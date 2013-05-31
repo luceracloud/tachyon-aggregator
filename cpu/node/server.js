@@ -1,7 +1,16 @@
+/*
+ *	server.js
+ *		Standalone server that allows
+ *		execution of dtrace scripts
+ *		and sends messages back to client
+ *		by way of an auxiliary function,
+ *		"dtrace_wrapper.js".
+ */
+
 var http = require('http');
 var libdtrace = require('libdtrace');
 var express = require('express');
-var cpu_dtrace = require('./cpu_dtrace.js');
+var dtrace = require('./dtrace_wrapper.js');
 
 /* init servers */
 var app = express()
@@ -28,27 +37,14 @@ io.sockets.on('connection', function(socket) {
 	   will happen during the lifetime of the connection. These will define how we interact with
        the client. The first is a message event which occurs when the client sends something to
 	   the server. */
-	socket.on( 'message', function(message) { 
+	socket.on( 'message', function(message) {
 		
-		/* Run the dtrace script indefinitely to determine what is being used */
+		console.log('\n > connection');
 
-		var processes = "profile:::profile-4999\n{\n@P[pid,execname] = count();\n}"
+		/* This is an ugly way of doing it */
+		var type = 'percpu';
+		dtrace.trace(message['type'], socket, dtp_by_session_id, interval_id_by_session_id, message['vars']);
 
-		var dtp = new libdtrace.Consumer();
-		var dscript = message['dscript'];
-		
-		dtp.strcompile( processes );		
-		dtp.go();
-		dtp_by_session_id[socket.sessionId] = dtp;
-    
-		/* All that's left to do is send the aggration data from the dscript.  */
-		interval_id_by_session_id[socket.sessionId] = setInterval(function () {
-		try {
-			socket.emit( 'message', cpu_dtrace.lumped(dtp));
-		} catch( err ) {
-			console.log(err);
-		}
-		},  1001 );
 	} );
 	    
 
@@ -60,13 +56,8 @@ io.sockets.on('connection', function(socket) {
 		var dtp = dtp_by_session_id[socket.sessionId];
 		delete dtp_by_session_id[socket.sessionId]; 
 		dtp.stop();		
-		console.log('disconnected');
-	    });
-	
-	   
-    } );
-
+		console.log(' > disconnected');
+	});
+});
 
 server.listen(8000);
-
-

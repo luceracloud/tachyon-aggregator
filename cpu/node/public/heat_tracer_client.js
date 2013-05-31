@@ -9,8 +9,12 @@ function heat_tracer() {
 
     socket.on('connect', function(){ 
 	    console.log('on connection');
-	    var dscript = "syscall:::entry\n{\nself->syscall_entry_ts[probefunc] = vtimestamp;\n}\nsyscall:::return\n/self->syscall_entry_ts[probefunc]/\n{\n\n@time[probefunc] = lquantize((vtimestamp - self->syscall_entry_ts[probefunc] ) / 1000, 0, 63, 2);\nself->syscall_entry_ts[probefunc] = 0;\n}";
-	    socket.emit( 'message',  { 'dscript' : dscript } );
+
+	    /* The client specifies which dtrace script to run here with "type"
+	       and then can pass arguments (e.g. PID, UID) with the "vars" array.
+	       The vars array can also be left blank (where applicable). */
+
+	    socket.emit( 'message',  { 'type' : 'heat', 'vars' : [1250] } );
 	});
 
 
@@ -19,12 +23,6 @@ function heat_tracer() {
     socket.on('message', function(message){ 
 	    console.log( message );
 	    draw(message);
-	    
-	    /* for ( key in message ) {
-	       val = message[key];
-	       console.log( 'key: ' + key + ', interval: ' + val[0][0] + '-' + val[0][1], ', count ' + val[1] );
-	       }  
-	    */
 	});
 
     socket.on('disconnect', function(){ 
