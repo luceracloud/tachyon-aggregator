@@ -30,14 +30,6 @@ dtrace:::BEGIN
 	samples = 0;
 }
 
-/* Count processes */
-profile-499
-/ !11111111111 /
-{
-	printf("NEW PID\n");
-	@PIDs[pid] = count();
-}
-
 /* Make note of running programs */
 profile-4999
 {
