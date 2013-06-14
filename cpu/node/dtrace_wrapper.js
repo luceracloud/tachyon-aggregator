@@ -20,6 +20,11 @@ module.exports.trace = function (type, socket, dtp_by_id, int_by_id, vars) {
 		'\n{\n\n@time[probefunc] = lquantize((vtimestamp - self->' +
 		'syscall_entry_ts[probefunc] ) / 1000, 0, 63, 2);\nself->' +
 		'syscall_entry_ts[probefunc] = 0;\n}';
+	script['saturation'] = 'profile:::profile-997hz\n{\n\n@TOTAL[cpu] ' +
+		'= sum(curthread->t_cpu->cpu_disp->disp_nrunnable);\n@QUANT[cpu] ' +
+		'= lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 100, 1);}';
+
+	/* Note that script['saturation'] should only work in global zone (not tested). */
 
 	/* Do stuff */
 	var dtp = new libdtrace.Consumer();
