@@ -14,6 +14,9 @@
  *	USAGE:
  *		(sudo) node server.js			[user]
  *		(sudo) nohup node server.js &	[daemon]
+ *
+ *	CREATED:    14 JUNE 2013
+ *	MODIFIED:   18 JUNE 2013
  */
 
 
@@ -42,8 +45,6 @@ io.set('log level', 1);
 
 /* keep track of dtrace consumers and intervals */
 var dtp_list = {};
-
-
 
 /* Handle connection events */
 io.sockets.on('connection', function(socket) { 

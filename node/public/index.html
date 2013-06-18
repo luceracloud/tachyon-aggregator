@@ -1,0 +1,101 @@
+<! Sample dashboard for dtrace+ monitoring scripts >
+<!  CREATED:	14 JUNE 2013 >
+<!  MODIFIED:	18 JUNE 2013 >
+
+<html>
+<head>
+<title>Dashboard | Lucera</title>
+
+<script src="socket.io/socket.io.js"></script>
+<script src="raphael.2.1.0.min.js"></script>
+<script src="justgage.1.0.1.min.js"></script>
+
+<script>
+	var cpugage, memgage, netgage, disgage;
+	var cpustat=0, memstat=0, diskstat=0, netstat=0;
+
+	window.onload = function(){
+		var cpugage = new JustGage({
+			id: "cpugage", 
+			value: cpustat, 
+			min: 0,
+			max: 100,
+			title: "CPU",
+			label: "",
+		});
+		
+		var memgage = new JustGage({
+			id: "memgage", 
+			value: 0, 
+			min: 0,
+			max: 100,
+			title: "MEMORY",
+			label: "",
+		});
+
+		var netgage = new JustGage({
+			id: "netgage", 
+			value: 0, 
+			min: 0,
+			max: 100,
+			title: "NETWORK",
+			label: "",
+		});
+
+		var disgage = new JustGage({
+			id: "disgage", 
+			value: 0, 
+			min: 0,
+			max: 100,
+			title: "DISK",
+			label: "",
+		});
+
+		setInterval(function() {
+			cpugage.refresh(cpustat);
+			memgage.refresh(getRandomInt(40,48));
+			netgage.refresh(getRandomInt(23,78));
+			disgage.refresh(getRandomInt(10,80));
+		}, 1200);
+	};
+
+	var socket = new io.connect();
+	socket.on('connect', function(){ 
+		console.log(' > connected');
+		socket.emit('message', {'type' : 'allStat'});
+	});
+
+	socket.on('message', function(message){ 
+		cpustat = message['cpu'];
+		console.log(message);
+	}); 
+</script>
+</head>
+
+<body>
+<center>
+<h1>Dashboard | Lucera</h1>
+<br><br>
+
+<div style="display: table;">
+    <div style="display: table-row">
+        <a href="./cpu/cpustats.html">
+        	<div id="cpugage" style="width: 300px; height:240px; display: table-cell;"></div>
+        </a>
+        <!a href="memstats.html">
+        	<div id="memgage" style="width:300px; height:240px; display: table-cell;"></div>
+        <!/a>
+    </div>
+    <div style="display: table-row">
+        <!a href="netstat.html">
+        	<div id="netgage" style="width: 300px; height:240px; display: table-cell;"></div>
+        <!/a>
+        <!a href="disstats.html">
+        	<div id="disgage" style="width:300px; height:240px; display: table-cell;"></div>
+        <!/a>
+    </div>    
+</div>
+
+</center>
+</body>
+</html>

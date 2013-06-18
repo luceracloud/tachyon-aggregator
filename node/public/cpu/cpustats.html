@@ -1,0 +1,94 @@
+<! Sample dashboard for dtrace+ monitoring scripts for CPU >
+<!  CREATED:	14 JUNE 2013 >
+<!  MODIFIED:	18 JUNE 2013 >
+
+<html>
+
+<head>
+<title>CPU Loads</title>
+<script src="./../socket.io/socket.io.js"></script>
+<script type="text/javascript" src="./../d3/d3.v3.js"></script>
+</head>
+
+<body>
+
+<a href="plist.html">Switch to per-process list</a><br>
+<a href="tlist.html">Switch to per-thread list</a><br><br>
+
+<script type="text/javascript">
+
+/* Set up global containers / varibles */
+var dataset = [];
+var h = 214;
+var textHeight = 14;
+var w = 500;
+var dataMax;
+var interval = 1200; // in ms
+var svg = d3.select("body")
+			.append("svg")
+			.attr("width", w)
+			.attr("height", h);
+
+/* Draw the chart every interval */
+setInterval(function drawBarChart () {
+	/* Remove all existing bars */
+	svg.selectAll("rect").remove();
+	svg.selectAll("text").remove();
+
+	/* Paint bars on the screen */
+	svg.selectAll("rect")
+	   .data(dataset)
+	   .enter()
+	   .append("rect")
+	   .attr("x", function(d,i) { return(i*(w/dataset.length)); } )
+	   .attr("y", function(d) { return h-(d*h); } )
+	   .attr("width", (w/dataset.length)-4)
+	   .attr("height", function(d) { return d*h+textHeight; } )
+	   .attr("stroke", "black")
+	   .attr("fill", "rgba(25,10,200,1.0)");
+
+	/* Make labels */
+	svg.selectAll("text")
+	   .data(dataset)
+	   .enter()
+	   .append("text")
+	   .text(function(d,i) { 
+	   		if (i < (dataset.length-1)) return ("CPU "+i+" : "+Math.floor(d*100)+"%"); 
+	   		else return ("AVG : " + Math.floor(d*100)+"%");
+	   	})
+	   .attr("x", function(d,i) { return(i*(w/dataset.length)+(w/dataset.length)/2); } )
+	   .attr("y", function() { return 14; } )
+	   .attr("font-family", "sans-serif")
+	   .attr("font-size", "12px")
+	   .attr("fill", "black")
+	   .attr("text-anchor", "middle");
+	}, interval);
+
+/* Server IO */
+var socket = new io.connect();
+socket.on('connect', function(){ 
+	console.log(' > connected');
+	socket.emit('message', {'type' : 'loaddist'});
+});
+
+socket.on('message', function(message){ 
+	dataset.length = 0;
+	for (var cpu in message) {
+		if (cpu != "cpu" && cpu != "nfo") {
+			dataset[cpu] = message[cpu]/message['nfo'];
+			if (dataset[cpu] > 1) dataset[cpu] = 1;
+			dataMax = message['nfo'];
+		}
+	}
+	
+	var sum = 0;
+	for (var p in dataset) {
+		sum += dataset[p];
+	}
+	
+	dataset[dataset.length] = sum / dataset.length;
+}); 
+</script>
+
+</body>
+</html>
