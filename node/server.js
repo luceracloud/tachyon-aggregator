@@ -21,6 +21,8 @@
 
 
 /* Load libraries */
+var sys = require('sys');
+var exec = require('child_process').exec;
 var libdtrace = require('libdtrace');
 var http = require('http');
 var libdtrace = require('libdtrace');
@@ -28,6 +30,7 @@ var express = require('express');
 
 /* Initalized variables */
 var script = {};	// The script to run (specified by "type" in original message)
+var cmdScript = {}; // The string to give to cmdline
 var nfo = {};		// Any accompanying information for the client (again, specified by "type")
 var args;			// Argument array
 
@@ -46,14 +49,37 @@ io.set('log level', 1);
 /* keep track of dtrace consumers and intervals */
 var dtp_list = {};
 
+/* Searches through body for term and
+ * returns a the first number that occurs
+ * after the first instance of term
+ */
+function searchParse(body, term) {
+  var position = body.search(term);
+  var line = "";
+
+  if (position < 0) return null;
+  position += term.length;
+
+  while (isNaN(parseInt(body[position]))) {
+    position++;
+  }
+
+  while (!isNaN(parseInt(body[position]))) {
+    line += body[position];
+    position++;
+  }
+
+  return line;
+}
+
 /* Handle connection events */
 io.sockets.on('connection', function(socket) { 
-
-	console.log(' > connected');
 
 	/* Handle new message events */
 	socket.on( 'message', function(message) {
 		
+		console.log(' > connected');
+
 		try {
 			console.log("\nRequest type: " + message['type']);
 			if (message['args']) {
@@ -89,32 +115,54 @@ io.sockets.on('connection', function(socket) {
 			'= lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 100, 1);}';
 		script['allStat'] = 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}';
 
+		/* This is for OSX */
+		cmdScript['memStat'] = "top -l 1 | grep PhysMem:";
+
+		/* Set up cmdline parsing script */
+		if (message['type'] == "cmd") {
+			var cmd = message['cmd'];
+
+			setInterval( function() {
+				var child = exec(cmdScript[message['cmd']], function (error, stdout, stderr) {
+					var toSend = {};
+					toSend['type'] = message['cmd'];
+					toSend['used'] = searchParse(stdout, "inactive");
+					toSend['free'] = searchParse(stdout, "used");
+					socket.emit('message', toSend);
+
+				})
+			}, 1001);
+			
 		/* Setup dtrace script runner and execute */
-		var dtp = new libdtrace.Consumer();
-		dtp.strcompile(script[message['type']]);
-		dtp.go();
-		dtp_list[socket.sessionId] = dtp;
+		} else {
+			var dtp = new libdtrace.Consumer();
+			dtp.strcompile(script[message['type']]);
+			dtp.go();
+			dtp_list[socket.sessionId] = dtp;
 
-		/* Send information to client periodically */
-		setInterval(function () {
-			try {
-				var cpu = 0;
-				var aggdata = {};
-				dtp.aggwalk(function (id, key, val) {
-					aggdata[key] = val;
-					cpu += val;
-				});
+			/* Send information to client periodically */
+			setInterval(function () {
+				try {
+					var cpu = 0;
+					var aggdata = {};
+					dtp.aggwalk(function (id, key, val) {
+						aggdata[key] = val;
+						cpu += val;
+					});
 
-				aggdata['nfo'] = nfo[message['type']];
-				aggdata['cpu'] = Math.floor(cpu/5/4)/10;
+					aggdata['type'] = message['type'];
+					aggdata['nfo'] = nfo[message['type']];
+					aggdata['cpu'] = Math.floor(cpu/5/4)/10;
+					aggdata['mem'] = 64;
 
-				socket.emit('message', aggdata);
+					socket.emit('message', aggdata);
 
-			} catch( err ) {
-				console.log(err);
-			}
+				} catch( err ) {
+					console.log(err);
+				}
 
-		}, 1001);
+			}, 1001);
+		}
 
 	} );
 
@@ -132,4 +180,4 @@ io.sockets.on('connection', function(socket) {
 });
 
 /* Specify port number for server to listen on */
-server.listen(8000);
+server.listen(4200);

@@ -5,7 +5,7 @@
 <html>
 
 <head>
-<title>CPU Loads</title>
+<title>CPU Loads | Lucera</title>
 <script src="./../socket.io/socket.io.js"></script>
 <script type="text/javascript" src="./../d3/d3.v3.js"></script>
 </head>
@@ -21,7 +21,8 @@
 var dataset = [];
 var h = 214;
 var textHeight = 14;
-var w = 500;
+var w = 600;
+var numberCores = 4;
 var dataMax;
 var interval = 1200; // in ms
 var svg = d3.select("body")
@@ -35,33 +36,44 @@ setInterval(function drawBarChart () {
 	svg.selectAll("rect").remove();
 	svg.selectAll("text").remove();
 
-	/* Paint bars on the screen */
-	svg.selectAll("rect")
-	   .data(dataset)
-	   .enter()
-	   .append("rect")
-	   .attr("x", function(d,i) { return(i*(w/dataset.length)); } )
-	   .attr("y", function(d) { return h-(d*h); } )
-	   .attr("width", (w/dataset.length)-4)
-	   .attr("height", function(d) { return d*h+textHeight; } )
-	   .attr("stroke", "black")
-	   .attr("fill", "rgba(25,10,200,1.0)");
+	var usage = 0;
 
-	/* Make labels */
-	svg.selectAll("text")
-	   .data(dataset)
-	   .enter()
-	   .append("text")
-	   .text(function(d,i) { 
-	   		if (i < (dataset.length-1)) return ("CPU "+i+" : "+Math.floor(d*100)+"%"); 
-	   		else return ("AVG : " + Math.floor(d*100)+"%");
-	   	})
-	   .attr("x", function(d,i) { return(i*(w/dataset.length)+(w/dataset.length)/2); } )
-	   .attr("y", function() { return 14; } )
-	   .attr("font-family", "sans-serif")
-	   .attr("font-size", "12px")
-	   .attr("fill", "black")
-	   .attr("text-anchor", "middle");
+	/* Paint bars on the screen */
+	for (var cpu=0; cpu<numberCores+1; cpu++) {
+
+		svg.append("rect")
+		   .attr("x", cpu*w/(numberCores+1))
+		   .attr("y", textHeight)
+		   .attr("width", w/(numberCores+1)-4)
+		   .attr("height", h)
+		   .attr("fill", "black");
+
+		try {
+			console.log(dataset[cpu]*h);
+			svg.append("rect")
+			   .attr("x", cpu*w/(numberCores+1)+1)
+			   .attr("y", h-(dataset[cpu]*h)+textHeight)
+			   .attr("width", w/(numberCores+1)-5)
+			   .attr("height", dataset[cpu]*h)
+			   .attr("fill", "rgba(25,10,200,1.0)");
+			usage = Math.floor(dataset[cpu]*1000)/10;
+		} catch (err) {
+			/* We can't draw because data wasn't reported */
+		}
+
+		svg.append("text")
+		   .text( function() {
+				if (cpu==numberCores) return ("AVG: " + usage + "%");
+				return ("CPU" + cpu + ": " + usage + "%");
+			})
+		   .attr("x", cpu*(w/(numberCores+1))+w/(numberCores+1)/2)
+		   .attr("y", textHeight - 4)
+		   .attr("font-family", "sans-serif")
+		   .attr("font-size", "12px")
+		   .attr("fill", "black")
+		   .attr("text-anchor", "middle");
+	}
+
 	}, interval);
 
 /* Server IO */
@@ -72,21 +84,20 @@ socket.on('connect', function(){
 });
 
 socket.on('message', function(message){ 
-	dataset.length = 0;
-	for (var cpu in message) {
-		if (cpu != "cpu" && cpu != "nfo") {
+	dataset = {};
+	var sum = 0;
+
+	for (var cpu=0; cpu<numberCores; cpu++) {
+		dataset[cpu] = 0;
+		try {
 			dataset[cpu] = message[cpu]/message['nfo'];
 			if (dataset[cpu] > 1) dataset[cpu] = 1;
-			dataMax = message['nfo'];
+			sum += dataset[cpu];
+		} catch (err) {
+			console.log(err);
 		}
 	}
-	
-	var sum = 0;
-	for (var p in dataset) {
-		sum += dataset[p];
-	}
-	
-	dataset[dataset.length] = sum / dataset.length;
+	dataset[numberCores] = sum/numberCores;
 }); 
 </script>
 
