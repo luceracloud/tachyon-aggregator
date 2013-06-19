@@ -1,0 +1,67 @@
+<! Sample dashboard for dtrace+ monitoring scripts for CPU >
+<!  CREATED:    14 JUNE 2013 >
+<!  MODIFIED:   19 JUNE 2013 >
+
+<html>
+
+<head>
+<title>mmap statistics | Lucera</title>
+<script src="./../socket.io/socket.io.js"></script>
+<script type="text/javascript" src="./../d3/d3.v3.js"></script>
+</head>
+
+<body>
+
+
+<script type="text/javascript">
+
+/* Set up global containers / varibles */
+var dataset = [];
+var h = 214;
+var textHeight = 14;
+var w = 600;
+var numberCores = 16;
+var dataMax;
+var interval = 1200; // in ms
+var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width", w)
+                        .attr("height", h);
+
+setInterval(function logScatter () {
+
+  for (var time in dataset) {
+    /* Graphics code here */
+    /* TO DO */
+  }
+
+});
+
+
+/* Server IO */
+var socket = new io.connect();
+socket.on('connect', function(){ 
+  console.log(' > connected');
+
+  socket.emit('message', {'type' : 'mmap_count'});
+
+});
+
+socket.on('message', function(message){ 
+
+  dataset = {};
+  
+  for (var id in message) {
+      if (id == 'type') continue;
+      if (id == 'cpu') continue;
+      if (id == 'mem') continue;
+
+      var idents = id.split(',');
+      dataset[idents[1]] = [message[id], idents[0]];
+  }
+  
+}); 
+</script>
+
+</body>
+</html>
