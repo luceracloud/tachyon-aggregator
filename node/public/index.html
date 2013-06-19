@@ -53,9 +53,9 @@
 
 		setInterval(function() {
 			cpugage.refresh(cpustat);
-			memgage.refresh(getRandomInt(40,48));
-			netgage.refresh(getRandomInt(23,78));
-			disgage.refresh(getRandomInt(10,80));
+			memgage.refresh(memstat, 100);
+			netgage.refresh(getRandomInt(5,30));
+			disgage.refresh(getRandomInt(10,12));
 		}, 1200);
 	};
 
@@ -63,11 +63,15 @@
 	socket.on('connect', function(){ 
 		console.log(' > connected');
 		socket.emit('message', {'type' : 'allStat'});
+		socket.emit("message", {"type" : "cmd", "cmd" : "memStat"});
 	});
 
 	socket.on('message', function(message){ 
-		cpustat = message['cpu'];
-		console.log(message);
+		if (message['type']=='allStat') cpustat = message['cpu'];
+		else if (message['type']=='memStat') {
+			var tMem = parseInt(message['used']) + parseInt(message['free']);
+			memstat = Math.floor(parseInt(message['used'])/tMem*1000)/10;
+		}
 	}); 
 </script>
 </head>
