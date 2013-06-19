@@ -131,7 +131,7 @@ io.sockets.on('connection', function(socket) {
 		if (message['type'] == "cmd") {
 			var cmd = message['cmd'];
 
-			setInterval( function() {
+			var cmdInt = setInterval( function() {
 				var child = exec(cmdScript[message['cmd']], function (error, stdout, stderr) {
 					var toSend = {};
 					toSend['type'] = message['cmd'];
@@ -150,7 +150,7 @@ io.sockets.on('connection', function(socket) {
 			dtp_list[socket.sessionId] = dtp;
 
 			/* Send information to client periodically */
-			setInterval(function () {
+			var dtraceInt = setInterval(function () {
 				try {
 					var cpu = 0;
 					var aggdata = {};
@@ -165,6 +165,10 @@ io.sockets.on('connection', function(socket) {
 					aggdata['mem'] = 64;
 
 					socket.emit('message', aggdata);
+
+					socket.on('message', function (message) { 
+						clearInterval(dtraceInt);
+					});
 
 				} catch( err ) {
 					console.log(err);

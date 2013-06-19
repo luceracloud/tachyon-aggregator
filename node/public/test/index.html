@@ -3,15 +3,18 @@
 <script src="./../socket.io/socket.io.js"></script>
 <script>
         
-        setInterval(function() {
-                socket.emit('message');
-                }, 1200);
+        var cetteType = "loaddist";
 
+        function refreshType() {
+                console.log("New request of type: " + document.getElementById('type').value);
+                cetteType = document.getElementById('type').value;
+                socket.emit('message', {'type' : cetteType});
+        }
 
         var socket = new io.connect();
         socket.on('connect', function(){ 
                 console.log(' > connected');
-                socket.emit('message', {'type' : 'mmap'});
+                socket.emit('message', {'type' : cetteType});
         });
 
         socket.on('message', function(message){ 
@@ -26,7 +29,10 @@
 
 <body>
 
-<textarea id="stdbox" cols=80 rows=20></textarea>
+SCRIPT TYPE: <input id="type" cols=80 /><br>
+<input type="button" value="refresh" onclick="refreshType();" />
+<br><br>
+<textarea id="stdbox" cols=80 rows=20 /></textarea>
 
 </body>
 </html>

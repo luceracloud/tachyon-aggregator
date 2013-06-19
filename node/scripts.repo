@@ -1,9 +1,41 @@
 exports.script = {
 
-	'lumpcpu' : 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}' ,
-	'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}' ,
-	'allStat' : 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}' ,
-	'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}' ,
-	'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}'
+	'lumpcpu' : 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}',
+	'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}',
+	'allStat' : 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}',
+	'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
+	'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}',
+	'mmap_cnt' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\n}',
+	'brk_cnt' : 'syscall::brk:entry\n{\n@P[pid,execname]=count();\n}\n',
+	'mmap' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
+		'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
+		'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
+		'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
+		'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
+		'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}'
 	
 };
+
+
+
+/*
+
+
+''
+''
+''
+''
+''
+''
+
+'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
+'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
+'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
+'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
+'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
+'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}';
+
+
+
+
+*/
