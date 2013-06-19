@@ -1,6 +1,6 @@
 <! Sample dashboard for dtrace+ monitoring scripts for CPU >
 <!  CREATED:    14 JUNE 2013 >
-<!  MODIFIED:   18 JUNE 2013 >
+<!  MODIFIED:   19 JUNE 2013 >
 
 <html>
 
@@ -51,9 +51,9 @@ setInterval(function drawBarChart () {
                 try {
                         svg.append("rect")
                            .attr("x", cpu*w/(numberCores+1)+1)
-                           .attr("y", h-(dataset[cpu]*h)+textHeight)
+                           .attr("y", h-(dataset[cpu]*(h-textHeight)))
                            .attr("width", w/(numberCores+1)-5)
-                           .attr("height", dataset[cpu]*h)
+                           .attr("height", dataset[cpu]*(h-textHeight))
                            .attr("fill", "rgba(25,10,200,1.0)");
         } catch (err) {
                         /* We can't draw because data wasn't reported */
@@ -93,11 +93,12 @@ socket.on('message', function(message){
                         dataset[cpu] = message[cpu]/message['nfo'];
                         if (dataset[cpu] > 1) dataset[cpu] = 1;
                         if (!(dataset[cpu] < 100.1)) dataset[cpu] = 0;
-                        sum += parseInt(dataset[cpu]);
+                        sum += dataset[cpu];
                 } catch (err) {
                         dataset[cpu] = 0;
                 }
         }
+
         dataset[numberCores] = sum/numberCores;
 }); 
 </script>

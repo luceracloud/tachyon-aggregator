@@ -1,0 +1,32 @@
+<html>
+<head>
+<script src="./../socket.io/socket.io.js"></script>
+<script>
+        
+        setInterval(function() {
+                socket.emit('message');
+                }, 1200);
+
+
+        var socket = new io.connect();
+        socket.on('connect', function(){ 
+                console.log(' > connected');
+                socket.emit('message', {'type' : 'mmap'});
+        });
+
+        socket.on('message', function(message){ 
+                document.getElementById( "stdbox" ).innerHTML = message['test'];
+                console.log(message);
+        }); 
+
+
+</script>
+</head>
+
+
+<body>
+
+<textarea id="stdbox" cols=80 rows=20></textarea>
+
+</body>
+</html>
