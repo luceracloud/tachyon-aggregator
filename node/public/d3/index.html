@@ -1,0 +1,102 @@
+<html>
+<head>
+	<title>STUFF</title>
+	<script type="text/javascript" src="d3.v3.js"></script>
+</head>
+
+
+<style>
+div.bar {
+		display: inline-block;
+		width: 20px;
+		height: 90px;
+		background-color: teal;
+		margin-right: 2px;
+}
+
+</style>
+
+
+<body>
+
+
+
+
+<!--
+<svg width="50" height="50">
+	<circle cx="25" cy="25" r="22"
+	fill="blue" stroke="gray" stroke-width="2" />
+</svg>-->
+
+
+<script type="text/javascript">
+
+var dataset = [];
+var h = 200;
+var w = 500;
+var svg = d3.select("body")
+			.append("svg")
+			.attr("width", w)
+			.attr("height", h);
+
+//.setInterval(drawBarChart(), 1200);
+
+/* Below function draws a bar graph */
+setInterval(function drawBarChart () {
+
+/* Some nice random data */
+dataset.length = 0;
+for (var i = 0; i < 20; i++) {
+	var newNumber = Math.random() * 30 + 50;
+	dataset.push(newNumber);
+}
+
+dataset[4] = 60;
+
+svg.selectAll("rect").remove();
+svg.selectAll("text").remove();
+
+/* Make svg zone 
+var svg = d3.select("body")
+			.append("svg")
+			.attr("width", w)
+			.attr("height", h); */
+
+console.log(dataset);
+
+/* Make bars */
+svg.selectAll("rect")
+   .data(dataset)
+   .enter()
+   .append("rect")
+   .attr("x", function(d,i) { return(i*(w/dataset.length)); } )
+   .attr("y", function(d) { return h-d; } )
+   .attr("width", (w/dataset.length)-1)
+   .attr("height", function(d) { return d*4; } )
+   .attr("fill", function(d) { return "rgba(25,10,200,1.0)"; });
+
+/* Make labels */
+svg.selectAll("text")
+   .data(dataset)
+   .enter()
+   .append("text")
+   //.text(function(d) { return Math.floor(d) ; })
+   .attr("x", function(d,i) { return(i*(w/dataset.length)+(w/dataset.length)/2); } )
+   .attr("y", function(d) { return h-d+16; } )
+   .attr("font-family", "sans-serif")
+   .attr("font-size", "11px")
+   .attr("fill", "white")
+   .attr("text-anchor", "middle");
+}, 1200);
+
+
+
+
+
+</script>
+
+
+</body>
+
+
+</html>
