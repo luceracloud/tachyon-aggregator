@@ -1,0 +1,9 @@
+exports.script = {
+
+	'lumpcpu' : 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}' ,
+	'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}' ,
+	'allStat' : 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}' ,
+	'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}' ,
+	'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}'
+	
+};

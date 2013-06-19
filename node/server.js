@@ -28,6 +28,8 @@ var http = require('http');
 var libdtrace = require('libdtrace');
 var express = require('express');
 
+var scripts = require('./scripts.repo');
+
 /* Initalized variables */
 var script = {};	// The script to run (specified by "type" in original message)
 var cmdScript = {}; // The string to give to cmdline
@@ -115,6 +117,13 @@ io.sockets.on('connection', function(socket) {
 			'= lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 100, 1);}';
 		script['allStat'] = 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}';
 
+		script['mmap'] = 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->beginning = ' + 'timestamp;\n}\nsyscall::mmap:entry\n{\n@R[pid,execname] = count();\nthis->intro = timestamp;' +
+			';\n}\nsyscall::brk:entry\n{\n@Q[pid,execname] = count();\nthis->beg = timestamp;' + 
+			';\n}\nsyscall::mmap:return\n{\nthis->finish = timestamp;\n@A[pid,execname] = avg' +
+			'(this->finish - this->start);\n}\nsyscall::mmap:return\n{\nthis->ending = timestamp;' +
+			'\n@C[pid,execname] = avg(this->ending - this->intro);\n}\nsyscall::brk:return\n{\n' +
+			'this->tail = timestamp;\n@B[pid,execname] = avg(this->tail - this->beg);\n}\n';
+
 		/* This is for OSX */
 		cmdScript['memStat'] = "top -l 1 | grep PhysMem:";
 
@@ -136,7 +145,7 @@ io.sockets.on('connection', function(socket) {
 		/* Setup dtrace script runner and execute */
 		} else {
 			var dtp = new libdtrace.Consumer();
-			dtp.strcompile(script[message['type']]);
+			dtp.strcompile(scripts.script[message['type']]);
 			dtp.go();
 			dtp_list[socket.sessionId] = dtp;
 
