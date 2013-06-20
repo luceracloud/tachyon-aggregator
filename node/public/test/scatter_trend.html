@@ -20,23 +20,58 @@ var dataset = [];
 var h = 214;
 var textHeight = 14;
 var w = 600;
-var numberCores = 16;
+var numberMemory = 3;
 var dataMax;
 var interval = 1200; // in ms
 var svg = d3.select("body")
                         .append("svg")
                         .attr("width", w)
                         .attr("height", h);
+var rad = 4;
+
 
 setInterval(function logScatter () {
 
-  for (var time in dataset) {
-    /* Graphics code here */
-    /* TO DO */
-  }
+svg.selectAll("circle").remove();
+
+ for (var time in dataset) {
+                        svg.append("circle")                            
+                        .attr("cx", time/400 + 60)
+                                .attr("cy", dataset[time][0] + 60)
+                                .attr("r", rad);
+ }
+
+
+svg.append("line")
+        .attr("x1", 10)
+        .attr("y1", 50)
+        .attr("x2", 200)
+        .attr("y2", 50);
+
+
+/*      var last = 0;
+        for (var x = 1; x <=  30; x++)
+                {
+                        var count = 0
+                        for(var time in dataset) {
+                                        if(( time  - x * 1000 <= 500 && time - x*1000  > 0 ) || (x*1000  - time <= 500 && x * 1000 - time  > 0 ) ) 
+                                                {
+                count += dataset[time][0]
+
+                                        }                       
+                                }
+
+                svg.append("line")
+                                .attr("x1", x-1 + 60)
+                                .attr("y1", 50 - last/10)
+                                .attr("x2", x + 60)
+                                .attr("y2", count);
+                                console.log(last);
+                                last = count;   
+        } */
+
 
 });
-
 
 /* Server IO */
 var socket = new io.connect();
@@ -50,15 +85,15 @@ socket.on('connect', function(){
 socket.on('message', function(message){ 
 
   dataset = {};
-  
+  console.log(message);
   for (var id in message) {
       if (id == 'type') continue;
       if (id == 'cpu') continue;
       if (id == 'mem') continue;
 
       var idents = id.split(',');
-      dataset[idents[1]] = [message[id], idents[0]];
-  }
+      dataset[idents[1]] = [message[id], idents[0]]; 
+ }
   
 }); 
 </script>

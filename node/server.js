@@ -16,9 +16,8 @@
  *		(sudo) nohup node server.js &	[daemon]
  *
  *	CREATED:    14 JUNE 2013
- *	MODIFIED:   18 JUNE 2013
+ *	MODIFIED:   20 JUNE 2013
  */
-
 
 /* Load libraries */
 var sys = require('sys');
@@ -50,6 +49,8 @@ io.set('log level', 1);
 
 /* keep track of dtrace consumers and intervals */
 var dtp_list = {};
+var cmdInt = {};
+var dtraceInt = {};
 
 /* Searches through body for term and
  * returns a the first number that occurs
@@ -131,15 +132,23 @@ io.sockets.on('connection', function(socket) {
 		if (message['type'] == "cmd") {
 			var cmd = message['cmd'];
 
-			var cmdInt = setInterval( function() {
-				var child = exec(cmdScript[message['cmd']], function (error, stdout, stderr) {
+			cmdInt[socket.sessionId] = setInterval( function() {
+				
+				var child = exec(scripts.cmd[cmd]['cmdl'], function (error, stdout, stderr) {
 					var toSend = {};
 					toSend['type'] = message['cmd'];
-					toSend['used'] = searchParse(stdout, "inactive");
-					toSend['free'] = searchParse(stdout, "used");
+
+					for (var ret in scripts.cmd[cmd]['returns']) {
+						toSend[ret] = searchParse(stdout, scripts.cmd[cmd]['returns'][ret]);
+					}
+
 					socket.emit('message', toSend);
 
-				})
+					socket.on('message', function (message) { 
+						clearInterval(cmdInt[socket.sessionId]);
+					});
+
+				}) 
 			}, 1001);
 			
 		/* Setup dtrace script runner and execute */
@@ -150,7 +159,7 @@ io.sockets.on('connection', function(socket) {
 			dtp_list[socket.sessionId] = dtp;
 
 			/* Send information to client periodically */
-			var dtraceInt = setInterval(function () {
+			dtraceInt[socket.sessionId] = setInterval(function () {
 				try {
 					var cpu = 0;
 					var aggdata = {};
@@ -167,7 +176,7 @@ io.sockets.on('connection', function(socket) {
 					socket.emit('message', aggdata);
 
 					socket.on('message', function (message) { 
-						clearInterval(dtraceInt);
+						clearInterval(dtraceInt[socket.sessionId]);
 					});
 
 				} catch( err ) {

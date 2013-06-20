@@ -4,21 +4,31 @@
 <script>
         
         var cetteType = "loaddist";
+        var cmdType = "";
+        var exeType = "type";
 
         function refreshType() {
                 console.log("New request of type: " + document.getElementById('type').value);
                 cetteType = document.getElementById('type').value;
-                socket.emit('message', {'type' : cetteType});
+                cmdType = document.getElementById('cmd').value;
+                socket.emit('message', {'type' : cetteType, 'cmd' : cmdType});
+        }
+
+        function refreshEle() {
+                console.log("New element examine of type: " + document.getElementById('ex_ele').value);
+                exeType = document.getElementById('ex_ele').value;
+
         }
 
         var socket = new io.connect();
         socket.on('connect', function(){ 
                 console.log(' > connected');
-                socket.emit('message', {'type' : cetteType});
+                socket.emit('message', {'type' : cetteType, 'cmd' : cmdType});
         });
 
         socket.on('message', function(message){ 
-                document.getElementById( "stdbox" ).innerHTML = message['test'];
+                document.getElementById( "rtype" ).innerHTML = message['type'];
+                document.getElementById( "stdbox" ).innerHTML = message[exeType];;
                 console.log(message);
         }); 
 
@@ -30,9 +40,13 @@
 <body>
 
 SCRIPT TYPE: <input id="type" cols=80 /><br>
-<input type="button" value="refresh" onclick="refreshType();" />
+CMD TYPE: <input id="cmd" cols=80 /><br>
+<input type="button" value="refresh" onclick="refreshType();" /><br>
+ELEMENT TYPE: <input id="ex_ele" cols=80 /><br>
+<input type="button" value="refreshEle" onclick="refreshEle();" /><br>
 <br><br>
-<textarea id="stdbox" cols=80 rows=20 /></textarea>
+RETURN TYPE: <textarea id="rtype" cols=80 rows=1 ></textarea><br>
+<textarea id="stdbox" cols=80 rows=20 ></textarea>
 
 </body>
 </html>
