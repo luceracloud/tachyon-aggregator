@@ -19,6 +19,8 @@
  *	MODIFIED:   20 JUNE 2013
  */
 
+console.log("\n\033[00;31mServer starting...\033[00m \n")
+
 /* Load libraries */
 var sys = require('sys');
 var exec = require('child_process').exec;
@@ -100,8 +102,7 @@ function searchParse(body, term) {
   return line;
 }
 
-/* */
-console.log("\n\033[00;31mServer starting...\033[00m \n")
+console.log("\n\033[00;31m...done.\033[00m \n")
 
 /* Handle connection events */
 io.sockets.on('connection', function(socket) { 

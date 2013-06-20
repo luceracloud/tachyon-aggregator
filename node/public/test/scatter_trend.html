@@ -17,45 +17,165 @@
 
 /* Set up global containers / varibles */
 var dataset = [];
+var countSet = [];
 var h = 214;
 var textHeight = 14;
 var w = 600;
 var numberMemory = 3;
 var dataMax;
+var minSpeed = 60;
 var interval = 1200; // in ms
 var svg = d3.select("body")
                         .append("svg")
                         .attr("width", w)
                         .attr("height", h);
-var rad = 4;
+var rad = 2;
 
+/* Set Up Grid with labels*/
+svg.append("text")
+         .text("|")
+         .attr("x", 68.84)
+         .attr("y", 160)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("100")
+         .attr("x", 64.84)
+         .attr("y", 170)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 10)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("|")
+         .attr("x", 108.71)
+         .attr("y", 160)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("1000")
+         .attr("x", 108.71)
+         .attr("y", 170)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 10)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("|")
+         .attr("x", 148.57)
+         .attr("y", 160)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("10000")
+         .attr("x", 148.57)
+         .attr("y", 170)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 10)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("|")
+         .attr("x", 188.4)
+         .attr("y", 160)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("100000")
+         .attr("x", 188.4)
+         .attr("y", 170)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 10)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("|")
+         .attr("x", 228.3)
+         .attr("y", 160)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("1000000")
+         .attr("x", 228.3)
+         .attr("y", 170)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 10)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("File Mapping Time Counts (ns)")
+         .attr("x", 270)
+         .attr("y", 95)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("text")
+         .text("Rolling Average File Mapping Time Counts (ns)")
+         .attr("x", 250)
+         .attr("y", 15)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 15)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+
+svg.append("rect")
+         .attr("x", 60)
+         .attr("y", 142)
+         .attr("width", 540 )
+         .attr("height", 5)
+         .attr("fill", "blue");
 
 setInterval(function logScatter () {
 
+/*  for(var id in countset)
+{
+console.log(countset[id]);
+} */
+
 svg.selectAll("circle").remove();
+svg.selectAll("line").remove();
 
  for (var time in dataset) {
                         svg.append("circle")                            
-                        .attr("cx", time/400 + 60)
-                                .attr("cy", dataset[time][0] + 60)
+                        .attr("cx",12* Math.log(time/minSpeed)/Math. log(2) + 60)
+                                .attr("cy", 140 - dataset[time][0]/10) 
                                 .attr("r", rad);
+                                                                                                
+/*if(time < 500) {
+        console.log(time);
+ }*/
  }
 
 
-svg.append("line")
-        .attr("x1", 10)
-        .attr("y1", 50)
-        .attr("x2", 200)
-        .attr("y2", 50);
 
-
-/*      var last = 0;
-        for (var x = 1; x <=  30; x++)
+     var last = 0;
+        for (var x = 1; x <=  540; x++)
                 {
                         var count = 0
                         for(var time in dataset) {
-                                        if(( time  - x * 1000 <= 500 && time - x*1000  > 0 ) || (x*1000  - time <= 500 && x * 1000 - time  > 0 ) ) 
-                                                {
+                         if (Math.abs (12* Math.log(time/minSpeed)/Math. log(2) - x)  < 2) {                 
                 count += dataset[time][0]
 
                                         }                       
@@ -63,12 +183,13 @@ svg.append("line")
 
                 svg.append("line")
                                 .attr("x1", x-1 + 60)
-                                .attr("y1", 50 - last/10)
+                                .attr("y1", 80 - last/12)
                                 .attr("x2", x + 60)
-                                .attr("y2", count);
-                                console.log(last);
+                                .attr("y2", 80 -  count / 12)
+                               .attr("stroke-width", 2)
+                                                                                                                                .attr("stroke", "black");
                                 last = count;   
-        } */
+        } 
 
 
 });
@@ -78,13 +199,14 @@ var socket = new io.connect();
 socket.on('connect', function(){ 
   console.log(' > connected');
 
-  socket.emit('message', {'type' : 'mmap_count'});
+  socket.emit('message', {'type' : 'brk_count'});
 
 });
 
 socket.on('message', function(message){ 
 
   dataset = {};
+        countset = {};
   console.log(message);
   for (var id in message) {
       if (id == 'type') continue;
@@ -92,7 +214,14 @@ socket.on('message', function(message){
       if (id == 'mem') continue;
 
       var idents = id.split(',');
-      dataset[idents[1]] = [message[id], idents[0]]; 
+      dataset[idents[1]] = [message[id], idents[0]];
+
+                        if(isNaN(countset[idents[0]]))
+{
+                        countset[idents[0]] = 0;
+}
+                        countset[idents[0]]++;
+                        console.log(countset[idents[0]]);
  }
   
 }); 
