@@ -22,7 +22,48 @@ exports.script = {
         'brk_quant' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:return\n' +
                 '{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
 
+        'brk_count' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:return\n' +
+                '{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
+
+
+
         'mmap_count' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:return\n' +
+'{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
+
+
+
+        'mmap' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
+                'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
+                'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
+                'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
+                'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
+                'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}'
+        
+};
+
+/* Command line scripts for parsing */
+exports.cmd = {
+        
+        'memStat' : {'cmdl' : 'top -l 1 | grep PhysMem:', 'returns' : {'used' : 'inactive', 'free' : 'used'} },
+        'memTotal' : {'cmdl' : 'kstat -n system_pages', 'returns' : {'physmem' : 'physmem', 'freemem' : 'freemem'} },
+                                'dfUse' : {'cmdl' : 'df', 'returns' : {'used' : 'zones/,3', 'available' : 'zones/,4'} }
+
+}
+
+
+
+/*
+
+'syscall::mmap:entry {this->bt=timestamp;} syscall::mmap:return {this->et=timestamp;@P[pid,this->et-this->bt]=count();}'
+
+'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
+'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
+'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
+'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
+'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
+'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}';
+
+*/'mmap_count' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:return\n' +
                 '{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
 
         'mmap' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +

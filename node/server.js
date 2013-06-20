@@ -100,18 +100,22 @@ function searchParse(body, term) {
   return line;
 }
 
+/* */
+console.log("\n\033[00;31mServer starting...\033[00m \n")
+
 /* Handle connection events */
 io.sockets.on('connection', function(socket) { 
 
 	/* Handle new message events */
 	socket.on( 'message', function(message) {
-		
-		console.log(' > connected');
+
+		console.log(' > \033[01;36mconnected\033[00m     [ \033[00;37m' + socket.id + 
+			'\033[00m ] \033[00m< \033[00;35m' + message['type'] + '\033[00m >');
 
 		try {
-			console.log("\nRequest type: " + message['type']);
+			//console.log("\nRequest type: " + message['type']);
 			if (message['args']) {
-				console.log("with arguments: " + message['args'].substr(1));
+			//	console.log("with arguments: " + message['args'].substr(1));
 				args = message['args'].substr(1);
 			}		
 		} catch (err) {
@@ -119,10 +123,6 @@ io.sockets.on('connection', function(socket) {
 		}
 
 		/* Script repository */
-		script['lumpcpu'] = 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}';
-		script['percpu'] = 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}';
-		script['tlist'] = 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}';
-		script['loaddist'] = 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}';
 		nfo['loaddist'] = 4999;
 		script['pzoom2'] = 'profile:::profile-4999\n/pid == ' + args +'/\n{\n@P[cpu,curthread] = count();\n' +
 			'}';
@@ -132,16 +132,10 @@ io.sockets.on('connection', function(socket) {
 		'@Qavg[probefunc,execname] = avg(self->stop - self->start);\n@Qmin[probefunc,execname] = ' +
 		'min(self->stop - self->start);\n@Qmax[probefunc,execname] = max(self->stop - self->start);\n}\n' +
 		'profile:::profile-4999\n/pid == ' + args + '/\n{\n@Q[cpu,curthread] = count();\n}';
-		script['user_dist'] = '{\n@P[gid, uid] = count();\n}\n\nsyscall:::return\n{\n@Q[gid, uid] = count();\n}';
-		script['heat'] = 'syscall:::entry\n{\nself->syscall_entry_ts[probefunc] = ' +
-			'vtimestamp;\n}\nsyscall:::return\n/self->syscall_entry_ts[probefunc]/' +
-			'\n{\n\n@time[probefunc] = lquantize((vtimestamp - self->' +
-			'syscall_entry_ts[probefunc] ) / 1000, 0, 63, 2);\nself->' +
-			'syscall_entry_ts[probefunc] = 0;\n}';
+
 		script['saturation'] = 'profile:::profile-997hz\n{\n\n@TOTAL[cpu] ' +
 			'= sum(curthread->t_cpu->cpu_disp->disp_nrunnable);\n@QUANT[cpu] ' +
 			'= lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 100, 1);}';
-		script['allStat'] = 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}';
 
 		script['mmap'] = 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->beginning = ' + 'timestamp;\n}\nsyscall::mmap:entry\n{\n@R[pid,execname] = count();\nthis->intro = timestamp;' +
 			';\n}\nsyscall::brk:entry\n{\n@Q[pid,execname] = count();\nthis->beg = timestamp;' + 
@@ -157,7 +151,7 @@ io.sockets.on('connection', function(socket) {
 		if (message['type'] == "cmd") {
 			var cmd = message['cmd'];
 
-			cmdInt[socket.sessionId] = setInterval( function() {
+			cmdInt[socket.id] = setInterval( function() {
 				
 				var child = exec(scripts.cmd[cmd]['cmdl'], function (error, stdout, stderr) {
 					var toSend = {};
@@ -170,7 +164,7 @@ io.sockets.on('connection', function(socket) {
 					socket.emit('message', toSend);
 
 					socket.on('message', function (message) { 
-						clearInterval(cmdInt[socket.sessionId]);
+						clearInterval(cmdInt[socket.id]);
 					});
 
 				}) 
@@ -181,10 +175,10 @@ io.sockets.on('connection', function(socket) {
 			var dtp = new libdtrace.Consumer();
 			dtp.strcompile(scripts.script[message['type']]);
 			dtp.go();
-			dtp_list[socket.sessionId] = dtp;
+			dtp_list[socket.id] = dtp;
 
 			/* Send information to client periodically */
-			dtraceInt[socket.sessionId] = setInterval(function () {
+			dtraceInt[socket.id] = setInterval(function () {
 				try {
 					var cpu = 0;
 					var aggdata = {};
@@ -201,7 +195,7 @@ io.sockets.on('connection', function(socket) {
 					socket.emit('message', aggdata);
 
 					socket.on('message', function (message) { 
-						clearInterval(dtraceInt[socket.sessionId]);
+						clearInterval(dtraceInt[socket.id]);
 					});
 
 				} catch( err ) {
@@ -216,10 +210,10 @@ io.sockets.on('connection', function(socket) {
 	/* Deal with disconnect from currently connected client */
 	socket.on('disconnect', function(){ 
 		try {
-			var dtp = dtp_list[socket.sessionId];
-			delete dtp_list[socket.sessionId];
+			console.log(' > \033[01;36mdisconnected\033[00m  [ \033[00;37m' + socket.id + '\033[00m ]');
+			var dtp = dtp_list[socket.id];
+			delete dtp_list[socket.id];
 			dtp.stop();
-			console.log(' > disconnected');
 		} catch (err) {
 			console.log(err);
 		}
