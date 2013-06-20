@@ -1,6 +1,6 @@
 <! Sample dashboard for dtrace+ monitoring scripts >
-<!  CREATED:	14 JUNE 2013 >
-<!  MODIFIED:	18 JUNE 2013 >
+<!  CREATED:    14 JUNE 2013 >
+<!  MODIFIED:   20 JUNE 2013 >
 
 <html>
 <head>
@@ -11,68 +11,68 @@
 <script src="justgage.1.0.1.min.js"></script>
 
 <script>
-	var cpugage, memgage, netgage, disgage;
-	var cpustat=0, memstat=0, diskstat=0, netstat=0;
+        var cpugage, memgage, netgage, disgage;
+        var cpustat=0, memstat=0, diskstat=0, netstat=0;
 
-	window.onload = function(){
-		var cpugage = new JustGage({
-			id: "cpugage", 
-			value: cpustat, 
-			min: 0,
-			max: 100,
-			title: "CPU",
-			label: "",
-		});
-		
-		var memgage = new JustGage({
-			id: "memgage", 
-			value: 0, 
-			min: 0,
-			max: 100,
-			title: "MEMORY",
-			label: "",
-		});
+        window.onload = function(){
+                var cpugage = new JustGage({
+                        id: "cpugage", 
+                        value: cpustat, 
+                        min: 0,
+                        max: 100,
+                        title: "CPU",
+                        label: "",
+                });
+                
+                var memgage = new JustGage({
+                        id: "memgage", 
+                        value: 0, 
+                        min: 0,
+                        max: 100,
+                        title: "MEMORY",
+                        label: "",
+                });
 
-		var netgage = new JustGage({
-			id: "netgage", 
-			value: 0, 
-			min: 0,
-			max: 100,
-			title: "NETWORK",
-			label: "",
-		});
+                var netgage = new JustGage({
+                        id: "netgage", 
+                        value: 0, 
+                        min: 0,
+                        max: 100,
+                        title: "NETWORK",
+                        label: "",
+                });
 
-		var disgage = new JustGage({
-			id: "disgage", 
-			value: 0, 
-			min: 0,
-			max: 100,
-			title: "DISK",
-			label: "",
-		});
+                var disgage = new JustGage({
+                        id: "disgage", 
+                        value: 0, 
+                        min: 0,
+                        max: 100,
+                        title: "DISK",
+                        label: "",
+                });
 
-		setInterval(function() {
-			cpugage.refresh(cpustat);
-			memgage.refresh(memstat, 100);
-			netgage.refresh(getRandomInt(5,30));
-			disgage.refresh(getRandomInt(10,12));
-		}, 1200);
-	};
+                setInterval(function() {
+                        cpugage.refresh(cpustat);
+                        memgage.refresh(memstat, 100);
+                        netgage.refresh(getRandomInt(5,30));
+                        disgage.refresh(getRandomInt(10,12));
+                }, 1200);
+        };
 
-	var socket = new io.connect();
-	socket.on('connect', function(){ 
-		console.log(' > connected');
-		socket.emit('message', {'type' : 'allStat'});
-		socket.emit("message", {"type" : "cmd", "cmd" : "memStat"});
-	});
+        var socket = new io.connect();
+        socket.on('connect', function(){ 
+                console.log(' > connected');
+                socket.emit('message', {'type' : 'allStat'});
+                socket.emit("message", {"type" : "cmd", "cmd" : "memTotal"});
+        });
 
-	socket.on('message', function(message){ 
-		if (message['type']=='allStat') cpustat = message['cpu'];
-		else if (message['type']=='memStat') {
-			var tMem = parseInt(message['used']) + parseInt(message['free']);
-			memstat = Math.floor(parseInt(message['used'])/tMem*1000)/10;
-		}
-	}); 
+        socket.on('message', function(message){ 
+                if (message['type']=='allStat') cpustat = message['cpu'];
+                else if (message['type']=='memTotal') {
+                        var tMem = parseInt(message['physmem']);
+                        memstat = Math.floor(((tMem-message['freemem'])/tMem)*1000)/10;
+                }
+        }); 
 </script>
 </head>
 
@@ -84,18 +84,18 @@
 <div style="display: table;">
     <div style="display: table-row">
         <a href="./cpu/cpustats.html">
-        	<div id="cpugage" style="width: 300px; height:240px; display: table-cell;"></div>
+                <div id="cpugage" style="width: 300px; height:240px; display: table-cell;"></div>
         </a>
         <!a href="memstats.html">
-        	<div id="memgage" style="width:300px; height:240px; display: table-cell;"></div>
+                <div id="memgage" style="width:300px; height:240px; display: table-cell;"></div>
         <!/a>
     </div>
     <div style="display: table-row">
         <!a href="netstat.html">
-        	<div id="netgage" style="width: 300px; height:240px; display: table-cell;"></div>
+                <div id="netgage" style="width: 300px; height:240px; display: table-cell;"></div>
         <!/a>
         <!a href="disstats.html">
-        	<div id="disgage" style="width:300px; height:240px; display: table-cell;"></div>
+                <div id="disgage" style="width:300px; height:240px; display: table-cell;"></div>
         <!/a>
     </div>    
 </div>

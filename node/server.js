@@ -51,21 +51,46 @@ io.set('log level', 1);
 var dtp_list = {};
 var cmdInt = {};
 var dtraceInt = {};
+var retval;
 
 /* Searches through body for term and
  * returns a the first number that occurs
  * after the first instance of term
  */
 function searchParse(body, term) {
-  var position = body.search(term);
   var line = "";
+  var skips = 0;
+
+  var terms = term.split(',');
+  term = terms[0];
+
+  if (terms.length > 1) skips = parseInt(terms[1]);
+  var position = body.search(term);
 
   if (position < 0) return null;
   position += term.length;
 
-  while (isNaN(parseInt(body[position]))) {
-    position++;
+  if (skips > 0) {
+	  while (body[position]!='\n') {
+	  	line += body[position];
+	  	position++;
+	  }
+
+	  line = line.split(' ');
+
+	  for (var parsed in line) {
+	  	if (line[parsed].length!=0) {
+	  		skips--;
+	  	}
+	  	if (skips<1) {
+	  		return line[parsed];
+	  	}
+	  }
   }
+
+  while (isNaN(parseInt(body[position]))) {
+	    position++;
+	}
 
   while (!isNaN(parseInt(body[position]))) {
     line += body[position];

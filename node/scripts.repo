@@ -38,11 +38,12 @@ exports.script = {
 exports.cmd = {
         
         'memStat' : {'cmdl' : 'top -l 1 | grep PhysMem:', 'returns' : {'used' : 'inactive', 'free' : 'used'} },
-        'memTotal' : {'cmdl' : 'kstat -n system_pages', 'returns' : {'physmem' : 'physmem', 'freemem' : 'freemem'} }
+        'memTotal' : {'cmdl' : 'kstat -n system_pages', 'returns' : {'physmem' : 'physmem', 'freemem' : 'freemem'} },
+        'dfUse' : {'cmdl' : 'df', 'returns' : {'used' : '/dev/disk0s2,2', 'available' : '/dev/disk0s2,3'} }
+
+        // 'dfUse' : {'cmdl' : 'df', 'returns' : {'varname' : 'toparse'} 
 
 }
-
-
 
 /*
 
