@@ -1,0 +1,136 @@
+<! Sample dashboard for kstat monitoring script of network stats >
+<!  CREATED:    24 JUNE 2013 >
+<!  MODIFIED:		24 JUNE 2013 >
+
+<html>
+<head>
+<title>Network Statistics | Lucera</title>
+<script src="./../depends/Chart.js"></script>
+<script src="./../socket.io/socket.io.js"></script>
+<style>
+	canvas{
+	}
+</style>
+</head>
+
+<body>
+
+	<canvas id="packets" height="450" width="600"></canvas>
+	<canvas id="canvas" height="450" width="600"></canvas>
+
+	<script>
+		var bytesOut = [];			/* Bytes-out array	*/
+		var bytesIn = [];				/* 									*/
+		var packetsOut = [];		/* Packets array		*/
+		var packetsIn = [];			/*									*/
+		var time = [];					/* Time (x-ticks)		*/
+		var startTime;					/* Initial time			*/
+		var lastB_O;						
+		var lastB_I;						
+		var interval = 1200;		/* Interval between repeat (in ms) */	
+
+		setInterval( function() {
+			var lineChartDataP = {
+				labels : time, 
+				datasets : [
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(220,220,220,1)",
+						pointColor : "rgba(220,220,220,1)",
+						pointStrokeColor : "#00f",
+						data : packetsOut 
+					},
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(151,187,205,1)",
+						pointColor : "rgba(151,187,205,1)",
+						pointStrokeColor : "#f00",
+						data : packetsIn
+					}
+					]
+				};
+
+			var	myLineP = new Chart(document.getElementById("packets").getContext("2d")).Line(lineChartDataP);
+
+			var lineChartData = {
+				labels : time, 
+				datasets : [
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(220,220,220,1)",
+						pointColor : "rgba(220,220,220,1)",
+						pointStrokeColor : "#00f",
+						data : bytesOut 
+					},
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(151,187,205,1)",
+						pointColor : "rgba(151,187,205,1)",
+						pointStrokeColor : "#f00",
+						data : bytesIn
+					}
+					]
+				};
+
+			var	myLine = new Chart(document.getElementById("canvas").getContext("2d")).Line(lineChartData);
+
+		}, interval);
+
+	/* Server IO */
+	var socket = new io.connect();
+	socket.on('connect', function(){
+	        console.log(' > connected');
+	        socket.emit('message', {'type' : 'kstat', 'command' : 'netStat'});
+					startTime = new Date().getTime();
+	});
+
+	socket.on('message', function(message){
+	        var sum = 0;
+
+          var ts = new Date().getTime();
+
+					var oBytes, rBytes, oPackets, iPackets;
+
+					if (bytesOut.length-1 > 0) {
+						oBytes = message["obytes64"] - lastB_O;
+						rBytes = message["rbytes64"] - lastB_I;
+						oPackets = message["opackets"] - lastP_O;
+						iPackets = message["ipackets"] - lastP_I;
+					} else {
+						oBytes = message["obytes64"];
+						rBytes = message["rbytes64"];
+						oPackets = message["opackets"];
+						iPackets = message["ipackets"];
+					}
+
+					lastB_O = message["obytes64"];
+					lastB_I = message["rbytes64"];
+					lastP_O = message["opackets"];
+					lastP_I = message["ipackets"];
+
+					bytesOut.push(oBytes);
+					bytesIn.push(rBytes);
+					packetsOut.push(oPackets);
+					packetsIn.push(iPackets);
+
+					var thisTime = Math.floor((new Date().getTime() - startTime)/1000);
+
+					time.push( Math.floor(thisTime/60) + "m" + (thisTime%60) );
+
+					if (bytesOut.length > 10) {
+						packetsOut.shift();
+						packetsIn.shift();
+						bytesOut.shift();
+						bytesIn.shift();
+						time.shift();
+					}
+
+	});
+	</script>
+
+<br><br>	
+RED: input [ packets / bytes ] <br>
+BLUE: output [ packets / bytes ] <br><br><br>
+
+</body>
+</html>

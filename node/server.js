@@ -24,11 +24,11 @@ console.log("\n\033[00;31mServer starting...\033[00m \n")
 /* Load libraries */
 var sys = require('sys');
 var exec = require('child_process').exec;
+var kstat = require('kstat');
 var libdtrace = require('libdtrace');
 var http = require('http');
 var libdtrace = require('libdtrace');
 var express = require('express');
-
 var scripts = require('./scripts.repo');
 
 /* Initalized variables */
@@ -53,7 +53,19 @@ io.set('log level', 1);
 var dtp_list = {};
 var cmdInt = {};
 var dtraceInt = {};
-var retval;
+var kInt = {};
+var retval = {};
+
+
+/* Insert a PID after loading from
+ * the repository */
+function addPID(f, pid) {
+	if (!pid) {
+		return f;
+	}
+	var p = f.indexOf("$#$");
+	return f.substr(0,p) + pid + f.substr(p+3);
+}
 
 /* Searches through body for term and
  * returns a the first number that occurs
@@ -102,7 +114,10 @@ function searchParse(body, term) {
   return line;
 }
 
-console.log("\n\033[00;31m...done.\033[00m \n")
+var dT = new Date();
+console.log("\n \033[00;31m... online! \033[00m ")
+console.log("\n \033[00;31mCurrent time is: " + dT.getDate() + "/" + (dT.getMonth()+1) + "/" + dT.getFullYear() + 
+							" | " + dT.getHours() + ":" + dT.getMinutes() + ":" + dT.getSeconds() + "\033[00m \n");
 
 /* Handle connection events */
 io.sockets.on('connection', function(socket) { 
@@ -111,7 +126,7 @@ io.sockets.on('connection', function(socket) {
 	socket.on( 'message', function(message) {
 
 		console.log(' > \033[01;36mconnected\033[00m     [ \033[00;37m' + socket.id + 
-			'\033[00m ] \033[00m< \033[00;35m' + message['type'] + '\033[00m >');
+			'\033[00m ] < \033[00;35m' + message['type'] + ': \033[00;33m' + message['command'] + '\033[00m >');
 
 		try {
 			//console.log("\nRequest type: " + message['type']);
@@ -171,10 +186,57 @@ io.sockets.on('connection', function(socket) {
 				}) 
 			}, 1001);
 			
+		/* Statistics queries */
+		} else if (message['type'] == "queryStats") {
+			console.log(' > \033[00;31mWARN: [ \033[00;37m' + socket.id + 
+				'\033[00;31m ] queried statistics\033[00m');
+			for (var cnctn in cmdInt) {
+				console.log('"cmd" instance from     [ \033[00;37m' + cnctn + '\033[00m ]');
+			}
+			for (var cnctn in dtraceInt) {
+				console.log('"dtrace" instance from  [ \033[00;37m' + cnctn + '\033[00m ]');
+			}
+			socket.disconnect();
+
+		/* Setup kstat reader and execute */
+		} else if (message["type"] == "kstat") {
+				var aggdata = {};
+				aggdata["type"] = message["command"];
+
+				kInt[socket.id] = setInterval( function() {
+					for (var stat in scripts.kscript[message["command"]]) {
+						var r = new kstat.Reader( scripts.kscript[message["command"]][stat] );
+						aggdata[stat] = r.read()[0]["data"][stat];	
+						r.close();
+					}
+
+					try {
+						if (message["print"] == 1) {
+							console.log("data: ", aggdata);
+						}
+					} catch (err) {
+					}
+
+					socket.emit("message", aggdata);
+
+					socket.on("message", function (message) {
+						clearInterval(kInt[socket.id]);
+					});
+
+				}, 1001);
+		
 		/* Setup dtrace script runner and execute */
 		} else {
+
 			var dtp = new libdtrace.Consumer();
-			dtp.strcompile(scripts.script[message['type']]);
+
+			try {
+				dtp.strcompile(addPID(scripts.script[message['type']],message['command']));	
+			} catch (err) {
+				console.log(err);
+				dtp.strcompile(scripts.script['loaddist']);
+			}
+
 			dtp.go();
 			dtp_list[socket.id] = dtp;
 
@@ -190,7 +252,7 @@ io.sockets.on('connection', function(socket) {
 
 					aggdata['type'] = message['type'];
 					aggdata['nfo'] = nfo[message['type']];
-					aggdata['cpu'] = Math.floor(cpu/5/4)/10;
+					aggdata['cpu'] = cpu;
 					aggdata['mem'] = 64;
 
 					socket.emit('message', aggdata);

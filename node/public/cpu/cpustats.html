@@ -7,7 +7,7 @@
 <head>
 <title>CPU Loads | Lucera</title>
 <script src="./../socket.io/socket.io.js"></script>
-<script type="text/javascript" src="./../d3/d3.v3.js"></script>
+<script src="./../depends/d3.v3.js"></script>
 </head>
 
 <body>
@@ -49,23 +49,23 @@ setInterval(function drawBarChart () {
                    .attr("fill", "black");
 
                 try {
-                        svg.append("rect")
-                           .attr("x", cpu*w/(numberCores+1)+1)
-                           .attr("y", h-(dataset[cpu]*(h-textHeight)))
-                           .attr("width", w/(numberCores+1)-5)
-                           .attr("height", dataset[cpu]*(h-textHeight))
-                           .attr("fill", "rgba(25,10,200,1.0)");
-        } catch (err) {
-                        /* We can't draw because data wasn't reported */
+               		 svg.append("rect")
+                      .attr("x", cpu*w/(numberCores+1)+1)
+                      .attr("y", h-(dataset[cpu]*(h-textHeight)))
+                      .attr("width", w/(numberCores+1)-5)
+                      .attr("height", dataset[cpu]*(h-textHeight))
+                      .attr("fill", "rgba(25,10,200,1.0)");
+        				} catch (err) {
+                   /* We can't draw because data wasn't reported */
                 }
 
                 usage = Math.floor(dataset[cpu]*1000)/10;
 
                 svg.append("text")
                    .text( function() {
-                                if (cpu==numberCores) return (usage + "%");
-                                return (usage + "%");
-                        })
+                       if (cpu==numberCores) return (usage + "%");
+                         return (usage + "%");
+                       })
                    .attr("x", cpu*(w/(numberCores+1))+w/(numberCores+1)/2)
                    .attr("y", textHeight - 4)
                    .attr("font-family", "sans-serif")
@@ -74,7 +74,7 @@ setInterval(function drawBarChart () {
                    .attr("text-anchor", "middle");
         }
 
-        }, interval);
+  }, interval);
 
 /* Server IO */
 var socket = new io.connect();

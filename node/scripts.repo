@@ -10,9 +10,9 @@
 /* dtrace scripts */
 exports.script = {
 
-        'lumpcpu' : 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}',
+        // 'lumpcpu' : 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}',
         'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}',
-        'allStat' : 'profile:::profile-4999\n/pid!=0/\n{\n@P[pid,execname,cpu] = count();\n}',
+        'allStat' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
         'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
         'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}',
         'mmap_cnt' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\n}',
@@ -25,6 +25,9 @@ exports.script = {
         'brk_count' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:return\n' +
                 '{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
 
+				'vminfo' : 'vminfo:::\n{\n@A[pid,probefunc,probename] = count();\n}',
+
+				'proc_thread' : 'profile:::profile-4999\n/pid==$#$/\n{\n@P[execname,cpu,curthread] = count();\n}',
 
 
         'mmap_count' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:return\n' +
@@ -40,6 +43,40 @@ exports.script = {
                 'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}'
         
 };
+
+exports.kscript = {
+
+		"memStat" : {
+				"freemem" :	{ "class" : "pages", "module" : "unix", "name" : "system_pages" },
+				"physmem" : { "class" : "pages", "module" : "unix", "name" : "system_pages" }
+			},
+
+		"netStat" : {
+				"obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+				"rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+				"opackets" : { "class" : "net", "module" : "link", "name" : "net0" },
+				"ipackets" : { "class" : "net", "module" : "link", "name" : "net0" }
+			},
+
+		"netStatData" : {
+				"obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+				"rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" }
+			},
+
+		"netStatPacket" : {
+				"opackets" : { "class" : "net", "module" : "link", "name" : "net0" },
+				"ipackets" : { "class" : "net", "module" : "link", "name" : "net0" }
+			},
+
+		"swapStat" : {
+				"swap" : { "class" : "zone_memory_cap", "module" : "memory_cap" },
+				"swapcap" : { "class" : "zone_memory_cap", "module" : "memory_cap"}
+			}
+
+
+	
+
+}
 
 /* Command line scripts for parsing */
 exports.cmd = {

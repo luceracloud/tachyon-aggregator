@@ -1,11 +1,11 @@
-<! Sample dashboard for dtrace+ monitoring scripts for CPU >
-<!  CREATED:   14 JUNE 2013 >
-<!  MODIFIED:  18 JUNE 2013 >
+<! Sample dashboard monitoring individual processes >
+<!  CREATED:   21 JUNE 2013 >
+<!  MODIFIED:  21 JUNE 2013 >
 
 <html>
 
 <head>
-<title>Thread List | Lucera</title>
+<title>Process Zoom | Lucera</title>
 <script src="./../socket.io/socket.io.js"></script>
 <script src="./../depends/d3.v3.js"></script>
 </head>
@@ -13,21 +13,26 @@
 <body>
 
 <a href="cpustats.html">Switch to overview</a><br>
-<a href="plist.html">Switch to per-process list</a><br><br>
+<a href="tlist.html">Switch to per-thread list</a><br><br>
 
-<! BEGIN THREAD LISTING >
+<! BEGIN PROCESS LISTING >
 
 <input type="button" value="per process" onclick="changeScale(1);" /><br>
 <input type="button" value="total" onclick="changeScale(0);" /><br>
 
 FONT SIZE&nbsp;&nbsp;
 <input type="button" value="-" onclick="fontChange(-1);" />
-<input type="button" value="+" onclick="fontChange(1);" /><br>
+<input type="button" value="+" onclick="fontChange(1);" />
+
+<br>
 
 <script type="text/javascript">
 
-/* dataset[PID] = [PID, name, thread, all_cpus, cpu1, cpu2, cpu3, cpu4, ...] */
+/* dataset[PID] = [PID, name, all_cpus, cpu1, cpu2, cpu3, cpu4, ...] */
 var dataset = {};
+
+var execname = "";
+
 
 /* Constants etc. */
 var numberCores = 16;
@@ -37,7 +42,6 @@ var colors = ["orange", "red", "green", "blue", "coral", "cyan",
 			"deeppink", "aquamarine", "gray", "lawngreen", "lightpink", "yellow",
 				"steelblue", "teal", "tan", "seagreen"];
 var h = 2014;
-var iBarWidth = 350;
 var textHeight = 15;
 var w = 700;
 var interval = 1200;
@@ -48,6 +52,11 @@ var svg = d3.select("body")
 			.append("svg")
 			.attr("width", w)
 			.attr("height", h);
+var svg_circ = d3.select("body")
+			.append("svg")
+			.attr("width", w)
+			.attr("height", h);
+
 
 /* Aesthetics */
 function changeScale(mode) {
@@ -82,8 +91,8 @@ setInterval(function drawPList () {
 
    var idx = 0;
    for (var proc in dataset) {
-
-      if (!dataset[proc][3]) {
+			
+      if (!dataset[proc][2]) {
          continue;
       }
 
@@ -92,25 +101,25 @@ setInterval(function drawPList () {
       svg.append("rect")
          .attr("x", 0)
          .attr("y", idx*(textHeight+2))
-         .attr("width", iBarWidth)
+         .attr("width", 300)
          .attr("height", textHeight)
          .attr("fill", bgColor);
 
       svg.append("rect")
-         .attr("x", iBarWidth)
+         .attr("x", 300)
          .attr("y", idx*(textHeight+2))
-         .attr("width", w-iBarWidth)
+         .attr("width", w-300)
          .attr("height", textHeight)
          .attr("fill", "black");
 
-      var position = iBarWidth;
+      var position = 300;
       for (var core=0; core<numberCores; core++) {
          
-         if (dataset[proc][core+4]) {
+         if (dataset[proc][core+3]) {
 
-            if (scalingMode==1) var thisWidth = dataset[proc][core+4]/dataset[proc][3];
-            else if (scalingMode==0) var thisWidth = dataset[proc][core+4]/rate/numberCores;
-            thisWidth = thisWidth*(w-iBarWidth);
+            if (scalingMode==1) var thisWidth = dataset[proc][core+3]/dataset[proc][2];
+            else if (scalingMode==0) var thisWidth = dataset[proc][core+3]/rate/numberCores;
+            thisWidth = thisWidth*(w-300);
 
             svg.append("rect")
                .attr("x", position)
@@ -141,17 +150,8 @@ setInterval(function drawPList () {
          .attr("text-anchor", "start");
 
       svg.append("text")
-         .text(dataset[proc][2])
-         .attr("x", 200)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
-
-      svg.append("text")
-         .text(Math.floor(dataset[proc][3]/rate/numberCores*1000)/10 + "%")
-         .attr("x", iBarWidth-20-textHeight)
+         .text(Math.floor(dataset[proc][2]/rate/numberCores*1000)/10 + "%")
+         .attr("x", 280-textHeight)
          .attr("y", (idx+1)*(textHeight+2)-7)
          .attr("font-family", "sans-serif")
          .attr("font-size", (textHeight-8)+"px")
@@ -164,40 +164,36 @@ setInterval(function drawPList () {
 var socket = new io.connect();
 socket.on('connect', function(){ 
    console.log(' > connected');
-   socket.emit('message', {'type' : 'tlist'});
+   socket.emit('message', {'type' : 'proc_thread', 'command' : location['search'].substr(1) });
 });
 
 socket.on('message', function(message){ 
    dataset = {};
-   for (var proc in message) {
-      var itms = proc.split(',');
-      try {
-         if (!(dataset[itms[0]])) {
-            dataset[itms[0]] = [];
-            dataset[itms[0]][0] = parseInt(itms[0]);
-            dataset[itms[0]][1] = itms[1];
-            dataset[itms[0]][2] = itms[3];
-         }
-         
-         var idx = 4+parseInt(itms[2]);
 
-         if (idx) {
-            dataset[itms[0]][idx] = message[proc];
-         }
-      } catch (err) {
-         console.log(err);
-      }
-   }
 
-   for (var proc in dataset) {
-      var sum = 0;
-      for (var k=0; k<numberCores; k++) {
-         if(dataset[proc][k+4]) {
-            sum = sum + dataset[proc][k+4];
-         }
-      }
-      dataset[proc][3] = sum;
-   }
+		for (var t in message) {
+
+			t = t.split(',');
+			
+			if (t=="cpu") continue;
+			if (t=="type") continue;
+			if (t=="mem") continue;
+
+		
+			execname = t[0];
+
+	
+			dataset[t[2]] = {};
+			dataset[t[2]][0] = parseInt(t[1]);
+			dataset[t[2]][1] = message[t];
+
+
+			
+			
+		}
+
+		console.log(dataset);
+
 
 });
 

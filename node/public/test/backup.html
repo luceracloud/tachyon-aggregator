@@ -1,4 +1,4 @@
-<!Sample dashboard for dtrace+ monitoring scripts for CPU >
+<! Sample dashboard for dtrace+ monitoring scripts for CPU >
 <!  CREATED:    14 JUNE 2013 >
 <!  MODIFIED:   19 JUNE 2013 >
 
@@ -192,8 +192,8 @@ svg.append("text")
 var start = 185;
 for(var id in countset)
 {
-                console.log(countset[id]);
-        svg.append("text")
+		console.log(countset[id]);
+	svg.append("text")
          .text(id)
          .attr("x", 60)
          .attr("y", start )
@@ -210,14 +210,14 @@ for(var id in countset)
          .attr("font-size", 5)
          .attr("fill", "black")
          .attr("text-anchor", "start");
-        start += 5;
+	start += 5;
 }
 
 
 /*Draws Circles*/
  for (var time in dataset) {
                         svg.append("circle")                            
-                                 .attr("cx",12* Math.log(time/minSpeed)/Math. log(2) + 60)
+                       		 .attr("cx",12* Math.log(time/minSpeed)/Math. log(2) + 60)
                            .attr("cy", 140 - dataset[time][0]/10) 
                            .attr("r", rad);
                                                                                                 
@@ -245,7 +245,7 @@ for(var id in countset)
                                 .attr("x2", x + 60)
                                 .attr("y2", 80 -  count / 12)
                                 .attr("stroke-width", 2)
-                                                                                                                                .attr("stroke", "black");
+																.attr("stroke", "black");
                                 last = count;   
         } 
 
@@ -258,6 +258,7 @@ socket.on('connect', function(){
   console.log(' > connected');
 
   socket.emit('message', {'type' : 'brk_count'});
+
 });
 
 socket.on('message', function(message){ 
@@ -270,12 +271,11 @@ socket.on('message', function(message){
       if (id == 'cpu') continue;
       if (id == 'mem') continue;
 
-			
       var idents = id.split(',');
       dataset[idents[1]] = [message[id], idents[0]];
-                        var f = idents[0]
+			var f = idents[0]
 
-                        if(isNaN(countset[f]))
+			if(isNaN(countset[f]))
 {
 countset[f] = 0;
 }
@@ -287,4 +287,3 @@ countset[f]++;
 
 </body>
 </html>
-
