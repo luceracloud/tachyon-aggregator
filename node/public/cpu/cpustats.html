@@ -1,6 +1,9 @@
-<! Sample dashboard for dtrace+ monitoring scripts for CPU >
-<!  CREATED:    14 JUNE 2013 >
-<!  MODIFIED:   19 JUNE 2013 >
+<!. Sample dashboard for dtrace process monitoring scripts      .>
+<!.    Displays non-idle % time of each core on a machine in    .>
+<!.    addition to showing average over all cores               .>
+<!.                                                             .>
+<!. CREATED:   14 JUNE 2013                                     .>
+<!. MODIFIED:  27 JUNE 2013                                     .>
 
 <html>
 
@@ -20,94 +23,94 @@
 <script type="text/javascript">
 
 /* Set up global containers / varibles */
+var numberCores = 16;   // This has to be set manually
+var interval = 1200;    // Time (ms) between redraws
+var textHeight = 14;    
 var dataset = [];
 var h = 214;
-var textHeight = 14;
 var w = 600;
-var numberCores = 16;
 var dataMax;
-var interval = 1200; // in ms
+
 var svg = d3.select("body")
-                        .append("svg")
-                        .attr("width", w)
-                        .attr("height", h);
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
 
 /* Draw the chart every interval */
-setInterval(function drawBarChart () {
-        /* Remove all existing bars */
-        svg.selectAll("rect").remove();
-        svg.selectAll("text").remove();
+setInterval(function drawBarChart() {
+  /* Clear everything */
+  svg.selectAll("rect").remove();
+  svg.selectAll("text").remove();
 
-        var usage = 0;
+  var usage = 0;
 
-        /* Paint bars on the screen */
-        for (var cpu=0; cpu<numberCores+1; cpu++) {
+  /* Paint bars on the screen */
+  for (var cpu=0; cpu<numberCores+1; cpu++) {
 
-                svg.append("rect")
-                   .attr("x", cpu*w/(numberCores+1))
-                   .attr("y", textHeight)
-                   .attr("width", w/(numberCores+1)-4)
-                   .attr("height", h)
-                   .attr("fill", "black");
+    svg.append("rect")
+       .attr("x", cpu*w/(numberCores+1))
+       .attr("y", textHeight)
+       .attr("width", w/(numberCores+1)-4)
+       .attr("height", h)
+       .attr("fill", "black");
 
-                try {
-               		 svg.append("rect")
-                      .attr("x", cpu*w/(numberCores+1)+1)
-                      .attr("y", h-(dataset[cpu]*(h-textHeight)))
-                      .attr("width", w/(numberCores+1)-5)
-                      .attr("height", dataset[cpu]*(h-textHeight))
-                      .attr("fill", "rgba(25,10,200,1.0)");
-        				} catch (err) {
-                   /* We can't draw because data wasn't reported */
-                }
+    try {
+      svg.append("rect")
+       .attr("x", cpu*w/(numberCores+1)+1)
+       .attr("y", h-(dataset[cpu]*(h-textHeight)))
+       .attr("width", w/(numberCores+1)-5)
+       .attr("height", dataset[cpu]*(h-textHeight))
+       .attr("fill", "rgba(25,10,200,1.0)");
+    } catch (err) {
+      /* We can't draw because data wasn't reported */
+    }
 
-                usage = Math.floor(dataset[cpu]*1000)/10;
+    usage = Math.floor(dataset[cpu]*1000)/10;
 
-                svg.append("text")
-                   .text( function() {
-                       if (cpu==numberCores) return (usage + "%");
-                         return (usage + "%");
-                       })
-                   .attr("x", cpu*(w/(numberCores+1))+w/(numberCores+1)/2)
-                   .attr("y", textHeight - 4)
-                   .attr("font-family", "sans-serif")
-                   .attr("font-size", "12px")
-                   .attr("fill", "black")
-                   .attr("text-anchor", "middle");
-        }
+    svg.append("text")
+       .text( function() {
+          if (cpu==numberCores) return (usage + "%");
+          return (usage + "%");
+          })
+       .attr("x", cpu*(w/(numberCores+1))+w/(numberCores+1)/2)
+       .attr("y", textHeight - 4)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", "12px")
+       .attr("fill", "black")
+       .attr("text-anchor", "middle");
+  }
 
-  }, interval);
+}, interval);
 
 /* Server IO */
 var socket = new io.connect();
-socket.on('connect', function(){ 
-        console.log(' > connected');
-        socket.emit('message', {'type' : 'loaddist'});
+socket.on('connect', function() { 
+  console.log(' > connected');
+  socket.emit('message', {'type' : 'loaddist'});
 });
 
 socket.on('message', function(message){ 
-        dataset = {};
-        var sum = 0;
+  dataset = {};
+  var sum = 0;
 
-        for (var cpu=0; cpu<numberCores; cpu++) {
-                dataset[cpu] = 0;
-                try {
-                        dataset[cpu] = message[cpu]/message['nfo'];
-                        if (dataset[cpu] > 1) dataset[cpu] = 1;
-                        if (!(dataset[cpu] < 100.1)) dataset[cpu] = 0;
-                        sum += dataset[cpu];
-                } catch (err) {
-                        dataset[cpu] = 0;
-                }
-        }
+  for (var cpu=0; cpu<numberCores; cpu++) {
+    dataset[cpu] = 0;
+    try {
+      dataset[cpu] = message[cpu]/message['nfo'];
+      if (dataset[cpu] > 1) dataset[cpu] = 1;
+      if (!(dataset[cpu] < 100.1)) dataset[cpu] = 0;
+      sum += dataset[cpu];
+    } catch (err) {
+      dataset[cpu] = 0;
+    }
+  }
 
-        dataset[numberCores] = sum/numberCores;
+  dataset[numberCores] = sum/numberCores;
 }); 
 </script>
 
 <br><br>Each of the above bars provides a graphical representation of %total runtime for computer's cores.<br><br>
 
 The first 16 bars represent %-not-idle time for cores 0-15 (in order) and the 17th bar represents an average over all cores. Percentages are rounded to the next-lowest tenth.
-
 </body>
 </html>
