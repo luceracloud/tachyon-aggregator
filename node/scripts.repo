@@ -4,92 +4,259 @@
  *         loading into server.js.
  *
  *      CREATED: 19 JUNE 2013
- *      UPDATED: 20 JUNE 2013
+ *      UPDATED: 27 JUNE 2013
  */
 
-/* dtrace scripts */
+/* DTrace Scripts */
 exports.script = {
 
-        // 'lumpcpu' : 'profile:::profile-4999\n{\n@P[pid,execname] = count();\n}',
-        'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}',
-        'allStat' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
-        'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
-        'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}',
-        'mmap_cnt' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\n}',
-        'brk_cnt' : 'syscall::brk:entry\n{\n@P[pid,execname]=count();\n}\n',
-        'mmap_quant' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:return\n' +
-                '{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
-        'brk_quant' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:return\n' +
-                '{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
 
-        'brk_count' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:return\n' +
-                '{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
+  'allStat' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
 
-				'vminfo' : 'vminfo:::\n{\n@A[pid,probefunc,probename] = count();\n}',
+  'brk_cnt' : 'syscall::brk:entry\n{\n@P[pid,execname]=count();\n}\n',
 
-				'proc_thread' : 'profile:::profile-4999\n/pid==$#$/\n{\n@P[execname,cpu,curthread] = count();\n}',
+  'brk_count' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:' +
+    'return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
+
+  'brk_quant' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:' +
+    'return\n{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
+
+  'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}',
+
+  'mmap_cnt' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\n}',
+
+  'mmap_count' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:' +
+    'return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt,execname]=count();\n}',
+
+  'mmap_quant' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:' + 
+    'return\n{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
+
+  'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
+
+  'proc_syscall' : 'syscall:::entry\n/pid==$#$/\n{\n@P[probefunc,curthread] = count();\n}',
+
+  'proc_thread' : 'profile:::profile-4999\n/pid==$#$/\n{\n@P[execname,cpu,curthread]' +
+    ' = count();\n}',
+
+  "sysc" : 'syscall::$S$:entry\n{\nself->sTime=timestamp;\n}\nsyscall::$S$:return\n{\n' +
+    'self->eTime=timestamp;\n@[self->eTime-self->sTime,pid]=count();\n}',
+
+  'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}',
+
+  'vminfo' : 'vminfo:::\n{\n@A[pid,probefunc,probename] = count();\n}',
 
 
-        'mmap_count' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:return\n' +
-'{\nthis->et=timestamp;@P[pid,this->et-this->bt,execname]=count();\n}',
-
-
-
-        'mmap' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
-                'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
-                'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
-                'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
-                'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
-                'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}'
-        
 };
 
+/// /// /// /// /// ///
+
+/* kstat Scripts */
 exports.kscript = {
 
-		"memStat" : {
-				"freemem" :	{ "class" : "pages", "module" : "unix", "name" : "system_pages" },
-				"physmem" : { "class" : "pages", "module" : "unix", "name" : "system_pages" }
-			},
 
-		"netStat" : {
-				"obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
-				"rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
-				"opackets" : { "class" : "net", "module" : "link", "name" : "net0" },
-				"ipackets" : { "class" : "net", "module" : "link", "name" : "net0" }
-			},
+  "kernStat" : {
+    "pp_kernel" : { "class" : "pages", "module" : "unix", "name" : "system_pages" },
+    "physmem"   : { "class" : "pages", "module" : "unix", "name" : "system_pages" }
+  },
 
-		"netStatData" : {
-				"obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
-				"rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" }
-			},
+  "rssStat" : {
+    "rss"     : { "class" : "zone_memory_cap", "module" : "memory_cap" },
+    "swapcap" : { "class" : "zone_memory_cap", "module" : "memory_cap" }
+  },
 
-		"netStatPacket" : {
-				"opackets" : { "class" : "net", "module" : "link", "name" : "net0" },
-				"ipackets" : { "class" : "net", "module" : "link", "name" : "net0" }
-			},
+  "memStat" : {
+    "freemem" : { "class" : "pages", "module" : "unix", "name" : "system_pages" },
+    "physmem" : { "class" : "pages", "module" : "unix", "name" : "system_pages" }
+  },
 
-		"swapStat" : {
-				"swap" : { "class" : "zone_memory_cap", "module" : "memory_cap" },
-				"swapcap" : { "class" : "zone_memory_cap", "module" : "memory_cap"}
-			}
+  "netStatSum" : {
+    "obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "ifspeed"  : { "class" : "net", "module" : "link", "name" : "net0" }
+  },
 
+  "netStat" : {
+    "obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "opackets" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "ipackets" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "ifspeed"  : { "class" : "net", "module" : "link", "name" : "net0" },
+    "ierrors"  : { "class" : "net", "module" : "link", "name" : "net0" },
+    "oerrors"  : { "class" : "net", "module" : "link", "name" : "net0" }
+  },
 
-	
+  "netStatData" : {
+    "obytes64" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "rbytes64" : { "class" : "net", "module" : "link", "name" : "net0" }
+  },
+
+  "netStatPacket" : {
+    "opackets" : { "class" : "net", "module" : "link", "name" : "net0" },
+    "ipackets" : { "class" : "net", "module" : "link", "name" : "net0" }
+  },
+
+  "swapStat" : {
+    "swap"    : { "class" : "zone_memory_cap", "module" : "memory_cap" },
+    "swapcap" : { "class" : "zone_memory_cap", "module" : "memory_cap"}
+  },
+
+  "diskIO0" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 0 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 0 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 0 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 0 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 0 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 0 }
+  },
+
+  "diskIO1" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 1 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 1 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 1 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 1 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 1 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 1 }  
+  },
+
+  "diskIO2" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 2 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 2 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 2 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 2 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 2 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 2 }  
+  },
+
+  "diskIO3" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 3 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 3 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 3 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 3 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 3 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 3 }  
+  },
+
+  "diskIO4" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 4 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 4 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 4 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 4 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 4 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 4 }  
+  },
+
+  "diskIO5" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 5 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 5 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 5 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 5 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 5 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 5 }  
+  },
+
+  "diskIO6" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 6 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 6 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 6 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 6 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 6 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 6 }  
+  },
+
+  "diskIO7" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 7 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 7 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 7 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 7 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 7 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 7 }  
+  },
+
+  "diskIO8" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 8 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 8 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 8 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 8 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 8 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 8 }  
+  },
+
+  "diskIO9" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 9 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 9 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 9 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 9 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 9 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 9 }  
+  },
+
+  "diskIO10" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 10 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 10 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 10 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 10 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 10 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 10 }  
+  },
+
+  "diskIO11" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 11 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 11 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 11 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 11 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 11 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 11 }  
+  },
+
+  "diskIO12" : {
+    "nread"     : { "class" : "disk", "module" : "sd", "instance" : 12 },
+    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : 12 },
+    "reads"     : { "class" : "disk", "module" : "sd", "instance" : 12 },
+    "writes"    : { "class" : "disk", "module" : "sd", "instance" : 12 },
+    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : 12 },
+    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : 12 }  
+  }
+
 
 }
 
+/// /// /// /// /// ///
+
 /* Command line scripts for parsing */
 exports.cmd = {
-        
-        'memStat' : {'cmdl' : 'top -l 1 | grep PhysMem:', 'returns' : {'used' : 'inactive', 'free' : 'used'} },
-        'memTotal' : {'cmdl' : 'kstat -n system_pages', 'returns' : {'physmem' : 'physmem', 'freemem' : 'freemem'} },
-                                'dfUse' : {'cmdl' : 'df', 'returns' : {'used' : 'zones/,3', 'available' : 'zones/,4'} }
+
+
+  'memStat' : {
+    'cmdl' : 'top -l 1 | grep PhysMem:',
+    'returns' : {'used' : 'inactive', 'free' : 'used'}
+    },
+
+  'memTotal' : {
+    'cmdl' : 'kstat -n system_pages',
+    'returns' : {'physmem' : 'physmem', 'freemem' : 'freemem'}
+    },
+
+  'dfUse' : {
+    'cmdl' : 'df',
+    'returns' : {'used' : 'zones/,3', 'available' : 'zones/,4'} 
+    }
+
 
 }
 
 
 
 /*
+
+  'mmap' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
+  'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
+  'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
+  'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
+  'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
+  'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}',
+
+//////
+
 
 'syscall::mmap:entry {this->bt=timestamp;} syscall::mmap:return {this->et=timestamp;@P[pid,this->et-this->bt]=count();}'
 
