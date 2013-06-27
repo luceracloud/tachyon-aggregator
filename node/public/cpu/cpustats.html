@@ -12,6 +12,8 @@
 
 <body>
 
+<h2>At-a-glace CPU Utilization Statistics</h2><br>
+
 <a href="plist.html">Switch to per-process list</a><br>
 <a href="tlist.html">Switch to per-thread list</a><br><br>
 
@@ -102,6 +104,10 @@ socket.on('message', function(message){
         dataset[numberCores] = sum/numberCores;
 }); 
 </script>
+
+<br><br>Each of the above bars provides a graphical representation of %total runtime for computer's cores.<br><br>
+
+The first 16 bars represent %-not-idle time for cores 0-15 (in order) and the 17th bar represents an average over all cores. Percentages are rounded to the next-lowest tenth.
 
 </body>
 </html>
