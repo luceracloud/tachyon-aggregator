@@ -1,6 +1,9 @@
-<! Sample dashboard for dtrace+ monitoring scripts for CPU >
-<!  CREATED:   14 JUNE 2013 >
-<!  MODIFIED:  18 JUNE 2013 >
+<!. Sample dashboard for dtrace process monitoring scripts      .>
+<!.    Displays information (similar to plist) for all threads  .>
+<!.    running on a system                                      .>
+<!.                                                             .>
+<!. CREATED:   14 JUNE 2013                                     .>
+<!. MODIFIED:   1 JULY 2013                                     .>
 
 <html>
 
@@ -15,8 +18,6 @@
 <a href="cpustats.html">Switch to overview</a><br>
 <a href="plist.html">Switch to per-process list</a><br><br>
 
-<! BEGIN THREAD LISTING >
-
 <input type="button" value="per process" onclick="changeScale(1);" /><br>
 <input type="button" value="total" onclick="changeScale(0);" /><br>
 
@@ -25,182 +26,178 @@ FONT SIZE&nbsp;&nbsp;
 <input type="button" value="+" onclick="fontChange(1);" /><br>
 
 <script type="text/javascript">
-
-/* dataset[PID] = [PID, name, thread, all_cpus, cpu1, cpu2, cpu3, cpu4, ...] */
 var dataset = {};
 
 /* Constants etc. */
-var numberCores = 16;
-var rate = 4999;
-var scalingMode = 1;
-var colors = ["orange", "red", "green", "blue", "coral", "cyan",
-			"deeppink", "aquamarine", "gray", "lawngreen", "lightpink", "yellow",
-				"steelblue", "teal", "tan", "seagreen"];
-var h = 2014;
-var iBarWidth = 350;
-var textHeight = 15;
-var w = 700;
-var interval = 1200;
+var colors = ["orange", "red", "green", "blue", "coral", "cyan", "deeppink",
+                "aquamarine", "gray", "lawngreen", "lightpink", "yellow",
+                "steelblue", "teal", "tan", "seagreen"];
 var bgColor = "rgba(25, 25, 25, 0.8)";
+
+var numberCores = 16;
+var iBarWidth = 350;
+var interval = 1200;
+var scalingMode = 1;
+var textHeight = 15;
+var rate = 4999;
+var h = 2014;
+var w = 700;
 
 /* Set up global container */
 var svg = d3.select("body")
-			.append("svg")
-			.attr("width", w)
-			.attr("height", h);
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
 
 /* Aesthetics */
 function changeScale(mode) {
-   scalingMode = mode;
+  scalingMode = mode;
 }
 function fontChange(delta) {
-   textHeight += delta;
+  textHeight += delta;
 }
 
 /* Drawing loop */
 setInterval(function drawPList () {
-   svg.selectAll("rect").remove();
-   svg.selectAll("text").remove();
+  svg.selectAll("rect").remove();
+  svg.selectAll("text").remove();
 
-   for (var proc=0; proc<numberCores; proc++) {
-      svg.append("rect")
-         .attr("x", proc*(w/numberCores))
-         .attr("y", 0)
-         .attr("width", (w/numberCores)-2)
-         .attr("height", textHeight)
-         .attr("fill", colors[proc]);
+  for (var proc=0; proc<numberCores; proc++) {
+    svg.append("rect")
+       .attr("x", proc*(w/numberCores))
+       .attr("y", 0)
+       .attr("width", (w/numberCores)-2)
+       .attr("height", textHeight)
+       .attr("fill", colors[proc]);
 
-      svg.append("text")
-         .attr("x", (proc+.5)*(w/numberCores)-1)
-         .attr("y", textHeight-5)
-         .text("CPU " + proc)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "middle");
-   }
+    svg.append("text")
+       .text("CPU " + proc)
+       .attr("x", (proc+.5)*(w/numberCores)-1)
+       .attr("y", textHeight-5)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", (textHeight-8)+"px")
+       .attr("fill", "white")
+       .attr("text-anchor", "middle");
+  }
 
-   var idx = 0;
-   for (var proc in dataset) {
+  var idx = 0;
+  for (var proc in dataset) {
+    if (!dataset[proc][3]) continue;
+    
+    idx = idx+1;
 
-      if (!dataset[proc][3]) {
-         continue;
+    svg.append("rect")
+       .attr("x", 0)
+       .attr("y", idx*(textHeight+2))
+       .attr("width", iBarWidth)
+       .attr("height", textHeight)
+       .attr("fill", bgColor);
+
+    svg.append("rect")
+       .attr("x", iBarWidth)
+       .attr("y", idx*(textHeight+2))
+       .attr("width", w-iBarWidth)
+       .attr("height", textHeight)
+       .attr("fill", "black");
+
+    var position = iBarWidth;
+    
+    for (var core=0; core<numberCores; core++) {
+      if (dataset[proc][core+4]) {
+        if (scalingMode==1) var thisWidth = dataset[proc][core+4]/dataset[proc][3];
+        else if (scalingMode==0) var thisWidth = dataset[proc][core+4]/rate/numberCores;
+        
+        thisWidth = thisWidth*(w-iBarWidth);
+
+        svg.append("rect")
+           .attr("x", position)
+           .attr("y", idx*(textHeight+2))
+           .attr("width", thisWidth)
+           .attr("height", textHeight)
+           .attr("fill", colors[core]);   
+        position = position + thisWidth;
       }
+    }
 
-      idx = idx+1;
+    svg.append("text")
+       .text(dataset[proc][0])
+       .attr("x", 10)
+       .attr("y", (idx+1)*(textHeight+2)-7)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", (textHeight-8)+"px")
+       .attr("fill", "white")
+       .attr("text-anchor", "start");
 
-      svg.append("rect")
-         .attr("x", 0)
-         .attr("y", idx*(textHeight+2))
-         .attr("width", iBarWidth)
-         .attr("height", textHeight)
-         .attr("fill", bgColor);
+    svg.append("text")
+       .text(dataset[proc][1])
+       .attr("x", 80)
+       .attr("y", (idx+1)*(textHeight+2)-7)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", (textHeight-8)+"px")
+       .attr("fill", "white")
+       .attr("text-anchor", "start");
 
-      svg.append("rect")
-         .attr("x", iBarWidth)
-         .attr("y", idx*(textHeight+2))
-         .attr("width", w-iBarWidth)
-         .attr("height", textHeight)
-         .attr("fill", "black");
+    svg.append("text")
+       .text(dataset[proc][2])
+       .attr("x", 200)
+       .attr("y", (idx+1)*(textHeight+2)-7)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", (textHeight-8)+"px")
+       .attr("fill", "white")
+       .attr("text-anchor", "start");
 
-      var position = iBarWidth;
-      for (var core=0; core<numberCores; core++) {
-         
-         if (dataset[proc][core+4]) {
-
-            if (scalingMode==1) var thisWidth = dataset[proc][core+4]/dataset[proc][3];
-            else if (scalingMode==0) var thisWidth = dataset[proc][core+4]/rate/numberCores;
-            thisWidth = thisWidth*(w-iBarWidth);
-
-            svg.append("rect")
-               .attr("x", position)
-               .attr("y", idx*(textHeight+2))
-               .attr("width", thisWidth)
-               .attr("height", textHeight)
-               .attr("fill", colors[core]);   
-               position = position + thisWidth;
-         }
-      }
-
-      svg.append("text")
-         .text(dataset[proc][0])
-         .attr("x", 10)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
-
-      svg.append("text")
-         .text(dataset[proc][1])
-         .attr("x", 80)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
-
-      svg.append("text")
-         .text(dataset[proc][2])
-         .attr("x", 200)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
-
-      svg.append("text")
-         .text(Math.floor(dataset[proc][3]/rate/numberCores*1000)/10 + "%")
-         .attr("x", iBarWidth-20-textHeight)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
-   }
-   }, interval);
+    svg.append("text")
+       .text(Math.floor(dataset[proc][3]/rate/numberCores*1000)/10 + "%")
+       .attr("x", iBarWidth-20-textHeight)
+       .attr("y", (idx+1)*(textHeight+2)-7)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", (textHeight-8)+"px")
+       .attr("fill", "white")
+       .attr("text-anchor", "start");
+  }
+}, interval);
 
 /* Server IO */
 var socket = new io.connect();
+
 socket.on('connect', function(){ 
-   console.log(' > connected');
-   socket.emit('message', {'type' : 'tlist'});
+  console.log(' > connected');
+  socket.emit('message', {'type' : 'tlist'});
 });
 
 socket.on('message', function(message){ 
-   dataset = {};
-   for (var proc in message) {
-      var itms = proc.split(',');
-      try {
-         if (!(dataset[itms[0]])) {
-            dataset[itms[0]] = [];
-            dataset[itms[0]][0] = parseInt(itms[0]);
-            dataset[itms[0]][1] = itms[1];
-            dataset[itms[0]][2] = itms[3];
-         }
-         
-         var idx = 4+parseInt(itms[2]);
+  dataset = {};
 
-         if (idx) {
-            dataset[itms[0]][idx] = message[proc];
-         }
-      } catch (err) {
-         console.log(err);
+  for (var proc in message) {
+    var itms = proc.split(',');
+    
+    try {
+      if (!(dataset[itms[0]])) {
+        dataset[itms[0]] = [];
+        dataset[itms[0]][0] = parseInt(itms[0]);
+        dataset[itms[0]][1] = itms[1];
+        dataset[itms[0]][2] = itms[3];
       }
-   }
 
-   for (var proc in dataset) {
-      var sum = 0;
-      for (var k=0; k<numberCores; k++) {
-         if(dataset[proc][k+4]) {
-            sum = sum + dataset[proc][k+4];
-         }
-      }
-      dataset[proc][3] = sum;
-   }
+      var idx = 4+parseInt(itms[2]);
+
+      if (idx) dataset[itms[0]][idx] = message[proc];
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  for (var proc in dataset) {
+  var sum = 0;
+  for (var k=0; k<numberCores; k++) {
+  if(dataset[proc][k+4]) {
+  sum = sum + dataset[proc][k+4];
+  }
+  }
+  dataset[proc][3] = sum;
+  }
 
 });
-
 </script>
 
 </body>
