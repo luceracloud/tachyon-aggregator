@@ -31,23 +31,32 @@ var svg = d3.select("body")
                         .attr("height", h);
 var rad = 2;
 
-var database = new Array("anonfree","anonpgin", "anonpgout", "as_fault","cow_fault","dfree", "execfree", "execpgin", "execpgout", "fsfree", "fspgin", "fspgout", "kernel_asflt", "maj_fault", "pgpin", "pgpout", "pgfrec", "pgrec", "pgrrun", "pgswapin", "pgswapout", "prot_fault", "softlock", "swapin", "swapout", "zfod");
 
-var ref  = new Array("apf","api", "apo", "as", "cow","dfr","epf","epi","epo","fpf","fpi","fpo","kaf","mf","pgpi","pgpo","pgfr","pgre","pgrr","pgsi","pgso","prot","sloc","swi","swo", "zfod");
+/* List of Paging Types */
+var database = new Array("anonfree","anonpgin", "anonpgout", "as_fault","cow_fault","dfree",
+                 "execfree", "execpgin", "execpgout", "fsfree", "fspgin", "fspgout", "kernel_asflt",
+								 "maj_fault", "pgpin", "pgpout", "pgfrec", "pgrec", "pgrrun", "pgswapin",
+                 "pgswapout", "prot_fault", "softlock", "swapin", "swapout", "zfod");
 
-var colors = ["orange", "red", "green", "purple", "blue", "coral", "cyan",
-             "deeppink", "aquamarine", "darkcyan", "lawngreen", "lightpink", "sienna",
-                                "steelblue", "teal", "tan", "seagreen", "crimson",
-							"darkgreen", "darkmagenta", "darksalmon","thistle" , "fuchsia", "gold" , "olive", "palegreen" ];
+/*Paging Abbreviations for display */
+var ref  = new Array("apf","api", "apo", "as", "cow","dfr","epf","epi","epo","fpf","fpi","fpo","kaf",
+                     "mf","pgpi","pgpo","pgfr","pgre","pgrr","pgsi","pgso","prot","sloc","swi","swo", "zfod");
+
+/*One color for each paging type */
+var colors = new Array("orange", "red", "green", "purple", "blue", "coral", "cyan",
+              "deeppink", "aquamarine", "darkcyan", "lawngreen", "lightpink", "sienna",
+              "steelblue", "teal", "tan", "seagreen", "crimson",
+              "darkgreen", "darkmagenta", "darksalmon","thistle" , "fuchsia", "gold" , "olive", "palegreen" );
 
 var bgColor = "rgba(25, 25, 25, 0.8)";
 
 /* Set Up Grid with labels*/
 setInterval(function drawPList () {
 
-	svg.selectAll("rect").remove();
-   svg.selectAll("text").remove();
+        svg.selectAll("rect").remove();
+   			svg.selectAll("text").remove();
 
+/*Create Rectangles showing abbreviation with color */
 for (var proc=0; proc< database.length; proc++) {
       svg.append("rect")
          .attr("x", proc*(w/database.length))
@@ -66,68 +75,69 @@ for (var proc=0; proc< database.length; proc++) {
          .attr("text-anchor", "middle");
    }
 
-var idx = 0;
-for (var proc in countset)
-{
-idx = idx + 1
+			var idx = 0;
+/*Creates the Rectangles that show the data */
+			for (var proc in countset)
+									{
+                   idx = idx + 1
 
-svg.append("rect")
-         .attr("x", 0)
-         .attr("y", idx*(textHeight+2))
-         .attr("width", 200)
-         .attr("height", textHeight)
-         .attr("fill", bgColor);
+/* Create the two rectangles were the other information goes */
+                   svg.append("rect")
+        									 .attr("x", 0)
+        									 .attr("y", idx*(textHeight+2))
+        									 .attr("width", 200)
+        									 .attr("height", textHeight)
+        									 .attr("fill", bgColor);
 
-      svg.append("rect")
-         .attr("x", 200)
-         .attr("y", idx*(textHeight+2))
-         .attr("width", w-200)
-         .attr("height", textHeight)
-         .attr("fill", "black");
-
-
-var position = 200;
-for(var other in dataset)
-{
-another = other % 100000;
-if(proc == another)
-{
-var thisWidth = w * dataset[other][0] / countset[proc];
-            svg.append("rect")
-               .attr("x", position)
-               .attr("y", idx*(textHeight+2))
-               .attr("width", thisWidth)
-               .attr("height", textHeight)
-               .attr("fill", colors[Math.floor(other/100000)]);   
-
-               position = position + thisWidth;
-}
-
-}
+      						svg.append("rect")
+        									 .attr("x", 200)
+         									 .attr("y", idx*(textHeight+2))
+        									 .attr("width", w-200)
+        									 .attr("height", textHeight)
+        									 .attr("fill", "black");
 
 
+                        var position = 200;
+/* Create the smaller rectangles of color matching type*/
+                        for(var other in dataset)
+                                        {
+                                         another = other % 100000;
+                                         if(proc == another)
+                                                    {
+                                                     var thisWidth = w * dataset[other][0] / countset[proc];
+                                               			 svg.append("rect")
+                                                        .attr("x", position)
+                                                        .attr("y", idx*(textHeight+2))
+                                                        .attr("width", thisWidth)
+                                                        .attr("height", textHeight)
+                                                        .attr("fill", colors[Math.floor(other/100000)]);
+                                        						 position = position + thisWidth;
+                                                     }
 
-  svg.append("text")
-         .text("Pid:    " +  proc)
-         .attr("x", 10)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
+                                         }
 
 
-svg.append("text")
-         .text("Total Count:   " + countset[proc])
-         .attr("x", 100)
-         .attr("y", (idx+1)*(textHeight+2)-7)
-         .attr("font-family", "sans-serif")
-         .attr("font-size", (textHeight-8)+"px")
-         .attr("fill", "white")
-         .attr("text-anchor", "start");
-}
+/*Print the PID and total counts */
+                  svg.append("text")
+        									.text("Pid:    " +  proc)
+        								  .attr("x", 10)
+        								  .attr("y", (idx+1)*(textHeight+2)-7)
+        								  .attr("font-family", "sans-serif")
+        								  .attr("font-size", (textHeight-8)+"px")
+        								  .attr("fill", "white")
+         									.attr("text-anchor", "start");
+
+
+                  svg.append("text")
+        									.text("Total Count:   " + countset[proc])
+        								  .attr("x", 100)
+        								  .attr("y", (idx+1)*(textHeight+2)-7)
+        								  .attr("font-family", "sans-serif")
+        								  .attr("font-size", (textHeight-8)+"px")
+         									.attr("fill", "white")
+         									.attr("text-anchor", "start");
+                        }
 });
-
 
 /* Server IO */
 var socket = new io.connect();
@@ -145,29 +155,39 @@ socket.on('message', function(message){
 	countset = {};
   console.log(message);
   for (var id in message) {
+/*Filter Other Messages */
       if (id == 'type') continue;
       if (id == 'cpu') continue;
       if (id == 'mem') continue;
 
-                        var info = 0;
- var idents = id.split(',');   
-console.log(idents); 
-                for (var f = 0; f < database.length; f++)
+      var info = 0;
+		/*Split the Array into readable parts*/
+			var idents = id.split(',');   
+    
+/* Find out the type of page in */           
+		  for (var f = 0; f < database.length; f++)
                         {
                         if (database[f] == (idents[2]))
                                 {
                                         info = f;
                                 }
-                        }       
-						info = info*100000 + parseInt(idents[0]);
+                        } 
+/*Create a new ID number for easy storage */      
+				info = info*100000 + parseInt(idents[0]);
 				love = parseInt(idents[0]);
-	if (isNaN(countset[love]))
-{
-countset[love] = 0;
-}
+
+/*Sets the value to zero if it is the first time
+ *So there is no null error */
+
+				if (isNaN(countset[love]))
+							{
+								countset[love] = 0;
+
+							}
+/*Stores the count based on the general ID */
 countset[love]  += message[id];
+/*Stores the count based on specific ID */
       dataset[info] = [message[id]];
-          //    console.log(dataset[info], database[Math.round(info / 100000)]);	
 }
 }); 
 </script>

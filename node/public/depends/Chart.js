@@ -251,7 +251,7 @@ window.Chart = function(context){
 			animation : true,
 			animationSteps : 100,
 			animationEasing : "easeOutBounce",
-			animateRotate : true,
+			animateRotate : false,
 			animateScale : false,
 			onAnimationComplete : null
 		};		

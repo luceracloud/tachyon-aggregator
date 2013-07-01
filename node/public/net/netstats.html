@@ -1,9 +1,6 @@
-<!. Sample dashboard for dtrace process monitoring scripts      .>
-<!.    Displays IO for bytes and packets on network device,     .>
-<!.    shows total device usage, and cumulative errors          .>
-<!.                                                             .>
-<!. CREATED:   24 JUNE 2013                                     .>
-<!. MODIFIED:   1 JULY 2013                                     .>
+<! Sample dashboard for kstat monitoring script of network stats >
+<!  CREATED:    24 JUNE 2013 >
+<!  MODIFIED:		24 JUNE 2013 >
 
 <html>
 <head>
@@ -11,155 +8,163 @@
 <script src="./../depends/Chart.js"></script>
 <script src="./../socket.io/socket.io.js"></script>
 <style>
-canvas{
-}
+	canvas{
+	}
 </style>
 </head>
 
 <body>
 
-<canvas id="packets" height="450" width="600"></canvas>
-<canvas id="canvas" height="450" width="600"></canvas>
+	<canvas id="packets" height="450" width="600"></canvas>
+	<canvas id="canvas" height="450" width="600"></canvas>
 
-<script>
-/* Global and accounting variables */
-var interval = 1200;    /* Interval between repeat (in ms) */ 
-var packetsOut = [];    /* Packets array      */
-var packetsIn = [];     /*                    */
-var bytesTot = [];      /* Total bytes array  */
-var bytesOut = [];      /* Bytes-out array    */
-var bytesIn = [];       /*                    */
-var byteCap = 0;        /* Link cap           */
-var time = [];          /* Time (x-ticks)     */
-var startTime;          /* Initial time       */
-var lastB_O;            /* Accounting         */
-var lastB_I;            /*                    */
+	<script>
+		var bytesTot = [];			/* Total bytes array	*/
+		var bytesOut = [];			/* Bytes-out array		*/
+		var bytesIn = [];				/* 										*/
+		var packetsOut = [];		/* Packets array			*/
+		var packetsIn = [];			/*										*/
+		var time = [];					/* Time (x-ticks)			*/
+		var startTime;					/* Initial time				*/
+		var byteCap = 0;				/* Link cap						*/
+		var lastB_O;						
+		var lastB_I;						
+		var interval = 1200;		/* Interval between repeat (in ms) */	
+
+		setInterval( function() {
+			var lineChartDataP = {
+				labels : time, 
+				datasets : [
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(220,220,220,.6)",
+						pointColor : "rgba(220,220,220,1)",
+						pointStrokeColor : "#00f",
+						data : packetsOut 
+					},
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(151,187,205,.6)",
+						pointColor : "rgba(151,187,205,1)",
+						pointStrokeColor : "#f00",
+						data : packetsIn
+					}
+					]
+				};
+
+			var	myLineP = new Chart(document.getElementById("packets").getContext("2d")).Line(lineChartDataP);
+
+			var lineChartData = {
+				labels : time, 
+				datasets : [
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(220,220,220,.6)",
+						pointColor : "rgba(220,220,220,1)",
+						pointStrokeColor : "#00f",
+						data : bytesOut 
+					},
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(151,187,205,.6)",
+						pointColor : "rgba(151,187,205,1)",
+						pointStrokeColor : "#f00",
+						data : bytesIn
+					},
+					{
+						fillColor : "rgba(0,0,0,0)",
+						strokeColor : "rgba(120,120,120,.6)",
+						pointColor : "rgba(150,150,150,1)",
+						pointStrokeColor : "#f0f",
+						data : bytesTot
+					}
+					]
+				};
+
+			var	myLine = new Chart(document.getElementById("canvas").getContext("2d")).Line(lineChartData);
+
+		}, interval);
+
+	/* Server IO */
+	var socket = new io.connect();
+	socket.on('connect', function(){
+	        console.log(' > connected');
+	        socket.emit('message', {'type' : 'kstat', 'command' : 'netStat'});
+					startTime = new Date().getTime();
+	});
+
+	socket.on('message', function(message){
+	        var sum = 0;
+
+          var ts = new Date().getTime();
+
+					var oBytes, rBytes, oPackets, iPackets;
+
+					if (bytesOut.length-1 > 0) {
+						oBytes = message["obytes64"] - lastB_O;
+						rBytes = message["rbytes64"] - lastB_I;
+						oPackets = message["opackets"] - lastP_O;
+						iPackets = message["ipackets"] - lastP_I;
+
+						bytesOut.push(oBytes);
+						bytesIn.push(rBytes);
+						packetsOut.push(oPackets);
+						packetsIn.push(iPackets);
+						bytesTot.push(oBytes+rBytes);
+						byteCap = message["ifspeed"]/8;
+
+					} else {
+						oBytes = message["obytes64"];
+						rBytes = message["rbytes64"];
+						oPackets = message["opackets"];
+						iPackets = message["ipackets"];
+
+						bytesOut.push(0);
+						bytesIn.push(0);
+						packetsOut.push(0);
+						packetsIn.push(0);
+						bytesTot.push(0);
+						byteCap = message["ifspeed"]/8;
+					}
+
+					lastB_O = message["obytes64"];
+					lastB_I = message["rbytes64"];
+					lastP_O = message["opackets"];
+					lastP_I = message["ipackets"];
+
+					var thisTime = Math.floor((new Date().getTime() - startTime)/1000);
+
+					time.push( Math.floor(thisTime/60) + "m" + (thisTime%60) );
+
+					if (bytesOut.length > 10) {
+						packetsOut.shift();
+						packetsIn.shift();
+						bytesOut.shift();
+						bytesIn.shift();
+						bytesTot.shift();
+						time.shift();
+					}
+
+					document.statss.utilization.value = Math.floor(bytesTot[bytesTot.length-1]/byteCap*100000)/1000 + "%";
+					document.statss.Ierr.value = message["ierrors"];
+					document.statss.Oerr.value = message["oerrors"];
 
 
-setInterval( function() {
-  var lineChartDataP = {
-    labels : time, 
-    datasets : 
-    [{
-      fillColor : "rgba(0,0,0,0)",
-      strokeColor : "rgba(220,220,220,.6)",
-      pointColor : "rgba(220,220,220,1)",
-      pointStrokeColor : "#00f",
-      data : packetsOut 
-    },
-    { 
-      fillColor : "rgba(0,0,0,0)",
-      strokeColor : "rgba(151,187,205,.6)",
-      pointColor : "rgba(151,187,205,1)",
-      pointStrokeColor : "#f00",
-      data : packetsIn
-    }]
-  };
-
-  var lineChartData = {
-  labels : time, 
-  datasets : 
-  [{
-    fillColor : "rgba(0,0,0,0)",
-    strokeColor : "rgba(220,220,220,.6)",
-    pointColor : "rgba(220,220,220,1)",
-    pointStrokeColor : "#00f",
-    data : bytesOut 
-  },
-  {
-    fillColor : "rgba(0,0,0,0)",
-    strokeColor : "rgba(151,187,205,.6)",
-    pointColor : "rgba(151,187,205,1)",
-    pointStrokeColor : "#f00",
-    data : bytesIn
-  },
-  {
-    fillColor : "rgba(0,0,0,0)",
-    strokeColor : "rgba(120,120,120,.6)",
-    pointColor : "rgba(150,150,150,1)",
-    pointStrokeColor : "#f0f",
-    data : bytesTot
-  }]
-  };
-
-  var myLineP = new Chart(document.getElementById("packets").getContext("2d")).Line(lineChartDataP);
-  var myLine = new Chart(document.getElementById("canvas").getContext("2d")).Line(lineChartData);
-
-  }, interval);
-
-/* Server IO */
-var socket = new io.connect();
-socket.on('connect', function(){
-  console.log(' > connected');
-  socket.emit('message', {'type' : 'kstat', 'command' : 'netStat'});
-  startTime = new Date().getTime();
-});
-
-socket.on('message', function(message){
-  var sum = 0;
-  var ts = new Date().getTime();
-  var oBytes, rBytes, oPackets, iPackets;
-
-  if (bytesOut.length-1 > 0) {
-    oBytes = message["obytes64"] - lastB_O;
-    rBytes = message["rbytes64"] - lastB_I;
-    oPackets = message["opackets"] - lastP_O;
-    iPackets = message["ipackets"] - lastP_I;
-
-    bytesOut.push(oBytes);
-    bytesIn.push(rBytes);
-    packetsOut.push(oPackets);
-    packetsIn.push(iPackets);
-    bytesTot.push(oBytes+rBytes);
-    byteCap = message["ifspeed"]/8;
-  } else {
-    oBytes = message["obytes64"];
-    rBytes = message["rbytes64"];
-    oPackets = message["opackets"];
-    iPackets = message["ipackets"];
-
-    bytesOut.push(0);
-    bytesIn.push(0);
-    packetsOut.push(0);
-    packetsIn.push(0);
-    bytesTot.push(0);
-    byteCap = message["ifspeed"]/8;
-  }
-
-  lastB_O = message["obytes64"];
-  lastB_I = message["rbytes64"];
-  lastP_O = message["opackets"];
-  lastP_I = message["ipackets"];
-
-  var thisTime = Math.floor((new Date().getTime() - startTime)/1000);
-  time.push( Math.floor(thisTime/60) + "m" + (thisTime%60) );
-
-  if (bytesOut.length > 10) {
-    packetsOut.shift();
-    packetsIn.shift();
-    bytesOut.shift();
-    bytesIn.shift();
-    bytesTot.shift();
-    time.shift();
-  }
-
-  document.statss.utilization.value = Math.floor(bytesTot[bytesTot.length-1]/byteCap*100000)/1000 + "%";
-  document.statss.Ierr.value = message["ierrors"];
-  document.statss.Oerr.value = message["oerrors"];
-});
-</script>
+	});
+	</script>
 
 <br><br>
 <form name="statss">
-<input type="text" name="utilization" cols=80 readonly> percent utilization</input><br><br>
+<input type="text" name="utilization" cols=80 readonly> percent utilization</input>
+<br><br>
 <input type="text" name="Ierr" cols=80 readonly> input errors (cumulative)</input><br>
 <input type="text" name="Oerr" cols=80 readonly> output errors (cumulative)</input><br>
 </form>
-<br><br>
-
+<br><br>	
 RED: input [ packets / bytes ] <br>
 BLUE: output [ packets / bytes ] <br>
-PURPLE: total [ "" / bytes ] <br><br><br>
+PURPLE: total [ "" / bytes ] <br>
+<br><br>
 
 </body>
 </html>

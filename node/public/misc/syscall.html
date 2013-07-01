@@ -1,0 +1,196 @@
+<! Sample dashboard monitoring individual processes >
+<!  CREATED:   21 JUNE 2013 >
+<!  MODIFIED:  21 JUNE 2013 >
+
+<html>
+
+<head>
+<title>System-Call Inspect | Lucera</title>
+<script src="./../socket.io/socket.io.js"></script>
+<script src="./../depends/d3.v3.js"></script>
+<script src="./../depends/Chart.js"></script>
+</head>
+
+<body>
+<h2>System call information</h2>
+
+Inputting a system-call name allows you to track the length (from entry to return) of the call and examine its time duration distribution.<br><br>
+System call name: <input value="write" id="callName" cols=80 /> &nbsp; &nbsp 
+<input type="button" value="refresh" onclick="refreshCallName();" /> <br>
+<br>
+
+<script type="text/javascript">
+
+var w2 = 500
+var w = 1000;
+var h = 600;
+
+var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+
+var systemCall = "write";
+
+
+function refreshCallName() {
+  systemCall = document.getElementById("callName").value;
+	console.log("syscall: " + document.getElementById("callName").value);
+	socket.emit("message", {"type" : "killer"});
+	socket.emit("message", {"type" : "sysc", "command" : systemCall, "vars" : 2});
+}
+
+
+///// no guarantees above below
+
+
+var dataset = {};
+var syscalls = {};
+
+
+
+
+var colors = ["orange", "red", "green", "blue", "coral", "cyan",
+			"deeppink", "aquamarine", "gray", "lawngreen", "lightpink", "yellow",
+				"steelblue", "teal", "tan", "seagreen"];
+
+var interval = 1200;
+
+
+var colorIdxs = [];
+
+
+var displayLog = 1;
+var min = 10000000000;	// for formatting
+var max = 1;						// for formatting
+
+
+
+
+setInterval( function drawPlot() {
+
+	svg.selectAll("text").remove();
+	svg.selectAll("line").remove();
+	svg.selectAll("circle").remove();
+
+	svg.append("text")
+		.text("PID")
+		.attr("x", w2+20)
+		.attr("y", 10)
+		.attr("font-family", "sans-serif")
+		.attr("font-size", 10)
+		.attr("fill", "grey");
+	
+	for (var proc in colorIdxs) {
+		svg.append("text")
+			.text(proc)
+			.attr("x", w2+20)
+			.attr("y", 23+20*colorIdxs[proc])
+			.attr("font-family", "sans-serif")
+			.attr("font-size", 10)
+			.attr("fill", "black");
+	}
+
+	for (var pt in dataset) {
+
+	
+		
+		for (var pair in dataset[pt]) {
+			svg.append("circle")
+					.attr("cx", (pt-min)/(max-min)*(w2-20)+10)
+					.attr("cy", 20+20*colorIdxs[dataset[pt][pair][1]])
+					.attr("r", 5)
+					.attr("fill", colors[colorIdxs[dataset[pt][pair][1]]]);
+		}
+
+	}
+
+		svg.append("line")
+			 .attr("x1", 0)
+			.attr("y1", 12)
+			.attr("x2", w2)
+			.attr("y2", 12)
+			.attr("stroke", "black");
+
+		for (var i=10; i<w2; i+=(w2/5)) {
+		
+			var val = Math.floor(Math.exp((i+10)*(max-min)/(w2-20)+min)/100)*100
+
+				svg.append("text")
+				 .text( val )
+				.attr("x", i)
+				.attr("y", 10)
+			.attr("font-family", "sans-serif")
+	.attr("font-size", 10)
+				.attr("fill", "grey")
+			.attr("text-anchor", "start");
+		}
+
+
+
+//	svg.selectAll("rect").remove();
+//	svg.selectAll("text").remove();
+
+	var numberSysCalls = Object.keys(syscalls).length;
+
+}, interval);
+
+
+/* Server IO */
+var socket = new io.connect();
+socket.on('connect', function(){ 
+   console.log(' > connected');
+	 socket.emit('message', {'type' : 'sysc', 'command' : systemCall, "vars" : 2 });
+});
+
+socket.on('message', function(message){ 
+	
+	// CHECK to verify that the command is proper (i.e. is syscall good?)
+	
+	dataset = {};
+	colorIdxs = {};
+
+	var cIx = 0;
+
+	for (var time in message) {
+		if (time=="cpu") continue;
+		if (time=="type") continue;
+		if (time=="mem") continue;
+
+		time = time.split(',');	
+
+
+		if (displayLog==1) {
+			time[0] = Math.log(time[0]);
+		}
+		if (time[0]<min) min = time[0];
+		if (time[0]>max) max = time[0];
+
+// colorIdxs
+
+	if (dataset[time[0]]) {
+		dataset[time[0]].push([1,time[1]]);
+	} else {
+		dataset[time[0]] = [];
+		dataset[time[0]].push([1,time[1]]);
+	}
+
+
+	if ((colorIdxs[time[1]]) == undefined) {
+		colorIdxs[time[1]] = cIx;
+		cIx++;
+	}
+	
+	
+	}
+
+
+});
+
+</script>
+
+<br>
+
+
+</body>
+</html>

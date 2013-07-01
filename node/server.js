@@ -80,7 +80,18 @@ function addPID(f, pid) {
   return f.substr(0,p) + pid + f.substr(p+3);
 }
 
-/* Insert a string after lodaing from
+/* Insert an instance number after
+ * loading from the repository */
+function addINSTANCE(f, inst) {
+	if (typeof(inst)==undefined) return f;
+
+	for (var nfo in f) {
+		if (nfo=="instance") f[nfo]=inst;
+	}
+	return f;
+}
+
+/* Insert a string after loading from
  * the repoistory */
 function addSTRING(f, s) {
   if (!s) return f;
@@ -152,10 +163,19 @@ io.sockets.on('connection', function(socket) {
   /* Handle new message events */
   socket.on( 'message', function(message) {
 
-    console.log(' > \033[00;31m' + returnTime() +'  \033[01;36m' + 
+		var prtQ = ' > \033[00;31m' + returnTime() +'  \033[01;36m' + 
       'connected\033[00m     [ \033[00;37m' + socket.id + '\033[00m' +
-      ' ] < \033[00;35m' + message['type'] + ': \033[00;33m' +
-      message['command'] + '\033[00m >');
+      ' ] < \033[00;35m' + message['type'] + ': \033[00;33m' + message["command"];
+
+    for (var toAdd in message) {
+			if (toAdd=="type") continue;
+			if (toAdd=="vars") continue;
+			if (toAdd=="command") continue;
+			prtQ += ', ' +  message[toAdd];
+		}
+
+		prtQ += '\033[00m > ';
+		console.log(prtQ);
 
     try {
       if (message['args']) {
@@ -191,8 +211,30 @@ io.sockets.on('connection', function(socket) {
     /* This is for OSX */
     cmdScript['memStat'] = "top -l 1 | grep PhysMem:";
 
+		/* Allows us to kill other scripts already running */
+		if (message["type"] == "killer") {
+			
+			try {
+				var toRemove = [];
+				for (var j in Object.keys(dtraceInt)) {
+					var key = Object.keys(dtraceInt)[j].split(',');
+					if (key[0] == socket.id) {
+						toRemove.push(key);
+					}
+				}
+				try {
+					for (var j in toRemove) {
+						clearInterval( dtraceInt[toRemove[j]] );
+					}	
+				} catch (err) {
+					console.log("Error killing process...");
+				}
+			} catch (err) {
+				console.log("Il n'y en a rien de dtrace.");
+		}
+
     /* Set up cmdline parsing script */
-    if (message['type'] == "cmd") {
+    } else if (message['type'] == "cmd") {
       var cmd = message['cmd'];
 
       cmdInt[socket.id] = setInterval( function() {
@@ -239,14 +281,18 @@ io.sockets.on('connection', function(socket) {
 
       kInt[[socket.id, message["command"]]] = setInterval( function() {
         for (var stat in scripts.kscript[message["command"]]) {
-          var r = new kstat.Reader( scripts.kscript[message["command"]][stat] );
-          aggdata[stat] = r.read()[0]["data"][stat];  
+          
+					var kscript = scripts.kscript[message["command"]][stat];
+					
+					if (message["vars"]==2) {
+						kscript = addINSTANCE(kscript, message["vars2"]);
+					  aggdata["type"] = message["command"].substr(0,message["command"].length-3) + message["vars2"];
+					}
+
+					var r = new kstat.Reader( kscript );
+				  aggdata[stat] = r.read()[0]["data"][stat];  
           r.close();
         }
-
-        try {
-          if (message["print"] == 1) console.log("data: ", aggdata);
-        } catch (err) {}
 
         socket.emit("message", aggdata);
       }, 1001);

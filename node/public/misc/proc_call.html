@@ -1,34 +1,28 @@
 <! Sample dashboard monitoring individual processes >
 <!  CREATED:   21 JUNE 2013 >
-<!  MODIFIED:  21 JUNE 2013 >
+<!  MODIFIED:   1 JULY 2013 >
 
 <html>
 
 <head>
-<title>Process Zoom | Lucera</title>
+<title>Process Call Information | Lucera</title>
 <script src="./../socket.io/socket.io.js"></script>
 <script src="./../depends/d3.v3.js"></script>
-<script src="./../depends/Chart.js"></script>
 </head>
 
 <body>
 
 
-<h2>Process-specific information</h2>
-
-
-<canvas id="spread" height="450" width="450"></canvas>
-<br><br>Color indicates thread process, split indicates thread is split across several CPU<br><br>
-(i.e. three sections with two red indicates two threads, one split across two cores)<br><br>
+<h2>Process call profile</h2>
+Examines all functions that are called by the parent specified function (query in URL). Reports the per-second frequency of the call.<br><br> 
 
 <script type="text/javascript">
 
-/* dataset[PID] = [PID, name, all_cpus, cpu1, cpu2, cpu3, cpu4, ...] */
 var dataset = {};
 var syscalls = {};
 
 var w = 500;
-var h = 500;
+var h = 2000;
 
 var execname = "";
 
@@ -50,7 +44,7 @@ var svg = d3.select("body")
 						.attr("height", h);
 
 
-setInterval( function drawPie() {
+setInterval( function drawCalls() {
 
 	/* Syscall etc. chart */
 	svg.selectAll("rect").remove();
@@ -116,19 +110,6 @@ setInterval( function drawPie() {
 		}
 	}
 
-	/* Pie chart */
-	var data = [];
-	for (var t in dataset) {
-		t = t.split(',');
-		if (!(colorIdxs[t[0]]>-1)) {
-			colorIdxs[t[0]] = cIdx%16;
-			cIdx++;
-		}
-
-		data.push( { value:dataset[t], color:colors[colorIdxs[t[0]]] }  );
-	}
-	var spreadChart = new Chart(document.getElementById("spread").getContext("2d")).Pie(data);
-
 }, interval);
 
 
@@ -136,23 +117,12 @@ setInterval( function drawPie() {
 var socket = new io.connect();
 socket.on('connect', function(){ 
    console.log(' > connected');
-   socket.emit('message', {'type' : 'proc_thread', 'command' : location['search'].substr(1) });
-	 socket.emit('message', {'type' : 'proc_syscall', 'command' : location['search'].substr(1) });
+	 socket.emit('message', {'type' : 'proc_allcall', 'command' : location['search'].substr(1) });
 });
 
 socket.on('message', function(message){ 
 
-		if (message["type"]=="proc_thread") {
-			dataset = {};
-			for (var t in message) {
-				t = t.split(',');
-				if (t=="cpu") continue;
-				if (t=="type") continue;
-				if (t=="mem") continue;
-				execname = t[0];
-				dataset[ [parseInt(t[2]),parseInt(t[1])] ] = message[t];
-			}
-		}	else if (message["type"]=="proc_syscall") {
+		if (message["type"]=="proc_allcall") {
 			syscalls = {};
 			
 			for (var call in message) {
@@ -163,6 +133,7 @@ socket.on('message', function(message){
 					syscalls[call.split(',')[0]]+=message[call];
 				} else {
 					syscalls[call.split(',')[0]] = message[call];
+					execname = call.split(',')[2];
 				}
 			}
 		}
