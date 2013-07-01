@@ -1,6 +1,9 @@
-<! Sample dashboard monitoring individual processes >
-<!  CREATED:   21 JUNE 2013 >
-<!  MODIFIED:  21 JUNE 2013 >
+<!. Sample dashboard for dtrace process monitoring scripts      .>
+<!.    Allows examination of spread of threads (as over cores)  .>
+<!.    and frequency of system calls for any certain process    .>
+<!.                                                             .>
+<!. CREATED:   21 JUNE 2013                                     .>
+<!. MODIFIED:   1 JULY 2013                                     .>
 
 <html>
 
@@ -13,162 +16,152 @@
 
 <body>
 
-
 <h2>Process-specific information</h2>
-
 
 <canvas id="spread" height="450" width="450"></canvas>
 <br><br>Color indicates thread process, split indicates thread is split across several CPU<br><br>
 (i.e. three sections with two red indicates two threads, one split across two cores)<br><br>
 
 <script type="text/javascript">
+var colors = ["orange", "red", "green", "blue", "coral", "cyan", "deeppink",
+                "aquamarine", "gray", "lawngreen", "lightpink", "yellow",
+                "steelblue", "teal", "tan", "seagreen"];
+var colorIdxs = [];
 
-/* dataset[PID] = [PID, name, all_cpus, cpu1, cpu2, cpu3, cpu4, ...] */
-var dataset = {};
 var syscalls = {};
-
-var w = 500;
-var h = 500;
-
 var execname = "";
-
+var dataset = {};
 
 /* Constants etc. */
 var numberCores = 16;
-var rate = 4999;
-var colors = ["orange", "red", "green", "blue", "coral", "cyan",
-			"deeppink", "aquamarine", "gray", "lawngreen", "lightpink", "yellow",
-				"steelblue", "teal", "tan", "seagreen"];
-
 var interval = 1200;
+var rate = 4999;
 var cIdx = 0;
-var colorIdxs = [];
+var w = 500;
+var h = 500;
 
 var svg = d3.select("body")
-						.append("svg")
-						.attr("width", w)
-						.attr("height", h);
-
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
 
 setInterval( function drawPie() {
+  /* Syscall etc. chart */
+  svg.selectAll("rect").remove();
+  svg.selectAll("text").remove();
 
-	/* Syscall etc. chart */
-	svg.selectAll("rect").remove();
-	svg.selectAll("text").remove();
+  var numberSysCalls = Object.keys(syscalls).length;
+  var h2 = h/(numberSysCalls+1);
 
-	var numberSysCalls = Object.keys(syscalls).length;
-	var h2 = h/(numberSysCalls+1);
-	if (h2>21) h2=21;
+  if (h2>21) h2=21;
 
-	svg.append("rect")
-		 .attr("x", 2)
-		 .attr("y", 0)
-		 .attr("width", w-4)
-		 .attr("height", h)
-		 .attr("fill", "black");
+  svg.append("rect")
+     .attr("x", 2)
+     .attr("y", 0)
+     .attr("width", w-4)
+     .attr("height", h)
+     .attr("fill", "black");
 
-	for (var i=0; i<(numberSysCalls+1); i++) {
+  for (var i=0; i<(numberSysCalls+1); i++) {
+    svg.append("rect")
+       .attr("x", 2)
+       .attr("y", h2*i)
+       .attr("width", w-4)
+       .attr("height", h2-1)
+       .attr("fill", "grey");
 
-		 svg.append("rect")
-				.attr("x", 2)
-				.attr("y", h2*i)
-				.attr("width", w-4)
-				.attr("height", h2-1)
-				.attr("fill", "grey");
+    if (i==0) {
+      svg.append("text")
+         .text(execname)
+         .attr("x", 10)
+         .attr("y", h2-5)
+         .attr("font-family", "sans-serif")
+         .attr("fill", "blue")
+         .attr("font-size", "14px")
+         .attr("text-anchor", "start");
 
-		if (i==0) {
-		 svg.append("text")
-				.text(execname)
-				.attr("x", 10)
-				.attr("y", h2-5)
-				.attr("font-family", "sans-serif")
-				.attr("fill", "blue")
-				.attr("font-size", "14px")
-				.attr("text-anchor", "start");
+      svg.append("text")
+         .text(location['search'].substr(1))
+         .attr("x", 300)
+         .attr("y", h2-5)
+         .attr("font-family", "sans-serif")
+         .attr("fill", "blue")
+         .attr("font-size", "14px")
+         .attr("text-anchor", "start");
+    } else {
+      svg.append("text")
+         .text( Object.keys(syscalls)[i-1] )
+         .attr("x", 10)
+         .attr("y", h2*(i+1)-5)
+         .attr("font-family", "sans-serif")
+         .attr("fill", "white")
+         .attr("font-size", "14px")
+         .attr("text-anchor", "start");
 
-		 svg.append("text")
-				.text(location['search'].substr(1))
-				.attr("x", 300)
-				.attr("y", h2-5)
-				.attr("font-family", "sans-serif")
-				.attr("fill", "blue")
-				.attr("font-size", "14px")
-				.attr("text-anchor", "start");
+      svg.append("text")
+         .text( syscalls[Object.keys(syscalls)[i-1]] )
+         .attr("x", 300)
+         .attr("y", h2*(i+1)-5)
+         .attr("font-family", "sans-serif")
+         .attr("fill", "white")
+         .attr("font-size", "14px")
+         .attr("text-anchor", "start");
+    }
+  }
 
-		} else {
-		 svg.append("text")
-				.text( Object.keys(syscalls)[i-1] )
-				.attr("x", 10)
-				.attr("y", h2*(i+1)-5)
-				.attr("font-family", "sans-serif")
-				.attr("fill", "white")
-				.attr("font-size", "14px")
-				.attr("text-anchor", "start");
-		
-		 svg.append("text")
-				.text( syscalls[Object.keys(syscalls)[i-1]] )
-				.attr("x", 300)
-				.attr("y", h2*(i+1)-5)
-				.attr("font-family", "sans-serif")
-				.attr("fill", "white")
-				.attr("font-size", "14px")
-				.attr("text-anchor", "start");
-		}
-	}
+  /* Pie chart */
+  var data = [];
+  for (var t in dataset) {
+    t = t.split(',');
+    if (!(colorIdxs[t[0]]>-1)) {
+      colorIdxs[t[0]] = cIdx%16;
+      cIdx++;
+    }
+    data.push( { value:dataset[t], color:colors[colorIdxs[t[0]]] }  );
+  }
 
-	/* Pie chart */
-	var data = [];
-	for (var t in dataset) {
-		t = t.split(',');
-		if (!(colorIdxs[t[0]]>-1)) {
-			colorIdxs[t[0]] = cIdx%16;
-			cIdx++;
-		}
-
-		data.push( { value:dataset[t], color:colors[colorIdxs[t[0]]] }  );
-	}
-	var spreadChart = new Chart(document.getElementById("spread").getContext("2d")).Pie(data);
+  var spreadChart = new Chart(document.getElementById("spread").getContext("2d")).Pie(data);
 
 }, interval);
 
-
 /* Server IO */
 var socket = new io.connect();
+
 socket.on('connect', function(){ 
-   console.log(' > connected');
-   socket.emit('message', {'type' : 'proc_thread', 'command' : location['search'].substr(1) });
-	 socket.emit('message', {'type' : 'proc_syscall', 'command' : location['search'].substr(1) });
+  console.log(' > connected');
+  socket.emit('message', {'type' : 'proc_thread', 'command' : location['search'].substr(1) });
+  socket.emit('message', {'type' : 'proc_syscall', 'command' : location['search'].substr(1) });
 });
 
 socket.on('message', function(message){ 
+  if (message["type"]=="proc_thread") {
+    dataset = {};
+    for (var t in message) {
+      t = t.split(',');
+      
+      if (t=="cpu") continue;
+      if (t=="type") continue;
+      if (t=="mem") continue;
+      
+      execname = t[0];
+      dataset[ [parseInt(t[2]),parseInt(t[1])] ] = message[t];
+    }
+  } else if (message["type"]=="proc_syscall") {
+    syscalls = {};
 
-		if (message["type"]=="proc_thread") {
-			dataset = {};
-			for (var t in message) {
-				t = t.split(',');
-				if (t=="cpu") continue;
-				if (t=="type") continue;
-				if (t=="mem") continue;
-				execname = t[0];
-				dataset[ [parseInt(t[2]),parseInt(t[1])] ] = message[t];
-			}
-		}	else if (message["type"]=="proc_syscall") {
-			syscalls = {};
-			
-			for (var call in message) {
-				if (call=="cpu") continue;
-				if (call=="type") continue;
-				if (call=="mem") continue;
-				if (syscalls[call.split(',')[0]] >= 0) {
-					syscalls[call.split(',')[0]]+=message[call];
-				} else {
-					syscalls[call.split(',')[0]] = message[call];
-				}
-			}
-		}
-
+    for (var call in message) {
+      if (call=="cpu") continue;
+      if (call=="type") continue;
+      if (call=="mem") continue;
+      
+      if (syscalls[call.split(',')[0]] >= 0) {
+        syscalls[call.split(',')[0]]+=message[call];
+      } else {
+        syscalls[call.split(',')[0]] = message[call];
+      }
+    }
+  }
 });
-
 </script>
 
 </body>
