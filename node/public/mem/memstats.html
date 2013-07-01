@@ -1,6 +1,9 @@
-<! Sample dashboard for dtrace+ monitoring scripts >
-<!  CREATED:    14 JUNE 2013 >
-<!  MODIFIED:   24 JUNE 2013 >
+<!. Sample dashboard for dtrace process monitoring scripts      .>
+<!.    Information about free/avail, swap utilization, kernel   .>
+<!.    utilization, and RSS.                                    .>
+<!.                                                             .>
+<!. CREATED:   24 JUNE 2013                                     .>
+<!. MODIFIED:  27 JUNE 2013                                     .>
 
 <html>
 <head>
@@ -11,108 +14,102 @@
 <script src="./../depends/justgage.1.0.1.min.js"></script>
 <script src="./../depends/d3.v3.js"></script>
 
-
 <script>
-				
-				var tMem;
-        var pageSize = 4096;		/* in bytes */
-        var memstat=0, swapstat=0, kernstat=0, rssstat=0;
+var tMem;
+var pageSize = 4096;    /* in bytes */
+var memstat=0, swapstat=0, kernstat=0, rssstat=0;
 
-        window.onload = function(){
+window.onload = function(){
+  var svg = d3.select("body").append("svg")
+              .attr("width", 500)
+              .attr("height", 200);
 
-							 var svg = d3.select("body").append("svg")
-													 .attr("width", 500).attr("height", 200);
+  var memgage = new JustGage({
+    id: "memgage", 
+    value: 0, 
+    min: 0,
+    max: 100,
+    title: "MEMORY",
+    label: "",
+  });
 
-               var memgage = new JustGage({
-                        id: "memgage", 
-                        value: 0, 
-                        min: 0,
-                        max: 100,
-                        title: "MEMORY",
-                        label: "",
-                });
+  var rssgage = new JustGage({
+    id: "rssgage",
+    value: 0,
+    min: 0,
+    max: 100,
+    title: "RSS",
+    label: "",
+  });
 
-								var rssgage = new JustGage({
-												id: "rssgage",
-												value: 0,
-												min: 0,
-												max: 100,
-												title: "RSS",
-												label: "",
-								});
+  var swapgage = new JustGage({
+    id: "swapgage",
+    value: 0,
+    min: 0,
+    max: 100,
+    title: "SWAP",
+    label: "",
+  });
 
-								var swapgage = new JustGage({
-												id: "swapgage",
-												value: 0,
-												min: 0,
-												max: 100,
-												title: "SWAP",
-												label: "",
-								});
+  var kerngage = new JustGage({
+    id: "kerngage",
+    value: 0,
+    min: 0,
+    max: 100,
+    title: "KERNEL",
+    label: "",
+  });
 
-								var kerngage = new JustGage({
-												id: "kerngage",
-												value: 0,
-												min: 0,
-												max: 100,
-												title: "KERNEL",
-												label: "",
-								});
-	
-                setInterval(function() {
-                        memgage.refresh(memstat);
-												swapgage.refresh(swapstat);
-												kerngage.refresh(kernstat);
-												rssgage.refresh(rssstat);
+  setInterval(function() {
+    memgage.refresh(memstat);
+    swapgage.refresh(swapstat);
+    kerngage.refresh(kernstat);
+    rssgage.refresh(rssstat);
 
-												 svg.selectAll("text").remove();
-	
-												 svg.append("text")
-														.text("Total Physical Memory: " + (tMem*pageSize/Math.pow(2,20)))
-														.attr("x", 5)
-														.attr("y", 20)
-														.attr("font-family", "sans-serif")
-														.attr("font-size", 14)
-														.attr("fill", "black");
+    svg.selectAll("text").remove();
 
+    svg.append("text")
+       .text("Total Physical Memory: " + (tMem*pageSize/Math.pow(2,20)))
+       .attr("x", 5)
+       .attr("y", 20)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", 14)
+       .attr("fill", "black");
+  }, 1001);
+};
 
-                }, 1001);
-        };
+var socket = new io.connect();
 
-        var socket = new io.connect();
-        socket.on('connect', function(){ 
-                console.log(' > connected');
-                socket.emit("message", {"type" : "kstat", "command" : "memStat"});
-								socket.emit("message", {"type" : "kstat", "command" : "swapStat"});
-        				socket.emit("message", {"type" : "kstat", "command" : "kernStat"});
-								socket.emit("message", {"type" : "kstat", "command" : "rssStat"});
-				});
+socket.on('connect', function(){ 
+  console.log(' > connected');
+  socket.emit("message", {"type" : "kstat", "command" : "memStat"});
+  socket.emit("message", {"type" : "kstat", "command" : "swapStat"});
+  socket.emit("message", {"type" : "kstat", "command" : "kernStat"});
+  socket.emit("message", {"type" : "kstat", "command" : "rssStat"});
+});
 
-        socket.on('message', function(message) {
-
-                if (message['type']=='memStat') {
-                        tMem = parseInt(message['physmem']);
-                        memstat = Math.floor(((tMem-message['freemem'])/tMem)*1000)/10;
-                } else if (message['type']=='swapStat') {
-												swapstat = Math.floor( message['swap'] / message['swapcap'] * 1000) / 10;
-								} else if (message["type"]=="kernStat") {
-												kernstat = Math.floor( message["pp_kernel"] / message["physmem"] * 1000 ) / 10;
-								} else if (message["type"]=="rssStat") {
-												rssstat = Math.floor( message["rss"] / message["swapcap"] * 1000 ) / 10;
-								}
-
-        }); 
+socket.on('message', function(message) {
+  if (message['type']=='memStat') {
+    tMem = parseInt(message['physmem']);
+    memstat = Math.floor(((tMem-message['freemem'])/tMem)*1000)/10;
+  } else if (message['type']=='swapStat') {
+    swapstat = Math.floor( message['swap'] / message['swapcap'] * 1000) / 10;
+  } else if (message["type"]=="kernStat") {
+    kernstat = Math.floor( message["pp_kernel"] / message["physmem"] * 1000 ) / 10;
+  } else if (message["type"]=="rssStat") {
+    rssstat = Math.floor( message["rss"] / message["swapcap"] * 1000 ) / 10;
+  }
+});
+ 
 </script>
 </head>
 
 <body>
 <br>
-
 <div id="memgage" style="width:300px; height:240px; display: table-cell;"></div>
 <div id="swapgage" style="width:300px; height:240px; display: table-cell;"></div>
 <div id="kerngage" style="width:300px; height:240px; display: table-cell;"></div>
 <div id="rssgage" style="width:300px; height:240px; display: table-cell;"></div>
-
-
 </body>
+
 </html>
