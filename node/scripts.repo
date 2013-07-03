@@ -1,60 +1,59 @@
 /*
- *      scripts.repo
- *         Script [dtrace+] repository for
- *         loading into server.js.
+ *  scripts.repo
+ *    Script [dtrace+] repository for
+ *    loading into server.js.
  *
- *      CREATED: 19 JUNE 2013
- *      UPDATED: 27 JUNE 2013
+ *  CREATED: 19 JUNE 2013
+ *  UPDATED:  2 JULY 2013
  */
 
 /* DTrace Scripts */
 exports.script = {
 
+  "allStat" : "profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}",
 
-  'allStat' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
+  "brk_cnt" : "syscall::brk:entry\n{\n@P[pid,execname]=count();\n}\n",
 
-  'brk_cnt' : 'syscall::brk:entry\n{\n@P[pid,execname]=count();\n}\n',
+  "brk_count" : "syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:" +
+    "return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}",
 
-  'brk_count' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:' +
-    'return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}',
+  "brk_quant" : "syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:" +
+    "return\n{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}",
 
-  'brk_quant' : 'syscall::brk:entry\n{\nthis->bt=timestamp;\n}\nsyscall::brk:' +
-    'return\n{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
+  "loaddist" : "profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}",
 
-  'loaddist' : 'profile:::profile-4999\n/pid != 0/\n{\n@P[cpu] = count();\n}',
+  "malloc_count" : "pid$#$::malloc:entry\n{\nthis->bt=timestamp;\n}\npid$#$::" +
+    "malloc:return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt]=count();\n}",
 
-  'mmap_cnt' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\n}',
+  "malloc_fail" : "pid$#$::malloc:return\n/ arg1 < 0 /\n{\n@P = count();\n}",
 
-  'mmap_count' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:' +
-    'return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt,execname]=count();\n}',
+  "mmap_cnt" : "syscall::mmap:entry\n{\n@P[pid,execname] = count();\n}",
 
-  'mmap_quant' : 'syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:' + 
-    'return\n{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}',
+  "mmap_count" : "syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:" +
+    "return\n{\nthis->et=timestamp;@P[pid,this->et-this->bt,execname]=count();\n}",
 
-  'percpu' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}',
+  "mmap_quant" : "syscall::mmap:entry\n{\nthis->bt=timestamp;\n}\nsyscall::mmap:" + 
+    "return\n{\nthis->et=timestamp;@P=quantize(this->et-this->bt);\n}",
 
-	"proc_allcall" : "pid$#$:::entry\n{\n@P[probefunc,curthread,execname] = count();\n}",
+  "percpu" : "profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}",
 
-  'proc_syscall' : 'syscall:::entry\n/pid==$#$/\n{\n@P[probefunc,curthread] = count();\n}',
+  "proc_allcall" : "pid$#$:::entry\n{\n@P[probefunc,curthread,execname] = count();\n}",
 
-  'proc_thread' : 'profile:::profile-4999\n/pid==$#$/\n{\n@P[execname,cpu,curthread]' +
-    ' = count();\n}',
+  "proc_syscall" : "syscall:::entry\n/pid==$#$/\n{\n@P[probefunc,curthread] = count();\n}",
 
-  "sysc" : 'syscall::$S$:entry\n{\nself->sTime=timestamp;\n}\nsyscall::$S$:return\n{\n' +
-    'self->eTime=timestamp;\n@[self->eTime-self->sTime,pid]=count();\n}',
+  "proc_thread" : "profile:::profile-4999\n/pid==$#$/\n{\n@P[execname,cpu,curthread]" +
+    " = count();\n}",
 
-  'tlist' : 'profile:::profile-4999\n{\n@P[pid,execname,cpu,curthread] = count();\n}',
+  "sysc" : "syscall::$S$:entry\n{\nself->sTime=timestamp;\n}\nsyscall::$S$:return\n{\n" +
+    "self->eTime=timestamp;\n@[self->eTime-self->sTime,pid]=count();\n}",
 
-  'vminfo' : 'vminfo:::\n{\n@A[pid,probefunc,probename] = count();\n}',
+  "tlist" : "profile:::profile-4999\n{\n@P[pid,execname,cpu,tid] = count();\n}",
 
-
+  "vminfo" : "vminfo:::\n{\n@A[pid,probefunc,probename] = count();\n}",
 };
-
-/// /// /// /// /// ///
 
 /* kstat Scripts */
 exports.kscript = {
-
 
   "kernStat" : {
     "pp_kernel" : { "class" : "pages", "module" : "unix", "name" : "system_pages" },
@@ -63,7 +62,7 @@ exports.kscript = {
 
   "rssStat" : {
     "rss"     : { "class" : "zone_memory_cap", "module" : "memory_cap" },
-    "swapcap" : { "class" : "zone_memory_cap", "module" : "memory_cap" }
+    "physcap" : { "class" : "zone_memory_cap", "module" : "memory_cap" }
   },
 
   "memStat" : {
@@ -103,65 +102,33 @@ exports.kscript = {
   },
 
   "diskIO$I$" : {
-    "nread"     : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
-    "nwritten"  : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
-    "reads"     : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
-    "writes"    : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
-    "wtime"     : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
-    "wlentime"  : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
-		"Hard Errors"      : { "class" : "device_error", "module" : "sderr", "instance" : "$I$" },
-		"Soft Errors" 		 : { "class" : "device_error", "module" : "sderr", "instance" : "$I$" },
-		"Transport Errors" : { "class" : "device_error", "module" : "sderr", "instance" : "$I$" }
+    "nread"            : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
+    "nwritten"         : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
+    "reads"            : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
+    "writes"           : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
+    "wtime"            : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
+    "wlentime"         : { "class" : "disk", "module" : "sd", "instance" : "$I$" },
+    "Hard Errors"      : { "class" : "device_error", "module" : "sderr", "instance" : "$I$" },
+    "Soft Errors"      : { "class" : "device_error", "module" : "sderr", "instance" : "$I$" },
+    "Transport Errors" : { "class" : "device_error", "module" : "sderr", "instance" : "$I$" }
   },
-
-
 }
-
-/// /// /// /// /// ///
 
 /* Command line scripts for parsing */
 exports.cmd = {
 
-
-  'memStat' : {
-    'cmdl' : 'top -l 1 | grep PhysMem:',
-    'returns' : {'used' : 'inactive', 'free' : 'used'}
+  "memStat" : {
+    "cmdl" : "top -l 1 | grep PhysMem:",
+    "returns" : { "used" : "inactive", "free" : "used" }
     },
 
-  'memTotal' : {
-    'cmdl' : 'kstat -n system_pages',
-    'returns' : {'physmem' : 'physmem', 'freemem' : 'freemem'}
+  "memTotal" : {
+    "cmdl" : "kstat -n system_pages",
+    "returns" : { "physmem" : "physmem", "freemem" : "freemem" }
     },
 
-  'dfUse' : {
-    'cmdl' : 'df',
-    'returns' : {'used' : 'zones/,3', 'available' : 'zones/,4'} 
+  "dfUse" : {
+    "cmdl" : "df",
+    "returns" : { "used" : "zones/,3", "available" : "zones/,4" }
     }
-
-
 }
-
-
-
-/*
-
-  'mmap' : 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
-  'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
-  'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
-  'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
-  'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
-  'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}',
-
-//////
-
-
-'syscall::mmap:entry {this->bt=timestamp;} syscall::mmap:return {this->et=timestamp;@P[pid,this->et-this->bt]=count();}'
-
-'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->start = timestamp;\n}\n' +
-'syscall::mmap64:entry\n{\n@R[pid,execname]=count();\nthis->intro=timestamp\n}\n' +
-'syscall::brk:entry\n{\n@Q[pid,execname]=count();\nthis->beginning=timestamp;\n}\n' +
-'syscall::mmap:return\n{\nthis->done=timestamp;\n@A[pid,execname]=avg(this->done - this->start);\n}\n' +
-'syscall::mmap64:return\n{\nthis->done=timestamp;\n@C[pid,execname]=avg(this->done-this->intro);\n}\n' +
-'syscall::brk:return\n{\nthis->done=timestamp;\n@B[pid,execname]=avg(this->done-this->beginning);\n}';
-
-*/

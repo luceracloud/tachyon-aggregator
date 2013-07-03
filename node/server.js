@@ -17,7 +17,7 @@
  *    (sudo) nohup node server.js &   [daemon]
  *
  *  CREATED:    14 JUNE 2013
- *  MODIFIED:   27 JUNE 2013
+ *  MODIFIED:    2 JULY 2013
  */
 
 console.log("\n\033[00;31mServer starting...\033[00m \n")
@@ -45,7 +45,7 @@ var app = express(),
             io = require('socket.io').listen(server);
 
 /* Configure express server */
-app.configure(function(){
+app.configure(function() {
   app.use(express.static(__dirname + '/public'));
 });
 io.set('log level', 1);
@@ -77,18 +77,20 @@ function addPID(f, pid) {
   if (!pid) return f;
 
   var p = f.indexOf("$#$");
-  return f.substr(0,p) + pid + f.substr(p+3);
+  if (p<0) return f;
+
+  return addPID(f.substr(0,p) + pid + f.substr(p+3), pid);
 }
 
 /* Insert an instance number after
  * loading from the repository */
 function addINSTANCE(f, inst) {
-	if (typeof(inst)==undefined) return f;
+  if (typeof(inst)==undefined) return f;
 
-	for (var nfo in f) {
-		if (nfo=="instance") f[nfo]=inst;
-	}
-	return f;
+  for (var nfo in f) {
+    if (nfo=="instance") f[nfo]=inst;
+  }
+  return f;
 }
 
 /* Insert a string after loading from
@@ -163,19 +165,19 @@ io.sockets.on('connection', function(socket) {
   /* Handle new message events */
   socket.on( 'message', function(message) {
 
-		var prtQ = ' > \033[00;31m' + returnTime() +'  \033[01;36m' + 
+    var prtQ = ' > \033[00;31m' + returnTime() +'  \033[01;36m' + 
       'connected\033[00m     [ \033[00;37m' + socket.id + '\033[00m' +
       ' ] < \033[00;35m' + message['type'] + ': \033[00;33m' + message["command"];
 
     for (var toAdd in message) {
-			if (toAdd=="type") continue;
-			if (toAdd=="vars") continue;
-			if (toAdd=="command") continue;
-			prtQ += ', ' +  message[toAdd];
-		}
+      if (toAdd=="type") continue;
+      if (toAdd=="vars") continue;
+      if (toAdd=="command") continue;
+      prtQ += ', ' +  message[toAdd];
+    }
 
-		prtQ += '\033[00m > ';
-		console.log(prtQ);
+    prtQ += '\033[00m > ';
+    console.log(prtQ);
 
     try {
       if (message['args']) {
@@ -196,48 +198,36 @@ io.sockets.on('connection', function(socket) {
     'min(self->stop - self->start);\n@Qmax[probefunc,execname] = max(self->stop - self->start);\n}\n' +
     'profile:::profile-4999\n/pid == ' + args + '/\n{\n@Q[cpu,curthread] = count();\n}';
 
-    script['saturation'] = 'profile:::profile-997hz\n{\n\n@TOTAL[cpu] ' +
-    '= sum(curthread->t_cpu->cpu_disp->disp_nrunnable);\n@QUANT[cpu] ' +
-    '= lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 100, 1);}';
-
-    script['mmap'] = 'syscall::mmap:entry\n{\n@P[pid,execname] = count();\nthis->beginning = ' +
-    'timestamp;\n}\nsyscall::mmap:entry\n{\n@R[pid,execname] = count();\nthis->intro = timestamp;' +
-    ';\n}\nsyscall::brk:entry\n{\n@Q[pid,execname] = count();\nthis->beg = timestamp;' + 
-    ';\n}\nsyscall::mmap:return\n{\nthis->finish = timestamp;\n@A[pid,execname] = avg' +
-    '(this->finish - this->start);\n}\nsyscall::mmap:return\n{\nthis->ending = timestamp;' +
-    '\n@C[pid,execname] = avg(this->ending - this->intro);\n}\nsyscall::brk:return\n{\n' +
-    'this->tail = timestamp;\n@B[pid,execname] = avg(this->tail - this->beg);\n}\n';
-
     /* This is for OSX */
     cmdScript['memStat'] = "top -l 1 | grep PhysMem:";
 
-		/* Allows us to kill other scripts already running */
-		if (message["type"] == "killer") {
-			
-			try {
-				var toRemove = [];
-				for (var j in Object.keys(dtraceInt)) {
-					var key = Object.keys(dtraceInt)[j].split(',');
-					if (key[0] == socket.id) {
-						toRemove.push(key);
-					}
-				}
-				try {
-					for (var j in toRemove) {
-						clearInterval( dtraceInt[toRemove[j]] );
-					}	
-				} catch (err) {
-					console.log("Error killing process...");
-				}
-			} catch (err) {
-				console.log("Il n'y en a rien de dtrace.");
-		}
+    /* Allows us to kill other scripts already running */
+    if (message["type"] == "killer") {
+      
+      try {
+        var toRemove = [];
+        for (var j in Object.keys(dtraceInt)) {
+          var key = Object.keys(dtraceInt)[j].split(',');
+          if (key[0] == socket.id) {
+            toRemove.push(key);
+          }
+        }
+        try {
+          for (var j in toRemove) {
+            clearInterval( dtraceInt[toRemove[j]] );
+          } 
+        } catch (err) {
+          console.log("Error killing process...");
+        }
+      } catch (err) {
+        console.log("Il n'y en a rien de dtrace.");
+    }
 
     /* Set up cmdline parsing script */
     } else if (message['type'] == "cmd") {
       var cmd = message['cmd'];
 
-      cmdInt[socket.id] = setInterval( function() {
+      cmdInt[[socket.id, message["command"]]] = setInterval( function() {
         var child = exec(scripts.cmd[cmd]['cmdl'], function (error, stdout, stderr) {
           var toSend = {};
           toSend['type'] = message['cmd'];
@@ -282,15 +272,15 @@ io.sockets.on('connection', function(socket) {
       kInt[[socket.id, message["command"]]] = setInterval( function() {
         for (var stat in scripts.kscript[message["command"]]) {
           
-					var kscript = scripts.kscript[message["command"]][stat];
-					
-					if (message["vars"]==2) {
-						kscript = addINSTANCE(kscript, message["vars2"]);
-					  aggdata["type"] = message["command"].substr(0,message["command"].length-3) + message["vars2"];
-					}
+          var kscript = scripts.kscript[message["command"]][stat];
+          
+          if (message["vars"]==2) {
+            kscript = addINSTANCE(kscript, message["vars2"]);
+            aggdata["type"] = message["command"].substr(0,message["command"].length-3) + message["vars2"];
+          }
 
-					var r = new kstat.Reader( kscript );
-				  aggdata[stat] = r.read()[0]["data"][stat];  
+          var r = new kstat.Reader( kscript );
+          aggdata[stat] = r.read()[0]["data"][stat];  
           r.close();
         }
 
@@ -312,7 +302,6 @@ io.sockets.on('connection', function(socket) {
           dtp.strcompile(addPID(scripts.script[message['type']],message['command'])); 
         } catch (err) {
           console.log(err);
-          dtp.strcompile(scripts.script['loaddist']);
         }
       }
 
@@ -372,6 +361,23 @@ io.sockets.on('connection', function(socket) {
           delete kInt[ toRemove[j] ];
         }
       } catch (err) {}
+
+      /* Try to clean up cmd intervals */
+      try {
+        var toRemove = [];
+        for (var j in Object.keys(cmdInt)) {
+          var key = Object.keys(cmdInt)[j].split(',');
+          if (key[0] == socket.id) {
+            toRemove.push(key);
+          }
+        }
+
+        for (var j in toRemove) {
+          clearInterval( cmdInt[toRemove[j]] );
+          delete cmdInt[ toremove[j] ];
+        }
+      } catch (err) {}  
+        
 
       /* Try to clean up dtrace intervals */
       try {

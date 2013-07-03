@@ -84,19 +84,19 @@ setInterval(function drawBarChart() {
 
 /* Server IO */
 var socket = new io.connect();
-socket.on('connect', function() { 
-  console.log(' > connected');
-  socket.emit('message', {'type' : 'loaddist'});
+socket.on("connect", function() { 
+  console.log(" > connected");
+  socket.emit("message", {"type" : "loaddist"});
 });
 
-socket.on('message', function(message){ 
+socket.on("message", function(message){ 
   dataset = {};
   var sum = 0;
 
   for (var cpu=0; cpu<numberCores; cpu++) {
     dataset[cpu] = 0;
     try {
-      dataset[cpu] = message[cpu]/message['nfo'];
+      dataset[cpu] = message[cpu]/message["nfo"];
       if (dataset[cpu] > 1) dataset[cpu] = 1;
       if (!(dataset[cpu] < 100.1)) dataset[cpu] = 0;
       sum += dataset[cpu];

@@ -97,7 +97,7 @@ socket.on('message', function(message) {
   } else if (message["type"]=="kernStat") {
     kernstat = Math.floor( message["pp_kernel"] / message["physmem"] * 1000 ) / 10;
   } else if (message["type"]=="rssStat") {
-    rssstat = Math.floor( message["rss"] / message["swapcap"] * 1000 ) / 10;
+    rssstat = Math.floor( message["rss"] / message["physcap"] * 1000 ) / 10;
   }
 });
  
@@ -110,6 +110,14 @@ socket.on('message', function(message) {
 <div id="swapgage" style="width:300px; height:240px; display: table-cell;"></div>
 <div id="kerngage" style="width:300px; height:240px; display: table-cell;"></div>
 <div id="rssgage" style="width:300px; height:240px; display: table-cell;"></div>
+
+<br><br>
+<a href="vminfo.html">Paging syscall occurrence</a><br>
+<a href="scatter_trend.html">Memory calls</a><br>
+
+
+<br><br><br>
+
 </body>
 
 </html>

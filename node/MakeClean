@@ -1,3 +1,9 @@
+
+# Delete all current files/folders
+# that comprise the server and use
+# git to download/sort the newest
+# version.
+
 rm -rf ./public
 rm -rf ./server.js
 

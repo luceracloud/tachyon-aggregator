@@ -154,12 +154,12 @@ setInterval(function drawPList () {
 /* Server IO */
 var socket = new io.connect();
 
-socket.on('connect', function(){ 
-  console.log(' > connected');
-  socket.emit('message', {'type' : 'percpu'});
+socket.on("connect", function(){ 
+  console.log(" > connected");
+  socket.emit("message", {"type" : "percpu"});
 });
 
-socket.on('message', function(message){ 
+socket.on("message", function(message){ 
   dataset = {}; /* Clear dataset to refresh information */
   
   for (var proc in message) {

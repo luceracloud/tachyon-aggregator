@@ -1,0 +1,118 @@
+<!. Sample dashboard for dtrace process monitoring scripts      .>
+<!.    Chart displays disk errors (hard, soft, transport)       .>
+<!.                                                             .>
+<!. CREATED:   24 JUNE 2013                                     .>
+<!. MODIFIED:   1 JULY 2013                                     .>
+
+<html>
+
+<head>
+<title>diskError | Lucera</title>
+<script src="./../socket.io/socket.io.js"></script>
+<script src="./../depends/d3.v3.js"></script>
+</head>
+
+<body>
+<script type="text/javascript">
+/* Set up global containers / varibles */
+var numberMemory = 3;
+var textHeight = 14;
+var interval = 1200;
+var minSpeed = 60;
+var numdisks = 13;
+var current = [];
+var former =[];
+var h = 300;
+var w = 600;
+var dataMax;
+
+var svg = d3.select("body")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h);
+
+setInterval(function drawChart() {
+  svg.selectAll("rect").remove();
+  svg.selectAll("text").remove();
+
+  svg.append("text")
+     .text("HE")
+     .attr("x", 90)
+     .attr("y", 10)
+     .attr("font-family", "sans-serif")
+     .attr("font-size", 10)
+     .attr("fill", "black")
+     .attr("text-anchor", "start");
+
+  svg.append("text")
+     .text("SE")
+     .attr("x", 130)
+     .attr("y", 10)
+     .attr("font-family", "sans-serif")
+     .attr("font-size", 10)
+     .attr("fill", "black")
+     .attr("text-anchor", "start");
+
+  svg.append("text")
+     .text("TE")
+     .attr("x", 170)
+     .attr("y", 10)
+     .attr("font-family", "sans-serif")
+     .attr("font-size", 10)
+     .attr("fill", "black")
+     .attr("text-anchor", "start");
+
+  for (var i =0 ; i < numdisks; i++) {
+    svg.append("text")
+       .text("Disk:    " +  i)
+       .attr("x", 10)
+       .attr("y", (i+1)*(textHeight+2)+10)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", 10)
+       .attr("fill", "black")
+       .attr("text-anchor", "start");
+
+    for(var j = 0; j < 3; j++) {
+      svg.append("text")
+         .text(current[i][j])
+         .attr("x", 90 + 40 * j)
+         .attr("y", (i+1)*(textHeight+2)+10)
+         .attr("font-family", "sans-serif")
+         .attr("font-size", 10)
+         .attr("fill", "black")
+         .attr("text-anchor", "start");
+    }
+  }
+}, 1001);
+
+/* Server IO */
+var socket = new io.connect();
+
+socket.on('connect', function() {
+  console.log(' > connected');
+  for(var i =0; i < numdisks; i++) {
+    socket.emit("message", {"type" : "kstat", "command" : "diskIO$I$", "vars" : 2, "vars2" : i});
+  }
+});
+
+socket.on('message', function(message) {
+  for (var id in message) {
+    /* Filter Other Messages */
+    if (id == 'type') continue;
+    if (id == 'cpu') continue;
+    if (id == 'mem') continue;
+
+    var s = parseInt(message["type"].substring(6));
+
+    former[s] = current[s];
+    current[s] = [message["Hard Errors"], message["Soft Errors"], message["Transport Errors"]];
+  }
+});
+</script>
+
+<br><br>
+<a href="diskIO.html">Disk IO (vs time)</a>
+<br><br><br>
+
+</body>
+</html>

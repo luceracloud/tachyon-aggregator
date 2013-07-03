@@ -1,6 +1,9 @@
-<! Sample dashboard for dtrace+ monitoring scripts for CPU >
-<!  CREATED:    14 JUNE 2013 >
-<!  MODIFIED:   19 JUNE 2013 >
+<!. Sample dashboard for dtrace process monitoring scripts      .>
+<!.    Displays time-wise plots of read/write time, bytes,      .>
+<!.    and general counts for each disk.                        .>
+<!.                                                             .>
+<!. CREATED:   24 JUNE 2013                                     .>
+<!. MODIFIED:   3 JULY 2013                                     .>
 
 <html>
 
@@ -16,572 +19,767 @@ canvas
 </head>
 
 <body>
-				<canvas id="canvas2" height="400" width="600"></canvas>
-        <canvas id="canvas" height="400" width="600"></canvas>
-<canvas id="canvas3" height="400" width="600"></canvas>
-<canvas id="canvas4" height="400" width="600"></canvas>
-
+<canvas id="canvas2" height="300" width="450"></canvas>
+<canvas id="canvas" height="300" width="450"></canvas>
+<canvas id="canvas3" height="300" width="450"></canvas>
+<canvas id="canvas4" height="300" width="450"></canvas>
+<canvas id="canvas5" height="300" width="450"></canvas>
+<canvas id="canvas6" height="300" width="450"></canvas>
 
 <script>
 /* Set up global containers / varibles */
 var current = [];
 var former =[];
+var time = [];
+
+var nr = [];
+var nw = [];
+var wt = [];
+var wl = [];
+var r = [];
+var w = [];
+
 var interval = 1200; // in ms
 var numdisks = 13;
 var startTime = 0;
-var time = [];
-var nr = [];
-var nw = [];
-var r = [];
-var w = [];
 var count = 0;
+
 
 /* Set Up Grid with labels*/
 setInterval(function () {
+  /* Updates the Chart after there are two datapoints to work off of */
+  if(count == numdisks*2) {
+    for (var i = 0; i <13; i++) {
+      nr[i] = [former[i][0],current[i][0]];
+      nw[i] = [former[i][1],current[i][1]];
+      r[i] = [former[i][2],current[i][2]];
+      w[i] = [former[i][3],current[i][3]];
+      wt[i] = [former[i][4],current[i][4]];
+      wl[i] = [former[i][5],current[i][5]];
+    }
+  }
 
-  if(count == 26)
-{
-for (var i = 0; i <13; i++)
-	{
-		nr[i] = [former[i][0],current[i][0]];
-		nw[i] = [former[i][1],current[i][1]];
-		r[i] = [former[i][2],current[i][2]];
-		w[i] = [former[i][3],current[i][3]];
+  /* Updates the data the second time and after */
+  if (count > numdisks) {
+    for(var i =0; i < numdisks; i++) {
+      var nread = current[i][0] - former[i][0];
+      var nwritten = current[i][1] - former[i][1];
+      var reads = current[i][2] - former[i][2];
+      var writes = current[i][3] - former[i][3];
+      var wait = current[i][4] - former[i][4];
+      var waitl = current[i][5] - former[i][5];
+      nr[i].push(nread);
+      nw[i].push(nwritten);
+      r[i].push(reads);
+      w[i].push(writes);
+      wt[i].push(wait);
+      wl[i].push(waitl);
+    }
+  }
 
-	}
-}
+  /*Sets the data for each chart. Does this 4 times */
+  var lineChartData2 = {
+    labels : time,
+    
+    datasets :
+    [{
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(125,109,90,1)",
+      pointColor : "rgba(125,109,90,1)",
+      pointStrokeColor : "#765",
+      data : nr[0]
+    },
 
-if (count > 13)
-{
-	for(var i =0; i < numdisks; i++)
-	{
-		var nread = current[i][0] - former[i][0];
-		var nwritten = current[i][1] - former[i][1];
-		var reads = current[i][2] - former[i][2];
-		var writes = current[i][3] - former[i][3];
-		nr[i].push(nread);
-		nw[i].push(nwritten);
-		r[i].push(reads);
-		w[i].push(writes);
-	}
-}
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(255,0,234,1)",
+      pointColor : "rgba(255,0,234,1)",
+      pointStrokeColor : "#f0e",
+      data : nr[1]
+    },
 
-var lineChartData2 = {
-                                labels : time,
-                                datasets : [
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(125,109,90,1)",
-                                                pointColor : "rgba(125,109,90,1)",
-                                                pointStrokeColor : "#765",
-                                                data : nr[0]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(166,253,191,1)",
+      pointColor : "rgba(166,253,191,1)",
+      pointStrokeColor : "#afb",
+      data : nr[2]
+    },
 
-                                                                                                                                                                {
-                                                                                                                                                                        fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(255,0,234,1)",
-                                                pointStrokeColor : "#f0e",
-                                                data : nr [1]
-                                                                                                                                                                },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(166,253,191,1)",
-                                                pointColor : "rgba(166,253,191,1)",
-                                                pointStrokeColor : "#afb",
-                                                data : nr[2]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(183,0,0,1)",
+      pointColor : "rgba(183,0,0,1)",
+      pointStrokeColor : "#b00",
+      data : nr[3]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(183,0,0,1)",
-                                                pointColor : "rgba(183,0,0,1)",
-                                                pointStrokeColor : "#b00",
-                                                data : nr [3]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(70,130,180,1)",
-                                                pointColor : "rgba(70,130,180,1)",
-                                                pointStrokeColor : "#48b",
-                                                data : nr[4]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(70,130,180,1)",
+      pointColor : "rgba(70,130,180,1)",
+      pointStrokeColor : "#48b",
+      data : nr[4]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(174,255,58,1)",
-                                                pointColor : "rgba(174,255,58,1)",
-                                                pointStrokeColor : "#af3",
-                                                data : nr [5]
-                                        },
-                                                                                                                                                 {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,102,0,1)",
-                                                pointColor : "rgba(255,102,0,1)",
-                                                pointStrokeColor : "#f60",
-                                                data : nr[6]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(174,255,58,1)",
+      pointColor : "rgba(174,255,58,1)",
+      pointStrokeColor : "#af3",
+      data : nr[5]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(0,0,51,1)",
-                                                pointStrokeColor : "#003",
-                                                data : nr [7]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(102,51,0,1)",
-                                                pointColor : "rgba(102,51,0,1)",
-                                                pointStrokeColor : "#630",
-                                                data : nr[8]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(255,102,0,1)",
+      pointColor : "rgba(255,102,0,1)",
+      pointStrokeColor : "#f60",
+      data : nr[6]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(204,204,204,1)",
-                                                pointColor : "rgba(204,204,204,1)",
-                                                pointStrokeColor : "#CCC",
-                                                data : nr [9]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,255,51,1)",
-                                                pointColor : "rgba(252,255,51,1)",
-                                                pointStrokeColor : "#ff3",
-                                                data : nr[10]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(255,0,234,1)",
+      pointColor : "rgba(0,0,51,1)",
+      pointStrokeColor : "#003",
+      data : nr[7]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(0,255,255,1)",
-                                                pointColor : "rgba(0,255,255,1)",
-                                                pointStrokeColor : "#0ff",
-                                                data : nr [11]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(102,51,0,1)",
+      pointColor : "rgba(102,51,0,1)",
+      pointStrokeColor : "#630",
+      data : nr[8]
+    },
 
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(201,0,204,1)",
-                                                pointColor : "rgba(201,0,204,1)",
-                                                pointStrokeColor : "#C0C",
-                                                data : nr [12]
-                                        }
-                                        ]
-                                };
- var     myLine2 = new Chart(document.getElementById("canvas2").getContext("2d")).Line(lineChartData2);
- var lineChartData  = {                         labels : time,
-                                datasets : [
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(125,109,90,1)",
-                                                pointColor : "rgba(125,109,90,1)",
-                                                pointStrokeColor : "#765",
-                                                data : nw[0]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(204,204,204,1)",
+      pointColor : "rgba(204,204,204,1)",
+      pointStrokeColor : "#CCC",
+      data : nr[9]
+    },
 
-																				{
-																					fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(255,0,234,1)",
-                                                pointStrokeColor : "#f0e",
-                                                data : nw [1]
-																				},
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(166,253,191,1)",
-                                                pointColor : "rgba(166,253,191,1)",
-                                                pointStrokeColor : "#afb",
-                                                data : nw[2]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(255,255,51,1)",
+      pointColor : "rgba(252,255,51,1)",
+      pointStrokeColor : "#ff3",
+      data : nr[10]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(183,0,0,1)",
-                                                pointColor : "rgba(183,0,0,1)",
-                                                pointStrokeColor : "#b00",
-                                                data : nw [3]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(70,130,180,1)",
-                                                pointColor : "rgba(70,130,180,1)",
-                                                pointStrokeColor : "#48b",
-                                                data : nw[4]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(0,255,255,1)",
+      pointColor : "rgba(0,255,255,1)",
+      pointStrokeColor : "#0ff",
+      data : nr[11]
+    },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(174,255,58,1)",
-                                                pointColor : "rgba(174,255,58,1)",
-                                                pointStrokeColor : "#af3",
-                                                data : nw [5]
-                                        },
-																		 {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,102,0,1)",
-                                                pointColor : "rgba(255,102,0,1)",
-                                                pointStrokeColor : "#f60",
-                                                data : nw[6]
-                                        },
+    {
+      fillColor : "rgba(0,0,0,0)",
+      strokeColor : "rgba(201,0,204,1)",
+      pointColor : "rgba(201,0,204,1)",
+      pointStrokeColor : "#C0C",
+      data : nr [12]
+    }]
+  };
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(0,0,51,1)",
-                                                pointStrokeColor : "#003",
-                                                data : nw [7]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(102,51,0,1)",
-                                                pointColor : "rgba(102,51,0,1)",
-                                                pointStrokeColor : "#630",
-                                                data : nw[8]
-                                        },
+  var myLine2 = new Chart(document.getElementById("canvas2").getContext("2d")).Line(lineChartData2);
+  var lineChartData  = {               
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(204,204,204,1)",
-                                                pointColor : "rgba(204,204,204,1)",
-                                                pointStrokeColor : "#CCC",
-                                                data : nw [9]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,255,51,1)",
-                                                pointColor : "rgba(252,255,51,1)",
-                                                pointStrokeColor : "#ff3",
-                                                data : nw[10]
-                                        },
+  labels : time,
+  datasets : [
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(125,109,90,1)",
+  pointColor : "rgba(125,109,90,1)",
+  pointStrokeColor : "#765",
+  data : nw[0]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(0,255,255,1)",
-                                                pointColor : "rgba(0,255,255,1)",
-                                                pointStrokeColor : "#0ff",
-                                                data : nw [11]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(255,0,234,1)",
+  pointStrokeColor : "#f0e",
+  data : nw [1]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(166,253,191,1)",
+  pointColor : "rgba(166,253,191,1)",
+  pointStrokeColor : "#afb",
+  data : nw[2]
+  },
 
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(201,0,204,1)",
-                                                pointColor : "rgba(201,0,204,1)",
-                                                pointStrokeColor : "#C0C",
-                                                data : nw [12]
-                                        }
-                                        ]
-                                };
- var     myLine = new Chart(document.getElementById("canvas").getContext("2d")).Line(lineChartData);
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(183,0,0,1)",
+  pointColor : "rgba(183,0,0,1)",
+  pointStrokeColor : "#b00",
+  data : nw [3]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(70,130,180,1)",
+  pointColor : "rgba(70,130,180,1)",
+  pointStrokeColor : "#48b",
+  data : nw[4]
+  },
 
-var lineChartData3  = {                         labels : time,
-                                datasets : [
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(125,109,90,1)",
-                                                pointColor : "rgba(125,109,90,1)",
-                                                pointStrokeColor : "#765",
-                                                data : r[0]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(174,255,58,1)",
+  pointColor : "rgba(174,255,58,1)",
+  pointStrokeColor : "#af3",
+  data : nw [5]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,102,0,1)",
+  pointColor : "rgba(255,102,0,1)",
+  pointStrokeColor : "#f60",
+  data : nw[6]
+  },
 
-                                                                                                                                                                {
-                                                                                                                                                                        fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(255,0,234,1)",
-                                                pointStrokeColor : "#f0e",
-                                                data : r [1]
-                                                                                                                                                                },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(166,253,191,1)",
-                                                pointColor : "rgba(166,253,191,1)",
-                                                pointStrokeColor : "#afb",
-                                                data : r[2]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(0,0,51,1)",
+  pointStrokeColor : "#003",
+  data : nw [7]
+  },
+  { 
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(102,51,0,1)",
+  pointColor : "rgba(102,51,0,1)",
+  pointStrokeColor : "#630",
+  data : nw[8]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(183,0,0,1)",
-                                                pointColor : "rgba(183,0,0,1)",
-                                                pointStrokeColor : "#b00",
-                                                data : r [3]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(70,130,180,1)",
-                                                pointColor : "rgba(70,130,180,1)",
-                                                pointStrokeColor : "#48b",
-                                                data : r[4]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(204,204,204,1)",
+  pointColor : "rgba(204,204,204,1)",
+  pointStrokeColor : "#CCC",
+  data : nw [9]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,255,51,1)",
+  pointColor : "rgba(252,255,51,1)",
+  pointStrokeColor : "#ff3",
+  data : nw[10]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(174,255,58,1)",
-                                                pointColor : "rgba(174,255,58,1)",
-                                                pointStrokeColor : "#af3",
-                                                data : r[5]
-                                        },
-                                                                                                                                                 {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,102,0,1)",
-                                                pointColor : "rgba(255,102,0,1)",
-                                                pointStrokeColor : "#f60",
-                                                data : r[6]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(0,255,255,1)",
+  pointColor : "rgba(0,255,255,1)",
+  pointStrokeColor : "#0ff",
+  data : nw [11]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(0,0,51,1)",
-                                                pointStrokeColor : "#003",
-                                                data : r[7]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(102,51,0,1)",
-                                                pointColor : "rgba(102,51,0,1)",
-                                                pointStrokeColor : "#630",
-                                                data : r[8]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(201,0,204,1)",
+  pointColor : "rgba(201,0,204,1)",
+  pointStrokeColor : "#C0C",
+  data : nw [12]
+  }
+  ]
+  };
+  var     myLine = new Chart(document.getElementById("canvas").getContext("2d")).Line(lineChartData);
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(204,204,204,1)",
-                                                pointColor : "rgba(204,204,204,1)",
-                                                pointStrokeColor : "#CCC",
-                                                data : r[9]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,255,51,1)",
-                                                pointColor : "rgba(252,255,51,1)",
-                                                pointStrokeColor : "#ff3",
-                                                data : r[10]
-                                        },
+  var lineChartData3  = {           
+  labels : time,
+  datasets : [
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(125,109,90,1)",
+  pointColor : "rgba(125,109,90,1)",
+  pointStrokeColor : "#765",
+  data : r[0]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(0,255,255,1)",
-                                                pointColor : "rgba(0,255,255,1)",
-                                                pointStrokeColor : "#0ff",
-                                                data : r[11]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(255,0,234,1)",
+  pointStrokeColor : "#f0e",
+  data : r [1]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(166,253,191,1)",
+  pointColor : "rgba(166,253,191,1)",
+  pointStrokeColor : "#afb",
+  data : r[2]
+  },
 
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(201,0,204,1)",
-                                                pointColor : "rgba(201,0,204,1)",
-                                                pointStrokeColor : "#C0C",
-                                                data : r[12]
-                                        }
-                                        ]
-                                };
- var     myLine3 = new Chart(document.getElementById("canvas3").getContext("2d")).Line(lineChartData3);
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(183,0,0,1)",
+  pointColor : "rgba(183,0,0,1)",
+  pointStrokeColor : "#b00",
+  data : r [3]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(70,130,180,1)",
+  pointColor : "rgba(70,130,180,1)",
+  pointStrokeColor : "#48b",
+  data : r[4]
+  },
 
- var lineChartData4  = {                         labels : time,
-                                datasets : [
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(125,109,90,1)",
-                                                pointColor : "rgba(125,109,90,1)",
-                                                pointStrokeColor : "#765",
-                                                data : w[0]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(174,255,58,1)",
+  pointColor : "rgba(174,255,58,1)",
+  pointStrokeColor : "#af3",
+  data : r[5]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,102,0,1)",
+  pointColor : "rgba(255,102,0,1)",
+  pointStrokeColor : "#f60",
+  data : r[6]
+  },
 
-                                                                                                                                                                {
-                                                                                                                                                                        fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(255,0,234,1)",
-                                                pointStrokeColor : "#f0e",
-                                                data : w [1]
-                                                                                                                                                                },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(166,253,191,1)",
-                                                pointColor : "rgba(166,253,191,1)",
-                                                pointStrokeColor : "#afb",
-                                                data : w[2]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(0,0,51,1)",
+  pointStrokeColor : "#003",
+  data : r[7]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(102,51,0,1)",
+  pointColor : "rgba(102,51,0,1)",
+  pointStrokeColor : "#630",
+  data : r[8]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(183,0,0,1)",
-                                                pointColor : "rgba(183,0,0,1)",
-                                                pointStrokeColor : "#b00",
-                                                data : w [3]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(70,130,180,1)",
-                                                pointColor : "rgba(70,130,180,1)",
-                                                pointStrokeColor : "#48b",
-                                                data : w[4]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(204,204,204,1)",
+  pointColor : "rgba(204,204,204,1)",
+  pointStrokeColor : "#CCC",
+  data : r[9]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,255,51,1)",
+  pointColor : "rgba(252,255,51,1)",
+  pointStrokeColor : "#ff3",
+  data : r[10]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(174,255,58,1)",
-                                                pointColor : "rgba(174,255,58,1)",
-                                                pointStrokeColor : "#af3",
-                                                data : w [5]
-                                        },
-                                                                                                                                                 {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,102,0,1)",
-                                                pointColor : "rgba(255,102,0,1)",
-                                                pointStrokeColor : "#f60",
-                                                data : w[6]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(0,255,255,1)",
+  pointColor : "rgba(0,255,255,1)",
+  pointStrokeColor : "#0ff",
+  data : r[11]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,0,234,1)",
-                                                pointColor : "rgba(0,0,51,1)",
-                                                pointStrokeColor : "#003",
-                                                data : w [7]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(102,51,0,1)",
-                                                pointColor : "rgba(102,51,0,1)",
-                                                pointStrokeColor : "#630",
-                                                data : w[8]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(201,0,204,1)",
+  pointColor : "rgba(201,0,204,1)",
+  pointStrokeColor : "#C0C",
+  data : r[12]
+  }
+  ]
+  };
+  var     myLine3 = new Chart(document.getElementById("canvas3").getContext("2d")).Line(lineChartData3);
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(204,204,204,1)",
-                                                pointColor : "rgba(204,204,204,1)",
-                                                pointStrokeColor : "#CCC",
-                                                data : w [9]
-                                        },
- {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(255,255,51,1)",
-                                                pointColor : "rgba(252,255,51,1)",
-                                                pointStrokeColor : "#ff3",
-                                                data : w[10]
-                                        },
+  var lineChartData4  = {                       
+  labels : time,
+  datasets : [
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(125,109,90,1)",
+  pointColor : "rgba(125,109,90,1)",
+  pointStrokeColor : "#765",
+  data : w[0]
+  },
 
-                                        {
-                                          fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(0,255,255,1)",
-                                                pointColor : "rgba(0,255,255,1)",
-                                                pointStrokeColor : "#0ff",
-                                                data : w [11]
-                                        },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(255,0,234,1)",
+  pointStrokeColor : "#f0e",
+  data : w [1]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(166,253,191,1)",
+  pointColor : "rgba(166,253,191,1)",
+  pointStrokeColor : "#afb",
+  data : w[2]
+  },
 
-                                        {
-                                                fillColor : "rgba(0,0,0,0)",
-                                                strokeColor : "rgba(201,0,204,1)",
-                                                pointColor : "rgba(201,0,204,1)",
-                                                pointStrokeColor : "#C0C",
-                                                data : w [12]
-                                        }
-                                        ]
-                                };
- var     myLine4 = new Chart(document.getElementById("canvas4").getContext("2d")).Line(lineChartData4);
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(183,0,0,1)",
+  pointColor : "rgba(183,0,0,1)",
+  pointStrokeColor : "#b00",
+  data : w [3]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(70,130,180,1)",
+  pointColor : "rgba(70,130,180,1)",
+  pointStrokeColor : "#48b",
+  data : w[4]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(174,255,58,1)",
+  pointColor : "rgba(174,255,58,1)",
+  pointStrokeColor : "#af3",
+  data : w [5]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,102,0,1)",
+  pointColor : "rgba(255,102,0,1)",
+  pointStrokeColor : "#f60",
+  data : w[6]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(0,0,51,1)",
+  pointStrokeColor : "#003",
+  data : w [7]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(102,51,0,1)",
+  pointColor : "rgba(102,51,0,1)",
+  pointStrokeColor : "#630",
+  data : w[8]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(204,204,204,1)",
+  pointColor : "rgba(204,204,204,1)",
+  pointStrokeColor : "#CCC",
+  data : w [9]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,255,51,1)",
+  pointColor : "rgba(252,255,51,1)",
+  pointStrokeColor : "#ff3",
+  data : w[10]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(0,255,255,1)",
+  pointColor : "rgba(0,255,255,1)",
+  pointStrokeColor : "#0ff",
+  data : w [11]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(201,0,204,1)",
+  pointColor : "rgba(201,0,204,1)",
+  pointStrokeColor : "#C0C",
+  data : w [12]
+  }
+  ]
+  };
+  var    myLine4 = new Chart(document.getElementById("canvas4").getContext("2d")).Line(lineChartData4);
+
+  var lineChartData5  = {
+  labels : time,
+  datasets : [
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(125,109,90,1)",
+  pointColor : "rgba(125,109,90,1)",
+  pointStrokeColor : "#765",
+  data : wt[0]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(255,0,234,1)",
+  pointStrokeColor : "#f0e",
+  data : wt [1]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(166,253,191,1)",
+  pointColor : "rgba(166,253,191,1)",
+  pointStrokeColor : "#afb",
+  data : wt[2]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(183,0,0,1)",
+  pointColor : "rgba(183,0,0,1)",
+  pointStrokeColor : "#b00",
+  data : wt [3]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(70,130,180,1)",
+  pointColor : "rgba(70,130,180,1)",
+  pointStrokeColor : "#48b",
+  data : wt[4]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(174,255,58,1)",
+  pointColor : "rgba(174,255,58,1)",
+  pointStrokeColor : "#af3",
+  data : wt [5]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,102,0,1)",
+  pointColor : "rgba(255,102,0,1)",
+  pointStrokeColor : "#f60",
+  data : wt[6]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(0,0,51,1)",
+  pointStrokeColor : "#003",
+  data : wt [7]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(102,51,0,1)",
+  pointColor : "rgba(102,51,0,1)",
+  pointStrokeColor : "#630",
+  data : wt[8]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(204,204,204,1)",
+  pointColor : "rgba(204,204,204,1)",
+  pointStrokeColor : "#CCC",
+  data : wt [9]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,255,51,1)",
+  pointColor : "rgba(252,255,51,1)",
+  pointStrokeColor : "#ff3",
+  data : wt[10]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(0,255,255,1)",
+  pointColor : "rgba(0,255,255,1)",
+  pointStrokeColor : "#0ff",
+  data : wt [11]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(201,0,204,1)",
+  pointColor : "rgba(201,0,204,1)",
+  pointStrokeColor : "#C0C",
+  data : wt [12]
+  }
+  ]
+  };
+  var     myLine5 = new Chart(document.getElementById("canvas5").getContext("2d")).Line(lineChartData5);
+
+  var lineChartData6  = {
+  labels : time,
+  datasets : [
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(125,109,90,1)",
+  pointColor : "rgba(125,109,90,1)",
+  pointStrokeColor : "#765",
+  data : wl[0]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(255,0,234,1)",
+  pointStrokeColor : "#f0e",
+  data : wl [1]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(166,253,191,1)",
+  pointColor : "rgba(166,253,191,1)",
+  pointStrokeColor : "#afb",
+  data : wl[2]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(183,0,0,1)",
+  pointColor : "rgba(183,0,0,1)",
+  pointStrokeColor : "#b00",
+  data : wl [3]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(70,130,180,1)",
+  pointColor : "rgba(70,130,180,1)",
+  pointStrokeColor : "#48b",
+  data : wl[4]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(174,255,58,1)",
+  pointColor : "rgba(174,255,58,1)",
+  pointStrokeColor : "#af3",
+  data : wl [5]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,102,0,1)",
+  pointColor : "rgba(255,102,0,1)",
+  pointStrokeColor : "#f60",
+  data : wl[6]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,0,234,1)",
+  pointColor : "rgba(0,0,51,1)",
+  pointStrokeColor : "#003",
+  data : wl [7]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(102,51,0,1)",
+  pointColor : "rgba(102,51,0,1)",
+  pointStrokeColor : "#630",
+  data : wl[8]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(204,204,204,1)",
+  pointColor : "rgba(204,204,204,1)",
+  pointStrokeColor : "#CCC",
+  data : wl [9]
+  },
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(255,255,51,1)",
+  pointColor : "rgba(252,255,51,1)",
+  pointStrokeColor : "#ff3",
+  data : wl[10]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(0,255,255,1)",
+  pointColor : "rgba(0,255,255,1)",
+  pointStrokeColor : "#0ff",
+  data : wl [11]
+  },
+
+  {
+  fillColor : "rgba(0,0,0,0)",
+  strokeColor : "rgba(201,0,204,1)",
+  pointColor : "rgba(201,0,204,1)",
+  pointStrokeColor : "#C0C",
+  data : wl [12]
+  }
+  ]
+  };
+  var myLine6 = new Chart(document.getElementById("canvas6").getContext("2d")).Line(lineChartData6);
 
 }, 1001);
 
 /* Server IO */
-console.log("1");
 var socket = new io.connect();
-console.log("2");
+
 socket.on('connect', function(){
   console.log(' > connected');
 
+  for(var i =0; i < numdisks; i++) {
+    socket.emit("message", {"type" : "kstat", "command" : "diskIO$I$", "vars" : 2, "vars2" : i}); 
+  }
 
- 	for(var i =0; i < numdisks; i++) {
- 		socket.emit("message", {"type" : "kstat", "command" : "diskIO" + i});
-	}
-
-	startTime = new Date().getTime();
+  startTime = new Date().getTime();
 });
 
 socket.on("message", function(message){
-	var s = parseInt(message["type"].substring(6));
-	former[s] = current[s];
-	current[s] = [message["nread"]/1024,message["nwritten"]/1024,message["reads"],message["writes"]];
-count++;
-if(s== 12)
-{
- var thisTime = Math.floor((new Date().getTime() - startTime)/1000);
+  var s = parseInt(message["type"].substring(6));
 
-               time.push( Math.floor(thisTime/60) + "m" + (thisTime%60) );
-}
+  former[s] = current[s];
+  current[s] = [ message["nread"]/1024,
+                 message["nwritten"]/1024,
+                 message["reads"],
+                 message["writes"],
+                 message["wtime"],
+                 message["wlentime"] ];
+  count++;
 
+  /* Updates the time only once per cycle */
+  if(s== 12) {
+    var thisTime = Math.floor((new Date().getTime() - startTime)/1000);
+    time.push( Math.floor(thisTime/60) + "m" + (thisTime%60) );
+  }
 
- if (count  > 130 && count % 13 == 0) {
-																								nw[0].splice(0,1);
-																								nw[1].splice(0,1);
-                                                nw[2].splice(0,1);
-                                                nw[3].splice(0,1);
-                                                nw[4].splice(0,1);
-                                                nw[5].splice(0,1);
-                                                nw[6].splice(0,1);
-                                                nw[7].splice(0,1);
-                                                nw[8].splice(0,1);
-                                                nw[9].splice(0,1);
-                                                nw[10].splice(0,1);
-                                                nw[11].splice(0,1);
-                                                nw[12].splice(0,1);
-
-                                                nr[0].splice(0,1);
-                                                nr[1].splice(0,1);
-                                                nr[2].splice(0,1);
-                                                nr[3].splice(0,1);
-                                                nr[4].splice(0,1);
-                                                nr[5].splice(0,1);
-                                                nr[6].splice(0,1);
-                                                nr[7].splice(0,1);
-                                                nr[8].splice(0,1);
-                                                nr[9].splice(0,1);
-                                                nr[10].splice(0,1);
-                                                nr[11].splice(0,1);
-                                                nr[12].splice(0,1);
-
-																								r[0].splice(0,1);
-                                                r[1].splice(0,1);
-                                                r[2].splice(0,1);
-                                                r[3].splice(0,1);
-                                                r[4].splice(0,1);
-                                                r[5].splice(0,1);
-                                                r[6].splice(0,1);
-                                                r[7].splice(0,1);
-                                                r[8].splice(0,1);
-                                                r[9].splice(0,1);
-                                                r[10].splice(0,1);
-                                                r[11].splice(0,1);
-																								r[12].splice(0,1);
-
-																								w[0].splice(0,1);
-                                                w[1].splice(0,1);
-                                                w[2].splice(0,1);
-                                                w[3].splice(0,1);
-                                                w[4].splice(0,1);
-                                                w[5].splice(0,1);
-                                                w[6].splice(0,1);
-                                                w[7].splice(0,1);
-                                                w[8].splice(0,1);
-                                                w[9].splice(0,1);
-                                                w[10].splice(0,1);
-                                                w[11].splice(0,1);
-                                                w[12].splice(0,1);
-
-                                                time.shift();
-                                        }
-
-
+  /* Pushes back the data after the 10th run at the end of the cycle */
+  if (count  > 130 && count % 13 == 0) {
+    for (var i = 0; i < numdisks; i++) {
+      nw[i].splice(0,1);
+      nr[i].splice(0,1);
+      w[i].splice(0,1);
+      r[i].splice(0,1);
+      wt[i].splice(0,1);
+      wl[i].splice(0,1);
+    }
+    time.shift();
+  }
 });
 
 </script>
 
 <br><br>
- per Disk Stats    TL:KB reads       TR: KB writes         BL: Read counts         Br: Write Counts<br>
-D0: Khaki  Brown       D1: Pink   D2:  Seagreen   D3: Red  <br>
-D4: Medium Blue    D5: Lime Green   D6: Orange   D7: Dark Blue <br>
-D8 Brown     D9: Grey    D10:Yellow  D11:Light Blue   D12:Purple   <br><br><br>
+per Disk Stats<br><br>
+
+Top-left: KB reads <br>
+Top-center: KB writes<br>
+Top-right: Read counts<br>
+Bottom-left: Write Counts<br>
+Bottom-center: wtime<br>
+Bottom-right: wlentime<br><br>
+
+D0: Khaki Brown D1: Pink D2: Seagreen D3: Red<br>
+D4: Medium Blue D5: Lime Green D6: Orange D7: Dark Blue<br>
+D8: Brown D9: Grey D10:Yellow D11:Light Blue D12:Purple<br><br><br>
+
+<br><br><br>
+<a href="./diskErrors.html">Disk Errors</a>
+<br><br><br>
 
 </body>
 </html>

@@ -160,13 +160,13 @@ setInterval(function drawPList () {
 /* Server IO */
 var socket = new io.connect();
 
-socket.on('connect', function(){ 
-  console.log(' > connected');
-  socket.emit('message', {'type' : 'tlist'});
+socket.on("connect", function(){ 
+  console.log(" > connected");
+  socket.emit("message", {"type" : "tlist"});
 });
 
-socket.on('message', function(message){ 
-  dataset = {};
+socket.on("message", function(message){ 
+  dataset = {}; /* Clear dataset to refresh information */
 
   for (var proc in message) {
     var itms = proc.split(',');
@@ -188,13 +188,12 @@ socket.on('message', function(message){
   }
 
   for (var proc in dataset) {
-  var sum = 0;
-  for (var k=0; k<numberCores; k++) {
-  if(dataset[proc][k+4]) {
-  sum = sum + dataset[proc][k+4];
-  }
-  }
-  dataset[proc][3] = sum;
+    var sum = 0;
+    for (var k=0; k<numberCores; k++) {
+      if(dataset[proc][k+4])
+        sum = sum + dataset[proc][k+4];
+    }
+    dataset[proc][3] = sum;
   }
 
 });

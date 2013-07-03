@@ -79,8 +79,8 @@ window.onload = function(){
 
 var socket = new io.connect();
 
-socket.on('connect', function(){ 
-  console.log(' > connected');
+socket.on("connect", function(){ 
+  console.log(" > connected");
   socket.emit("message", {"type" : "percpu"});
   socket.emit("message", {"type" : "kstat", "command" : "memStat"});
   socket.emit("message", {"type" : "cmd", "cmd" : "dfUse"});
@@ -88,17 +88,17 @@ socket.on('connect', function(){
   socket.emit("message", {"type" : "kstat", "command" : "netStatSum"});
 });
 
-socket.on('message', function(message) {
+socket.on("message", function(message) {
   
   if (message["type"]=="percpu") {
-    cpustat = Math.floor(message['cpu']/numberCores/rate*1000)/10;
-  } else if (message['type']=='memStat') {
-    var tMem = parseInt(message['physmem']);
-    memstat = Math.floor(((tMem-message['freemem'])/tMem)*1000)/10;
-  } else if (message['type']=='dfUse') {
-    diskstat = Math.floor( message['used'] / message['available'] * 1000) / 10;
-  } else if (message['type']=='swapStat') {
-    swapstat = Math.floor( message['swap'] / ( message['swapcap']) * 1000) / 10;
+    cpustat = Math.floor(message["cpu"]/numberCores/rate*1000)/10;
+  } else if (message["type"]=="memStat") {
+    var tMem = parseInt(message["physmem"]);
+    memstat = Math.floor(((tMem-message["freemem"])/tMem)*1000)/10;
+  } else if (message["type"]=="dfUse") {
+    diskstat = Math.floor( message["used"] / message["available"] * 1000) / 10;
+  } else if (message["type"]=="swapStat") {
+    swapstat = Math.floor( message["swap"] / ( message["swapcap"]) * 1000) / 10;
   } else if (message["type"]=="netStatSum") {
     netstat = (message["obytes64"]+message["rbytes64"]-lastnetO-lastnetI)*8/message["ifspeed"];
     lastnetO = message["obytes64"];
@@ -127,9 +127,7 @@ socket.on('message', function(message) {
   <div id="memgage" style="width:250px; height:200px; display: table-cell;"></div>
 </a>
 
-<!a href>
   <div id="swapgage" style="width:250px; height:200px; display: table-cell;"></div>
-<!/a>
 
 <a href="./disk/diskIO.html">
   <div id="disgage" style="width:250px; height:200px; display: table-cell;"></div>
