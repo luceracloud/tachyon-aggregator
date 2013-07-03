@@ -1,0 +1,27 @@
+package message;
+
+message ScriptRequest {
+  required string type = 1;
+  required string command = 2;
+
+  optional int32 pid = 3;
+  optional int32 instance = 4;
+  optional string probename = 5;
+}
+
+message ScriptReturns {
+  optional string command = 1;
+  repeated Entry entry = 2;
+
+  message Entry {
+    optional int32 cpu = 1;
+    optional int32 pid = 2;
+    optional int32 tid = 3;
+    optional int32 rate = 4;
+    optional int32 time = 5;
+    optional int32 value = 6;
+    optional string execname = 7;
+    optional string statistic = 8;
+  }
+}
+
