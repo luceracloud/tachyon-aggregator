@@ -118,17 +118,17 @@ exports.kscript = {
 exports.cmd = {
 
   "memStat" : {
-    "cmdl" : "top -l 1 | grep PhysMem:",
+    "cmdl"    : "top -l 1 | grep PhysMem:",
     "returns" : { "used" : "inactive", "free" : "used" }
     },
 
   "memTotal" : {
-    "cmdl" : "kstat -n system_pages",
+    "cmdl"    : "kstat -n system_pages",
     "returns" : { "physmem" : "physmem", "freemem" : "freemem" }
     },
 
   "dfUse" : {
-    "cmdl" : "df",
+    "cmdl"    : "df",
     "returns" : { "used" : "zones/,3", "available" : "zones/,4" }
     }
 }

@@ -17,7 +17,7 @@
  *    (sudo) nohup node server.js &   [daemon]
  *
  *  CREATED:    14 JUNE 2013
- *  MODIFIED:    9 JULY 2013
+ *  MODIFIED:   15 JULY 2013
  */
 
 console.log("\n\033[00;31mServer starting...\033[00m \n")
@@ -34,7 +34,7 @@ var scripts = require('./scripts.repo');
 /* Initalized variables */
 var script = {};    // The script to run (specified by "type" in original message)
 var cmdScript = {}; // The string to give to cmdline
-var nfo = {};       // Any accompanying information for the client (again, specified by "type")
+var nfo = {};       // Any accompanying information for the client (specified by "type")
 var args;           // Argument array
 
 /* Start up the express server */
@@ -49,7 +49,7 @@ app.configure(function() {
 });
 io.set('log level', 1);
 
-/* keep track of dtrace consumers and intervals */
+/* Keep track of dtrace consumers and other intervals */
 var dtraceInt = {};
 var dtp_list = {};
 var retval = {};
@@ -385,7 +385,6 @@ socket.send("message", script_request.toBuffer());
           delete cmdInt[ toremove[j] ];
         }
       } catch (err) {}  
-        
 
       /* Try to clean up dtrace intervals */
       try {

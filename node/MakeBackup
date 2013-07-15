@@ -1,4 +1,3 @@
-
 # Copy everything into a folder named
 # ./backup_van, excluding all other
 # non-essential folders.
