@@ -1,2 +1,0 @@
-gcc -L/zmq/lib -lzmq server.c -o server
-LD_LIBRARY_PATH=/zmq/lib ./server
