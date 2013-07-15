@@ -145,8 +145,7 @@ setInterval(function drawPlot() {
          .attr("font-family", "sans-serif")
          .attr("font-size", (textHeight-8)+"px")
          .attr("fill", "white")
-         .attr("text-anchor", "start");
-    }
+
   } catch(err) {}
 });
 
@@ -156,6 +155,12 @@ var socket = new io.connect();
 socket.on('connect', function(){ 
   console.log(' > connected');
   socket.emit('message', {'type' : 'vminfo'});
+
+/*
+var scpt_rqst = new ScriptRequest("dtrace", "vminfo");
+ socket.send(scpt_rqst.toArrayBuffer());
+*/
+
 });
 
 socket.on('message', function(message){ 
