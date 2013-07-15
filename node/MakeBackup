@@ -5,4 +5,5 @@
 
 mkdir ./backup_van
 cp -r ./public ./backup_van/
+cp -r ./bin ./backup_van/
 cp ./* ./backup_van/

@@ -17,7 +17,7 @@
  *    (sudo) nohup node server.js &   [daemon]
  *
  *  CREATED:    14 JUNE 2013
- *  MODIFIED:    2 JULY 2013
+ *  MODIFIED:    9 JULY 2013
  */
 
 console.log("\n\033[00;31mServer starting...\033[00m \n")
@@ -28,7 +28,6 @@ var exec = require('child_process').exec;
 var kstat = require('kstat');
 var libdtrace = require('libdtrace');
 var http = require('http');
-var libdtrace = require('libdtrace');
 var express = require('express');
 var scripts = require('./scripts.repo');
 
@@ -163,7 +162,16 @@ console.log("\n \033[00;31mStart time was: " + dT.getDate() + "/" +
 io.sockets.on('connection', function(socket) { 
 
   /* Handle new message events */
-  socket.on( 'message', function(message) {
+  socket.on( 'message', function(message, flags) {
+
+if(message['type'] == "vminfo")
+{
+console.log("freedom");
+socket.send("message", script_request.toBuffer());
+}
+
+
+
 
     var prtQ = ' > \033[00;31m' + returnTime() +'  \033[01;36m' + 
       'connected\033[00m     [ \033[00;37m' + socket.id + '\033[00m' +
