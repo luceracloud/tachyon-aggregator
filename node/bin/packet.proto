@@ -1,0 +1,53 @@
+message Packet {
+
+	required uint32 time = 1;
+
+  optional int32 ticks = 7;
+  	
+	repeated Cpu cpu = 2;
+  optional Mem mem = 3;  
+  repeated Disk disk = 4;
+  repeated Net net = 5;
+  repeated Process process = 6;
+
+  message Process {
+    optional int32 pid = 1;
+    optional string execname = 2;
+    optional string usage = 3;
+    optional int32 cpu = 4;
+  }
+
+	message Cpu {
+		optional int32 core = 1;
+		optional int32 usage = 2;
+	}
+  
+  message Mem {
+    optional uint32 physmem = 1;
+    optional uint32 rss = 2;
+    optional uint32 pp_kernel = 3;
+    optional uint32 freemem = 4;
+    optional uint32 physcap = 5;
+    optional uint32 swap = 6;
+    optional uint32 swapcap = 7;
+  }
+
+  message Net {
+    optional int32 obytes64 = 1;
+    optional int32 rbytes64 = 2;
+    optional int32 opackets = 3;
+    optional int32 ipackets = 4;
+    optional string instance = 5;
+  }
+
+  message Disk {
+    required string instance = 1;
+    optional int32 nread = 2;
+    optional int32 nwritten = 3;
+    optional int32 reads = 4;
+    optional int32 writes = 5;
+    optional int32 wtime = 6;
+    optional int32 wlentime = 7;
+  }
+
+}
