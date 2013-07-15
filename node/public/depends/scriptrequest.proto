@@ -1,0 +1,8 @@
+message ScriptRequest {
+  required string type = 1;
+  required string command = 2;
+
+  optional int32 pid = 3;
+  optional int32 instance = 4;
+  optional string probename = 5;
+}

@@ -134,6 +134,15 @@ socket.on('connect', function(){
   console.log(' > connected');
   socket.emit('message', {'type' : 'proc_thread', 'command' : location['search'].substr(1) });
   socket.emit('message', {'type' : 'proc_syscall', 'command' : location['search'].substr(1) });
+
+/*
+var scpt_rqst = new ScriptRequest("dtrace", "proc_thread", location["search"].substr(1));
+ socket.send(scpt_rqst.toArrayBuffer());
+
+var scpt_rqst2 = new ScriptRequest("dtrace", "procsyscall", location["search].substr(1);
+socket.send(scpt_rqst2.toArrayBuffer());
+*/
+
 });
 
 socket.on('message', function(message){ 

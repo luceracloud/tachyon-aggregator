@@ -87,6 +87,11 @@ var socket = new io.connect();
 socket.on("connect", function() { 
   console.log(" > connected");
   socket.emit("message", {"type" : "loaddist"});
+/*
+var scpt_rqst = new ScriptRequest("dtrace", "loaddist");
+ socket.send(scpt_rqst.toArrayBuffer());
+
+*/
 });
 
 socket.on("message", function(message){ 
