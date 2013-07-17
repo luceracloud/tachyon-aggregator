@@ -1,14 +1,15 @@
 message Packet {
 
-  required uint32 time = 1;
+  required string time = 1;
 
   optional int32 ticks = 7;
 
   repeated Cpu cpu = 2;
-  optional Mem mem = 3;  
+  optional Mem mem = 3;
   repeated Disk disk = 4;
   repeated Net net = 5;
   repeated Process process = 6;
+  repeated CallHeat callheat = 8;
 
   message Process {
     optional int32 pid = 1;
@@ -21,15 +22,15 @@ message Packet {
     optional int32 core = 1;
     optional int32 usage = 2;
   }
-  
+
   message Mem {
-    optional uint32 physmem = 1;
-    optional uint32 rss = 2;
-    optional uint32 pp_kernel = 3;
-    optional uint32 freemem = 4;
-    optional uint32 physcap = 5;
-    optional uint32 swap = 6;
-    optional uint32 swapcap = 7;
+    optional string physmem = 1;
+    optional string rss = 2;
+    optional string pp_kernel = 3;
+    optional string freemem = 4;
+    optional string physcap = 5;
+    optional string swap = 6;
+    optional string swapcap = 7;
   }
 
   message Net {
@@ -48,6 +49,13 @@ message Packet {
     optional int32 writes = 5;
     optional int32 wtime = 6;
     optional int32 wlentime = 7;
+  }
+
+  message CallHeat {
+    optional string name = 1;
+    optional string lowt = 2;
+    optional string hight = 3;
+    optional int32 value = 4;
   }
 
 }

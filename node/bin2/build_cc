@@ -1,0 +1,1 @@
+g++ server.cpp packet.pb.cc entry.pb.cc -lzmq -lkstat -lprotobuf -g -o server
