@@ -24,9 +24,9 @@ namespace S {
 
   namespace NET {
     int number = NET_NUM;
-    std::string module[ MEM_NUM ] = { "link", "link", "link", "link" };
-    std::string name[ MEM_NUM ] = { "net0", "net0", "net0", "net0" };
-    std::string statistic[ MEM_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets" };      
+    std::string module[ NET_NUM ] = { "link", "link", "link", "link" };
+    std::string name[ NET_NUM ] = { "net0", "net0", "net0", "net0" };
+    std::string statistic[ NET_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets" };      
   }
 
   namespace DISK {
@@ -36,5 +36,25 @@ namespace S {
     std::string statistic[ MEM_NUM ] = { "nread", "nwritten", "reads", "writes", "wtime", "wlentime" };      
   }
 
+  
+  namespace DTRACE {
+    int number = 1;
+
+    std::string trial = 
+    "profile-4999\n"
+    "{\n"
+    "  @[execname]=count();\n"
+    "}";
+
+    std::string dist = "profile:::profile-4999\n{\n@P[cpu] = count();\n}";
+    std::string proc = "profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}";
+    std::string ticks = "profile:::tick-4999\n{\n@P = count();\n}";
+
+ 
+  }
+
+
 }
+
+
 

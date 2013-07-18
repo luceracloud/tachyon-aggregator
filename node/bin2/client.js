@@ -9,8 +9,8 @@
  *
  *  CREATED:  17 JULY 2013
  *  UPDATED:  17 JULY 2013
- */
-
+ */ 
+   
 var zmq = require('zmq');
 var sock = zmq.socket('pull');
 var ProtoBuf = require('protobufjs');
@@ -28,9 +28,9 @@ sock.on('message', function(msg){
   try {
     var message = Packet.decode(msg);
     console.log( message );
-  } catch (err) {}
-
+  } catch (err) {
   /* Otherwise, just print */
-  console.log(msg.toString());
+    console.log( msg.toString() );
+  }
 
 });
