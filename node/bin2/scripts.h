@@ -9,17 +9,23 @@
  *  UPDATED:  17 JULY 2013
  */
     
-#define MEM_NUM 6
+#define MEM_NUM 7
 #define NET_NUM 4
 #define DISK_NUM 6
+#define DTRACE_NUM 4
 
 namespace S {
 
+  namespace STD {
+    std::string snaptime[3] = { "unix", "NULL", "snaptime" };
+
+  }
+
   namespace MEM {
     int number = MEM_NUM; 
-    std::string module[ MEM_NUM ] = { "unix", "unix", "unix", "memory_cap", "memory_cap", "memory_cap" };
-    std::string name[ MEM_NUM ] = { "system_pages", "system_pages", "system_pages", "NULL", "NULL", "NULL" };
-    std::string statistic[ MEM_NUM ] = { "freemem", "physmem", "pp_kernel", "rss", "swap", "swapcap" };      
+    std::string module[ MEM_NUM ] = { "unix", "unix", "unix", "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
+    std::string name[ MEM_NUM ] = { "system_pages", "system_pages", "system_pages", "NULL", "NULL", "NULL", "NULL" };
+    std::string statistic[ MEM_NUM ] = { "freemem", "physmem", "pp_kernel", "physcap", "rss", "swap", "swapcap" };      
   } 
 
   namespace NET {
@@ -36,9 +42,17 @@ namespace S {
     std::string statistic[ MEM_NUM ] = { "nread", "nwritten", "reads", "writes", "wtime", "wlentime" };      
   }
 
+  std::string dtrace[DTRACE_NUM] = 
+  {
+    (std::string)"profile:::profile-4999\n{\n@[0,cpu] = count();\n}",
+    (std::string)"profile:::profile-4999\n{\n@[1,cpu,execname,pid] = count();\n}",
+    (std::string)"profile:::tick-4999\n{\n@[2] = count();\n}",
+    (std::string)"profile:::profile-4999\n{\n@[3,execname]=count();\n}"
+  };
+
   
   namespace DTRACE {
-    int number = 1;
+    int number = DTRACE_NUM;
 
     std::string trial = 
     "profile-4999\n"
@@ -55,6 +69,4 @@ namespace S {
 
 
 }
-
-
 

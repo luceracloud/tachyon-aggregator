@@ -2,62 +2,62 @@ package PB_MSG;
 
 message Packet {
 
-  required string time = 1;
+  required uint64 time = 1;
 
-  optional int32 ticks = 7;
+  optional uint32 ticks = 7;
 
   repeated Cpu cpu = 2;
-  optional Mem mem = 3;
+  repeated Mem mem = 3;
   repeated Disk disk = 4;
   repeated Net net = 5;
   repeated Process process = 6;
   repeated CallHeat callheat = 8;
 
   message Process {
-    optional int32 pid = 1;
+    optional uint32 pid = 1;
     optional string execname = 2;
-    optional string usage = 3;
-    optional int32 cpu = 4;
+    optional uint32 usage = 3;
+    optional uint32 cpu = 4;
   }
 
   message Cpu {
-    optional int32 core = 1;
-    optional int32 usage = 2;
+    optional uint32 core = 1;
+    optional uint32 usage = 2;
   }
 
   message Mem {
-    optional string physmem = 1;
-    optional string rss = 2;
-    optional string pp_kernel = 3;
-    optional string freemem = 4;
-    optional string physcap = 5;
-    optional string swap = 6;
-    optional string swapcap = 7;
+    optional uint64 physmem = 1;
+    optional uint64 rss = 2;
+    optional uint64 pp_kernel = 3;
+    optional uint64 freemem = 4;
+    optional uint64 physcap = 5;
+    optional uint64 swap = 6;
+    optional uint64 swapcap = 7;
   }
 
   message Net {
-    optional int32 obytes64 = 1;
-    optional int32 rbytes64 = 2;
-    optional int32 opackets = 3;
-    optional int32 ipackets = 4;
-    optional string instance = 5;
+    optional uint64 obytes64 = 1;
+    optional uint64 rbytes64 = 2;
+    optional uint64 opackets = 3;
+    optional uint64 ipackets = 4;
+    required string instance = 5;
   }
 
   message Disk {
-    required string instance = 1;
-    optional int32 nread = 2;
-    optional int32 nwritten = 3;
-    optional int32 reads = 4;
-    optional int32 writes = 5;
-    optional int32 wtime = 6;
-    optional int32 wlentime = 7;
+    required uint32 instance = 1;
+    optional uint64 nread = 2;
+    optional uint64 nwritten = 3;
+    optional uint64 reads = 4;
+    optional uint64 writes = 5;
+    optional uint64 wtime = 6;
+    optional uint64 wlentime = 7;
   }
 
   message CallHeat {
-    optional string name = 1;
-    optional string lowt = 2;
-    optional string hight = 3;
-    optional int32 value = 4;
+    required string name = 1;
+    optional uint64 lowt = 2;
+    optional uint64 hight = 3;
+    optional uint64 value = 4;
   }
 
 }

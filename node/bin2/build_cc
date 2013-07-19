@@ -1,1 +1,2 @@
-g++ server.cpp packet.pb.cc entry.pb.cc -ldtrace -lzmq -lkstat -lprotobuf -g -o server
+protoc -I=. --cpp_out=. ./packet.proto
+g++ server.cpp packet.pb.cc -ldtrace -lzmq -lkstat -lprotobuf -g -o server
