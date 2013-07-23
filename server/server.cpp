@@ -22,7 +22,6 @@
 #include <dtrace.h>
 #include <zmq.hpp>       // for zmq sockets
 #include <kstat.h>       // for kstats
-#include "entry.pb.h"    // protocol buffer header
 #include "packet.pb.h"   // protocol buffer header
 #include "scripts.h"     // script repository
 
@@ -40,7 +39,7 @@ int send_message (const char *c);
 int send_message (PB_MSG::Packet pckt);
 
 int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value);
-int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr); 
+int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr);
 int dtrace_setopts (dtrace_hdl_t **this_g_dtp);
 int dtrace_init (dtrace_hdl_t **this_g_dtp, std::string s);
 static int dtrace_aggwalk(const dtrace_aggdata_t *data, void *arg);
@@ -48,8 +47,9 @@ static int dtrace_aggwalk(const dtrace_aggdata_t *data, void *arg);
 /*
  * Globally-existing variables &c.
  */
-bool VERBOSE = 0; 
-zmq::context_t context (1); 
+bool do_loop = 1;
+bool VERBOSE = 0;
+zmq::context_t context (1);
 zmq::socket_t socket (context, ZMQ_PUSH);
 PB_MSG::Packet msg_packet;
 kstat_ctl_t *kc;
@@ -78,18 +78,18 @@ int main (int argc, char **argv) {
         VERBOSE = 1;
       }
     }
- 
+
     /* Set up zmq socket */
     socket.bind ("tcp://*:7211");
-    send_message ((const char *)"Init"); 
+    send_message ((const char *)"Init");
 
     /* Protobuf stuff */
     GOOGLE_PROTOBUF_VERIFY_VERSION;
-    
+
     /* Dtrace init */
-    dtrace_hdl_t *g_dtp[S::DTRACE::number]; 
+    dtrace_hdl_t *g_dtp[S::DTRACE::number];
     for (i=0; i<S::DTRACE::number; i++) {
-      dtrace_init (&g_dtp[i], S::dtrace[i]);
+      dtrace_init (&g_dtp[i], S::DTRACE::dtrace[i]);
       dtrace_setopts (&g_dtp[i]);
       if (dtrace_go (g_dtp[i])) {
         pfc ("ERROR: Unable to start dtrace script\n", 31);
@@ -106,19 +106,19 @@ int main (int argc, char **argv) {
     printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
 
     /* Send data in loop */
-    while (true) {
-      
+    while (do_loop) {
+
       msg_packet.Clear(); // Clear the message (no need to reallocate)
-      
+
       /* Do kstat look-ups */
       int i=0;
-      
+
       // The chain should be updated occasionally
 
       if (kstat_chain_update ( kc )) {
         if (VERBOSE) pfc (" . kstat chain updated\n", 36);
       }
-      
+
       /* General statistics */
 
       /* Memory */
@@ -151,7 +151,7 @@ int main (int argc, char **argv) {
           }
 
           if (VERBOSE) printf ("Received: %u for %s\n", value, S::MEM::statistic[i].c_str());
-        } 
+        }
       }
 
       /* Network */
@@ -177,7 +177,7 @@ int main (int argc, char **argv) {
             } else if (S::NET::statistic[i]=="ipackets") {
               msg_net->set_ipackets_1 ((uint32_t)(value>>32));
               msg_net->set_ipackets_2 ((uint32_t)((value<<32)>>32));
-            } else pfc ("WARN: Unexpected statistic returned @net\n", 33); 
+            } else pfc ("WARN: Unexpected statistic returned @net\n", 33);
 
             if (VERBOSE) printf ("Received: %u for %s\n", value, S::NET::statistic[i].c_str());
           }
@@ -201,7 +201,7 @@ int main (int argc, char **argv) {
           // Nothing to see here. Move along.
         }
       }
- 
+
       /* Do dtrace look-ups */
       for (i=0; i<S::DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
@@ -214,15 +214,20 @@ int main (int argc, char **argv) {
         if (VERBOSE) printf ("===========================================\n");
       }
 
-      msg_packet.set_time ((uint64_t)time(NULL));      
+      msg_packet.set_time ((uint64_t)time(NULL));
 
       if (VERBOSE) {
         print_message (msg_packet);
       }
       send_message (msg_packet);
-      
+
       sleep (1);
     }
+
+    for (size_t scpt=0; scpt<S::DTRACE::number; scpt++) {
+      dtrace_close (g_dtp[scpt]);
+    }
+    pfc (" . dtrace scripts killed\n", 36);
 
     return 0;
 }
@@ -237,13 +242,13 @@ int dtrace_init (dtrace_hdl_t **this_dtp, std::string this_prog) {
 
   if ((*this_dtp = dtrace_open (DTRACE_VERSION, 0, &err)) == NULL) {
     pfc ("ERROR: Failed to init dtrace\n", 31);
-    return -1;  
+    return -1;
   }
 
   if ((prog = dtrace_program_strcompile (*this_dtp, (const char *)this_prog.c_str(),
     DTRACE_PROBESPEC_NAME, 0, 0, NULL)) == NULL) {
     pfc ("ERROR: Failed to compile program\n", 31);
-    return -1;  
+    return -1;
   }
 
   if (dtrace_program_exec (*this_dtp, prog, &info) == -1) {
@@ -281,11 +286,11 @@ int dtrace_init (dtrace_hdl_t **this_dtp, std::string this_prog) {
 
 /*
  * Given a bucket-id, return the max value.
- * The min value is simply (max/2)+1 
+ * The min value is simply (max/2)+1
  */
 inline int64_t max_quantize_range (int bckt_id) {
   if (bckt_id < DTRACE_QUANTIZE_ZEROBUCKET) {
-    return -1; 
+    return -1;
   } else if (bckt_id == DTRACE_QUANTIZE_ZEROBUCKET) {
     return 0;
   } else {
@@ -302,8 +307,8 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
     uint64_t usage;
     uint32_t pid;
     std::string name;
-  } data; 
-  
+  } data;
+
   bool reset = 1;
   dtrace_aggdesc_t *aggdesc = agg->dtada_desc;
 
@@ -319,7 +324,7 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
     /* Again, this is a very ugly way to do this */
     if (data.type==0) {
       if (i==2) data.core = *((uint32_t *)addr);
-      else if (i==3) data.usage = (uint64_t)*((uint32_t *)addr); 
+      else if (i==3) data.usage = (uint64_t)*((uint32_t *)addr);
     } else if (data.type==1) {
       if (i==2) data.core = *((uint32_t *)addr);
       else if (i==3) data.name = (std::string)(const char *)addr;
@@ -339,7 +344,7 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
           int64_t l_range = max_quantize_range (range_cnt);
           PB_MSG::Packet_CallHeat *msg_callheat = msg_packet.add_callheat();
           msg_callheat->set_name ((std::string)"allcall");
-          msg_callheat->set_lowt_1 ((uint32_t)(l_range>>32)); 
+          msg_callheat->set_lowt_1 ((uint32_t)(l_range>>32));
           msg_callheat->set_lowt_2 ((uint32_t)((l_range<<32)>>32));
           msg_callheat->set_value_1 ((uint32_t)(agg_data[range_cnt]>>32));
           msg_callheat->set_value_2 ((uint32_t)((agg_data[range_cnt]<<32)>>32));
@@ -349,7 +354,7 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
       pfc ("WARN: Unrecognized dtrace script type @334\n", 33);
       if (VERBOSE) formatted_print (rec, addr);
       printf ("\n");
-    } 
+    }
   }
 
   /* Actually add to the protobuf now */
@@ -361,9 +366,9 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
     PB_MSG::Packet_Process *msg_process = msg_packet.add_process();
     msg_process->set_pid (data.pid);
     msg_process->set_execname (data.name);
-    msg_process->set_usage ((uint32_t)data.usage); 
+    msg_process->set_usage ((uint32_t)data.usage);
     msg_process->set_cpu (data.core);
-  } 
+  }
 
   if (reset) return (DTRACE_AGGWALK_REMOVE);
   return (DTRACE_AGGWALK_NEXT);
@@ -387,20 +392,20 @@ int dtrace_setopts (dtrace_hdl_t **this_g_dtp) {
   if (dtrace_setopt(*this_g_dtp, "aggrate", "2msec") == -1) {
     pfc ("failed to set 'aggrate'", 31);
   }
- 
+
   return 0;
 }
 
 /* Print contents of packet message for user */
 int print_message(PB_MSG::Packet pckt) {
   printf ("String representation of packet:\n");
-  pckt.PrintDebugString(); 
+  pckt.PrintDebugString();
   return 0;
-}  
+}
 
 /*
  * Find the associated kstat using libkstat
- *   methods. Note the necessity to cast 
+ *   methods. Note the necessity to cast
  *   strings to raw char *'s.
  */
 int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value) {
@@ -412,10 +417,10 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
   //     module || name can be NULL to ignore
   //     instance can be -1 to ignore
 
-  /* Local variable declarations */ 
+  /* Local variable declarations */
   kstat_t         *ksp;
   kstat_named_t   *knp;
- 
+
   if (strcmp(name.c_str(), "NULL")) {
     ksp = kstat_lookup (kc, (char *)module.c_str(), -1, (char *)name.c_str());
   } else {
@@ -424,33 +429,33 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
 
   if ((ksp==NULL) && (statistic=="NULL")) {
     return 1;
-  } 
+  }
 
   if (ksp == NULL) {
     pfc ( "ksp @439 returned NULL\n", 31 );
   }
 
   /* If we're reading a KSTAT_TYPE_IO file, we have
-   * to handle things a bit differently 
+   * to handle things a bit differently
    */
   if (ksp->ks_type == KSTAT_TYPE_IO) {
-    
+
     kstat_io_t kio;   // Data structure to hold IO stat
-    kstat_read (kc, ksp, &kio); 
-    
+    kstat_read (kc, ksp, &kio);
+
     if (&kio == NULL) {
       printf ("NULL for instance %d\n", instance);
     }
-                   
+
     /* I'm keeping this non-modular here and
      * pushing directly to the protocol buffer
      * here because it will save significant
      * space and time/processing power
      */
-    
+
     PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
     msg_disk->set_instance ((uint32_t)instance);
-    
+
     msg_disk->set_nread_1 ((uint32_t)(kio.nread>>32));
     msg_disk->set_nread_2 ((uint32_t)((kio.nread<<32)>>32));
     msg_disk->set_nwritten_1 ((uint32_t)(kio.nwritten>>32));
@@ -469,7 +474,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
   } else {
 
     kstat_read (kc, ksp, NULL);
-    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str()); 
+    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
 
     if (knp == NULL) {
       pfc (" > libkstat lookup failed\n", 31);
@@ -507,7 +512,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
 }
 
 /*
- * This function sends a message 
+ * This function sends a message
  * over the established zmq socket
  */
 int send_message () {
@@ -555,6 +560,6 @@ int pfc (const char *c, int color) {
  * worry about errant dtrace scripts
  */
 void sigint_handler (int s) {
-  pfc ("\nWARN: dtrace script instances were not cleaned!\nKilling program...\n", 33);
-  exit(1);
+  do_loop = 0;
+  pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 32);
 }
