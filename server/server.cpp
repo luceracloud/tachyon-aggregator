@@ -56,18 +56,17 @@ bool do_loop = 1;
 bool VERBOSE = 0; 
 bool VERBOSE2 = 0;
 zmq::context_t context (1); 
-zmq::socket_t socket (context, ZMQ_PUSH);
+zmq::socket_t socket (context, ZMQ_PUB);
 PB_MSG::Packet msg_packet;
 kstat_ctl_t *kc;
 
 /*
- * Main loop
- *
+ *  main loop
  */
 int main (int argc, char **argv) {
 
     /* Handle signals (for cleanup) */
-    signal(SIGINT, sigint_handler);
+    signal (SIGINT, sigint_handler);
 
     /* Splash */
     pfc ("\n Statistics Server\n", 37);
@@ -86,6 +85,11 @@ int main (int argc, char **argv) {
       if (!strcmp(argv[i], "-vlite")) {
         pfc (" . running in light verbose mode\n", 36);
         VERBOSE2 = 1;
+      }
+      if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "-H")) {
+        pfc (" . printing usage information\n", 36);
+        usage();
+        return 1;
       }
     }
  
@@ -236,7 +240,7 @@ int main (int argc, char **argv) {
     for (size_t scpt=0; scpt<S::DTRACE::number; scpt++) {
       dtrace_close (g_dtp[scpt]); 
     }
-    pfc (" . dtrace scripts killed\n", 36);
+    pfc (" . dtrace scripts killed\n\n", 36);
 
     return 0;
 }
@@ -563,7 +567,8 @@ int send_message (PB_MSG::Packet pckt) {
  */
 int pfc (const char *c, int color) {
 
-  printf ("\033[00;%dm%s\033[00m", color, c);
+  std::cout << "\033[00;" << color << "m" << c << "\033[00m";
+  //printf ("\033[00;%dm%s\033[00m", color, c);
   return 0;
 }
 
@@ -575,3 +580,15 @@ void sigint_handler (int s) {
   do_loop = 0;
   pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 32);
 }
+
+/*
+ * Prints usage information to user
+ */
+void usage () {
+  std::cout << "\nusage:  server [-h] [-v] [-vlite]"; 
+  std::cout << "\n    -h      prints this help page";   
+  std::cout << "\n    -v      run in verbose mode (print all queries and responses)";
+  std::cout << "\n    -vlite  prints time (and dtrace ticks) for each sent message";
+  std::cout << "\n\n";
+}
+
