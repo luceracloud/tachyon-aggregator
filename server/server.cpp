@@ -10,7 +10,7 @@
  *        -lkstat -lprotobuf -O2 -o server_release
  *
  *    CREATED:  16 JULY 2013
- *    UPDATED:  23 JULY 2013
+ *    UPDATED:  24 JULY 2013
  *
  */
 
@@ -55,6 +55,7 @@ static int dtrace_aggwalk(const dtrace_aggdata_t *data, void *arg);
 bool do_loop = 1;
 bool VERBOSE = 0; 
 bool VERBOSE2 = 0;
+const char *port = "7211";
 zmq::context_t context (1); 
 zmq::socket_t socket (context, ZMQ_PUB);
 PB_MSG::Packet msg_packet;
@@ -91,10 +92,16 @@ int main (int argc, char **argv) {
         usage();
         return 1;
       }
+      if (!strcmp(argv[i], "-p") || !strcmp(argv[i], "-P")) {
+        port = argv[i+1];
+        std::cout << "\033[00;36m . using port " << port << "\033[00m\n"; 
+      } 
     }
  
     /* Set up zmq socket */
-    socket.bind ("tcp://*:7211");
+    char buf[15];
+    sprintf(buf, "tcp://*:%s", port);
+    socket.bind (buf);
     send_message ((const char *)"Init"); 
 
     /* Protobuf stuff */
@@ -585,10 +592,11 @@ void sigint_handler (int s) {
  * Prints usage information to user
  */
 void usage () {
-  std::cout << "\nusage:  server [-h] [-v] [-vlite]"; 
-  std::cout << "\n    -h      prints this help page";   
-  std::cout << "\n    -v      run in verbose mode (print all queries and responses)";
-  std::cout << "\n    -vlite  prints time (and dtrace ticks) for each sent message";
+  std::cout << "\nusage:  server [-h] [-p NUMBER] [-v] [-vlite]"; 
+  std::cout << "\n    -h         prints this help page";
+  std::cout << "\n    -p NUMBER  use port NUMBER";
+  std::cout << "\n    -v         run in verbose mode (print all queries and responses)";
+  std::cout << "\n    -vlite     prints time (and dtrace ticks) for each sent message";
   std::cout << "\n\n";
 }
 

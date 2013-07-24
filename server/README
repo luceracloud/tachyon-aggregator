@@ -11,7 +11,7 @@
 *        -lkstat -lprotobuf -O2 -o server_release
 *
 *    CREATED:  16 JULY 2013
-*    UPDATED:  23 JULY 2013
+*    UPDATED:  24 JULY 2013
 *
 * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -44,9 +44,10 @@
 
  BINARY USAGE (built on SmartOS):
 
-  server_release [-h] [-v] [-vlite]
+  server_release [-h] [-p NUMBER] [-v] [-vlite]
 
-    -h      prints help/usage page
-    -v      runs in verbose mode (print all queries and responses/ZMQ packet)
-    -vlite  print time (and dtrace ticks (tick-4999)) for each sent message
+    -h         prints help/usage page
+    -p NUMBER  run on port NUMBER
+    -v         runs in verbose mode (print all queries and responses/ZMQ packet)
+    -vlite     print time (and dtrace ticks (tick-4999)) for each sent message
 
