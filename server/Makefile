@@ -27,16 +27,13 @@ packet.pb.cc:
 	protoc -I=. --cpp_out=. ./packet.proto
 
 ll: packet.pb.cc server.cpp scripts.h
-<<<<<<< HEAD
-		$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
-		$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release_gz
-=======
-	$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
+	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
+	$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release_gz
+
 
 rel: server_release
 	cp server_release metric/bin
 	tar zcf metric.tar.gz metric/*
->>>>>>> d994f0a80334cb9425f6cd6273193243e4f4106a
 
 clean:
 	-rm packet.pb.cc
