@@ -14,6 +14,10 @@
  *
  */
 
+// 32bit support
+#define MSB(n) (uint32_t)(n>>32) 
+#define LSB(n) (uint32_t)((n<<32)>>32) 
+
 #include <string>
 #include <iostream>
 #include <unistd.h>
@@ -27,7 +31,11 @@
 #include <dtrace.h>
 #include <zmq.hpp>       // for zmq sockets
 #include <kstat.h>       // for kstats
+#ifdef FULLBIT
+#include "packet64.pb.h" // 64bit protocol buffer header
+#else
 #include "packet.pb.h"   // protocol buffer header
+#endif
 #include "scripts.h"     // script repository
 
 /*
@@ -147,28 +155,46 @@ int main (int argc, char **argv) {
         if (retreive_kstat (S::MEM::module[i], S::MEM::name[i], S::MEM::statistic[i], -1, &value)) {
           pfc ("Failure in function \"retreive_kstat\" @memory \n", 31);
         } else {
-          if (S::MEM::statistic[i]=="physmem") {
-            msg_mem->set_physmem_1 ((uint32_t)(value>>32));
-            msg_mem->set_physmem_2 ((uint32_t)((value<<32)>>32));
-          } else if (S::MEM::statistic[i]=="rss") {
-            msg_mem->set_rss_1 ((uint32_t)(value>>32));
-            msg_mem->set_rss_2 ((uint32_t)((value<<32)>>32));
-          } else if (S::MEM::statistic[i]=="pp_kernel") {
-            msg_mem->set_pp_kernel_1 ((uint32_t)(value>>32));
-            msg_mem->set_pp_kernel_2 ((uint32_t)((value<<32)>>32));
-          } else if (S::MEM::statistic[i]=="freemem") {
-            msg_mem->set_freemem_1 ((uint32_t)(value>>32));
-            msg_mem->set_freemem_2 ((uint32_t)((value<<32)>>32));
-          } else if (S::MEM::statistic[i]=="physcap") {
-            msg_mem->set_physcap_1 ((uint32_t)(value>>32));
-            msg_mem->set_physcap_2 ((uint32_t)((value<<32)>>32));
-          } else if (S::MEM::statistic[i]=="swap") {
-            msg_mem->set_swap_1 ((uint32_t)(value>>32));
-            msg_mem->set_swap_2 ((uint32_t)((value<<32)>>32));
-          } else if (S::MEM::statistic[i]=="swapcap") {
-            msg_mem->set_swapcap_1 ((uint32_t)(value>>32));
-            msg_mem->set_swapcap_2 ((uint32_t)((value<<32)>>32));
-          }
+          #ifdef FULLBIT
+             if (S::MEM::statistic[i]=="physmem") {
+             msg_mem->set_physmem (value);
+           } else if (S::MEM::statistic[i]=="rss") {
+             msg_mem->set_rss (value);
+           } else if (S::MEM::statistic[i]=="pp_kernel") {
+             msg_mem->set_pp_kernel (value);
+            } else if (S::MEM::statistic[i]=="freemem") {
+              msg_mem->set_freemem (value);
+            } else if (S::MEM::statistic[i]=="physcap") {
+              msg_mem->set_physcap (value);
+            } else if (S::MEM::statistic[i]=="swap") {
+              msg_mem->set_swap (value);
+            } else if (S::MEM::statistic[i]=="swapcap") {
+              msg_mem->set_swapcap (value);
+            }
+          #else
+             if (S::MEM::statistic[i]=="physmem") {
+              msg_mem->set_physmem_1 (MSB(value));
+              msg_mem->set_physmem_2 (LSB(value));
+            } else if (S::MEM::statistic[i]=="rss") {
+              msg_mem->set_rss_1 (MSB(value));
+              msg_mem->set_rss_2 (LSB(value));
+            } else if (S::MEM::statistic[i]=="pp_kernel") {
+              msg_mem->set_pp_kernel_1 (MSB(value));
+              msg_mem->set_pp_kernel_2 (LSB(value));
+            } else if (S::MEM::statistic[i]=="freemem") {
+              msg_mem->set_freemem_1 (MSB(value));
+              msg_mem->set_freemem_2 (LSB(value));
+            } else if (S::MEM::statistic[i]=="physcap") {
+              msg_mem->set_physcap_1 (MSB(value));
+              msg_mem->set_physcap_2 (LSB(value));
+            } else if (S::MEM::statistic[i]=="swap") {
+              msg_mem->set_swap_1 (MSB(value));
+              msg_mem->set_swap_2 (LSB(value));
+            } else if (S::MEM::statistic[i]=="swapcap") {
+              msg_mem->set_swapcap_1 (MSB(value));
+              msg_mem->set_swapcap_2 (LSB(value));
+            }
+         #endif
 
           if (VERBOSE) printf ("Received: %u for %s\n", value, S::MEM::statistic[i].c_str());
         } 
@@ -186,18 +212,29 @@ int main (int argc, char **argv) {
             pfc ("WARN: Failure in function \"retreive_kstat\" @network \n", 33);
           } else {
             /* This is an ugly way to do this...  */
-            if (S::NET::statistic[0][i]=="obytes64") {
-              msg_net->set_obytes64_1 ((uint32_t)(value>>32));
-              msg_net->set_obytes64_2 ((uint32_t)((value<<32)>>32));
-            } else if (S::NET::statistic[0][i]=="rbytes64") {
-              msg_net->set_rbytes64_1 ((uint32_t)(value>>32));
-              msg_net->set_rbytes64_2 ((uint32_t)((value<<32)>>32));
-            } else if (S::NET::statistic[0][i]=="opackets") {
-              msg_net->set_opackets_1 ((uint32_t)(value>>32));
-              msg_net->set_opackets_2 ((uint32_t)((value<<32)>>32));
-            } else if (S::NET::statistic[0][i]=="ipackets") {
-              msg_net->set_ipackets_1 ((uint32_t)(value>>32));
-              msg_net->set_ipackets_2 ((uint32_t)((value<<32)>>32));
+            #ifdef FULLBIT
+               if (S::NET::statistic[0][i]=="obytes64") {
+                msg_net->set_obytes64 (value);
+              } else if (S::NET::statistic[0][i]=="rbytes64") {
+                msg_net->set_rbytes64 (value);
+              } else if (S::NET::statistic[0][i]=="opackets") {
+                msg_net->set_opackets (value);
+              } else if (S::NET::statistic[0][i]=="ipackets") {
+                msg_net->set_ipackets (value);
+           #else
+              if (S::NET::statistic[0][i]=="obytes64") {
+                msg_net->set_obytes64_1 (MSB(value));
+                msg_net->set_obytes64_2 (LSB(value));
+              } else if (S::NET::statistic[0][i]=="rbytes64") {
+                msg_net->set_rbytes64_1 (MSB(value));
+                msg_net->set_rbytes64_2 (LSB(value));
+              } else if (S::NET::statistic[0][i]=="opackets") {
+                msg_net->set_opackets_1 (MSB(value));
+                msg_net->set_opackets_2 (LSB(value));
+              } else if (S::NET::statistic[0][i]=="ipackets") {
+                msg_net->set_ipackets_1 (MSB(value));
+                msg_net->set_ipackets_2 (LSB(value));
+            #endif
             } else pfc ("WARN: Unexpected statistic returned @net\n", 33); 
 
             if (VERBOSE) printf ("Received: %u for %s\n", value, S::NET::statistic[instance][i].c_str());
@@ -368,10 +405,15 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
           int64_t l_range = max_quantize_range (range_cnt);
           PB_MSG::Packet_CallHeat *msg_callheat = msg_packet.add_callheat();
           msg_callheat->set_name ((std::string)"allcall");
-          msg_callheat->set_lowt_1 ((uint32_t)(l_range>>32)); 
-          msg_callheat->set_lowt_2 ((uint32_t)((l_range<<32)>>32));
-          msg_callheat->set_value_1 ((uint32_t)(agg_data[range_cnt]>>32));
-          msg_callheat->set_value_2 ((uint32_t)((agg_data[range_cnt]<<32)>>32));
+          #ifdef FULLBIT
+            msg_callheat->set_lowt (l_range); 
+            msg_callheat->set_value (agg_data[range_cnt]);
+         #else
+            msg_callheat->set_lowt_1 (MSB(l_range)); 
+            msg_callheat->set_lowt_2 (LSB(l_range));
+            msg_callheat->set_value_1 (MSB(agg_data[range_cnt]));
+            msg_callheat->set_value_2 (LSB(agg_data[range_cnt]));
+          #endif
         }
       }
     } else {
@@ -480,21 +522,32 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
     
     PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
     msg_disk->set_instance ((uint32_t)instance);
-    
-    msg_disk->set_nread_1 ((uint32_t)(kio.nread>>32));
-    msg_disk->set_nread_2 ((uint32_t)((kio.nread<<32)>>32));
-    msg_disk->set_nwritten_1 ((uint32_t)(kio.nwritten>>32));
-    msg_disk->set_nwritten_2 ((uint32_t)((kio.nwritten<<32)>>32));
-    msg_disk->set_reads ((uint32_t)kio.reads);
-    msg_disk->set_writes ((uint32_t)kio.writes);
-    msg_disk->set_wtime_1 ((uint32_t)(kio.wtime>>32));
-    msg_disk->set_wtime_2 ((uint32_t)((kio.wtime<<32)>>32));
-    msg_disk->set_wlentime_1 ((uint32_t)(kio.wlentime>>32));
-    msg_disk->set_wlentime_2 ((uint32_t)((kio.wlentime<<32)>>32));
-    msg_disk->set_rtime_1 ((uint32_t)(kio.rtime>>32));
-    msg_disk->set_rtime_2 ((uint32_t)((kio.rtime<<32)>>32));
-    msg_disk->set_rlentime_1 ((uint32_t)(kio.rlentime>>32));
-    msg_disk->set_rlentime_2 ((uint32_t)((kio.rlentime<<32)>>32));
+   
+    #ifdef FULLBIT 
+      msg_disk->set_nread (kio.nread);
+      msg_disk->set_nwritten (kio.nwritten);
+      msg_disk->set_reads (kio.reads);
+      msg_disk->set_writes (kio.writes);
+      msg_disk->set_wtime (kio.wtime);
+      msg_disk->set_wlentime (kio.wlentime);
+      msg_disk->set_rtime (kio.rtime);
+      msg_disk->set_rlentime (kio.rlentime);
+    #else
+      msg_disk->set_nread_1 (MSB(kio.nread));
+      msg_disk->set_nread_2 (LSB(kio.nread));
+      msg_disk->set_nwritten_1 (MSB(kio.nwritten));
+      msg_disk->set_nwritten_2 (LSB(kio.nwritten));
+      msg_disk->set_reads ((uint32_t)kio.reads);
+      msg_disk->set_writes ((uint32_t)kio.writes);
+      msg_disk->set_wtime_1 (MSB(kio.wtime));
+      msg_disk->set_wtime_2 (LSB(kio.wtime));
+      msg_disk->set_wlentime_1 (MSB(kio.wlentime));
+      msg_disk->set_wlentime_2 (LSB(kio.wlentime));
+      msg_disk->set_rtime_1 (MSB(kio.rtime));
+      msg_disk->set_rtime_2 (LSB(kio.rtime));
+      msg_disk->set_rlentime_1 (MSB(kio.rlentime));
+      msg_disk->set_rlentime_2 (LSB(kio.rlentime));
+    #endif
 
   } else {
 
@@ -599,6 +652,10 @@ void usage () {
   std::cout << "\n    -p NUMBER  use port NUMBER";
   std::cout << "\n    -v         run in verbose mode (print all queries and responses)";
   std::cout << "\n    -vlite     prints time (and dtrace ticks) for each sent message";
+#ifdef FULLBIT
+#else
+  std::cout << "\n\nThis version of the server uses 32bit protocol buffer values.";
+#endif
   std::cout << "\n\n";
 }
 
