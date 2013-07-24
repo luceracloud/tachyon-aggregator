@@ -21,35 +21,42 @@
 namespace S {
 
   namespace MEM {
-    int number = MEM_NUM; 
+    size_t number = MEM_NUM; 
     std::string module[ MEM_NUM ] = { "unix", "unix", "unix", "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
     std::string name[ MEM_NUM ] = { "system_pages", "system_pages", "system_pages", "NULL", "NULL", "NULL", "NULL" };
     std::string statistic[ MEM_NUM ] = { "freemem", "physmem", "pp_kernel", "physcap", "rss", "swap", "swapcap" };      
   } 
 
   namespace NET {
-    int number = NET_NUM;
+    size_t number = NET_NUM;
 #ifdef ZONE
-    std::string module[ NET_NUM ] = { "link", "link", "link", "link" };
-    std::string name[ NET_NUM ] = { "net0", "net0", "net0", "net0" };
-    std::string statistic[ NET_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets" }; 
-#else    
-    std::string module[ NET_NUM ] = { "link", "link", "link", "link", "link", "link", "link", "link" };
-    std::string name[ NET_NUM ] = { "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0",
-                                    "int0", "int0", "int0", "int0" };
-    std::string statistic[ NET_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets", "obytes64", "rbytes64", "opackets", "ipackets" }; 
+    size_t num_instance = 1;
+    std::string module[1][ NET_NUM ] = { { "link", "link", "link", "link" } };
+    std::string name[1][ NET_NUM ] = { { "net0", "net0", "net0", "net0" } };
+    std::string statistic[1][ NET_NUM ] = { { "obytes64", "rbytes64", "opackets", "ipackets" } }; 
+#else
+    size_t num_instance = 2;
+    std::string module[2][ NET_NUM ] = {
+    { "link", "link", "link", "link" },
+    { "link", "link", "link", "link" } };
+    std::string name[2][ NET_NUM ] = {
+    { "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0" },
+    { "int0", "int0", "int0", "int0" } };
+    std::string statistic[2][ NET_NUM ] = {
+    { "obytes64", "rbytes64", "opackets", "ipackets" },
+    { "obytes64", "rbytes64", "opackets", "ipackets" } }; 
 #endif
   }
 
   namespace DISK {
-    int number = DISK_NUM;
+    size_t number = DISK_NUM;
     std::string module[ MEM_NUM ] = { "sd", "sd", "sd", "sd", "sd", "sd" };
     std::string name[ MEM_NUM ] = { "NULL", "NULL", "NULL", "NULL", "NULL", "NULL" };
     std::string statistic[ MEM_NUM ] = { "nread", "nwritten", "reads", "writes", "wtime", "wlentime" };      
   }
   
   namespace DTRACE {
-    int number = DTRACE_NUM;
+    size_t number = DTRACE_NUM;
   
     std::string dtrace[DTRACE_NUM] = {
       (std::string)"profile:::profile-4999\n{\n@[0,cpu] = count();\n}",

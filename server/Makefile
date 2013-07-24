@@ -25,7 +25,8 @@ packet.pb.cc:
 		protoc -I=. --cpp_out=. ./packet.proto
 
 ll: packet.pb.cc server.cpp scripts.h
-		$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
+		$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
+		$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release_gz
 
 clean:
 		-rm packet.pb.cc

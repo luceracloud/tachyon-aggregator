@@ -28,7 +28,7 @@
     v2.5.0 used with binary included in this directory
   libzmq - Zero MQ 
     latest release from: http://www.zeromq.org/intro:get-the-software
-    v3.2.3 used with binary included in this directory
+    v2.2.0 used with binary included in this directory
 
 
  As an alternative to the "COMPILE WITH:" instructions above, use the
@@ -36,10 +36,10 @@
  run `make proto'. To compile only the server, run `make server'. Running
  `make clean' removes previous build of the software.
 
-
- The server is currently configured to run on port 7211 using ZMQ's
- PUB (publish) configuration. Future versions will include the ability
- to change port binding.
+  
+ The server defaults to using port 7211. Also note that the server makes
+ use of 32bit values for protocol buffers as of now (so that node can
+ easily parse the data).
 
 
  BINARY USAGE (built on SmartOS):

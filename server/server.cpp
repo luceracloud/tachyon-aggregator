@@ -177,29 +177,30 @@ int main (int argc, char **argv) {
       /* Network */
       int instance;
       /* Allow for instance loop for future dev */
-      for (instance=0; instance<1; instance++) {
+      for (instance=0; instance<S::NET::num_instance; instance++) {
         PB_MSG::Packet_Net *msg_net = msg_packet.add_net();
-        msg_net->set_instance ("net0");
+        msg_net->set_instance (S::NET::name[instance][i].c_str());
         for (i=0; i<S::NET::number; i++) {
-          if (retreive_kstat (S::NET::module[i], S::NET::name[i], S::NET::statistic[i], -1, &value)) {
+          if (retreive_kstat (S::NET::module[instance][i], S::NET::name[instance][i],
+                       S::NET::statistic[instance][i], -1, &value)) {
             pfc ("WARN: Failure in function \"retreive_kstat\" @network \n", 33);
           } else {
             /* This is an ugly way to do this...  */
-            if (S::NET::statistic[i]=="obytes64") {
+            if (S::NET::statistic[0][i]=="obytes64") {
               msg_net->set_obytes64_1 ((uint32_t)(value>>32));
               msg_net->set_obytes64_2 ((uint32_t)((value<<32)>>32));
-            } else if (S::NET::statistic[i]=="rbytes64") {
+            } else if (S::NET::statistic[0][i]=="rbytes64") {
               msg_net->set_rbytes64_1 ((uint32_t)(value>>32));
               msg_net->set_rbytes64_2 ((uint32_t)((value<<32)>>32));
-            } else if (S::NET::statistic[i]=="opackets") {
+            } else if (S::NET::statistic[0][i]=="opackets") {
               msg_net->set_opackets_1 ((uint32_t)(value>>32));
               msg_net->set_opackets_2 ((uint32_t)((value<<32)>>32));
-            } else if (S::NET::statistic[i]=="ipackets") {
+            } else if (S::NET::statistic[0][i]=="ipackets") {
               msg_net->set_ipackets_1 ((uint32_t)(value>>32));
               msg_net->set_ipackets_2 ((uint32_t)((value<<32)>>32));
             } else pfc ("WARN: Unexpected statistic returned @net\n", 33); 
 
-            if (VERBOSE) printf ("Received: %u for %s\n", value, S::NET::statistic[i].c_str());
+            if (VERBOSE) printf ("Received: %u for %s\n", value, S::NET::statistic[instance][i].c_str());
           }
         }
       }
@@ -455,7 +456,8 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
   } 
 
   if (ksp == NULL) {
-    pfc ( "ksp @439 returned NULL\n", 31 );
+    std::cout << "Fail on: " << module << " " << name << " " << statistic;
+    pfc ( "\nksp @439 returned NULL\n", 31 );
   }
 
   /* If we're reading a KSTAT_TYPE_IO file, we have
