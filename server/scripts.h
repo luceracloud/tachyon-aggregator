@@ -10,7 +10,11 @@
  */
     
 #define MEM_NUM 7
+#ifdef ZONE
 #define NET_NUM 4
+#else
+#define NET_NUM 8
+#endif
 #define DISK_NUM 6
 #define DTRACE_NUM 4
 
@@ -25,9 +29,16 @@ namespace S {
 
   namespace NET {
     int number = NET_NUM;
+#ifdef ZONE
     std::string module[ NET_NUM ] = { "link", "link", "link", "link" };
     std::string name[ NET_NUM ] = { "net0", "net0", "net0", "net0" };
-    std::string statistic[ NET_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets" };      
+    std::string statistic[ NET_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets" }; 
+#else    
+    std::string module[ NET_NUM ] = { "link", "link", "link", "link", "link", "link", "link", "link" };
+    std::string name[ NET_NUM ] = { "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0",
+                                    "int0", "int0", "int0", "int0" };
+    std::string statistic[ NET_NUM ] = { "obytes64", "rbytes64", "opackets", "ipackets", "obytes64", "rbytes64", "opackets", "ipackets" }; 
+#endif
   }
 
   namespace DISK {
