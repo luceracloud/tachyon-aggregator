@@ -25,7 +25,6 @@ ll: packet.pb.cc server.cpp scripts.h
 		$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
 
 clean:
-		rm packet.pb.cc
-		rm packet.pb.h
-		rm server_release
-	
+		-rm packet.pb.cc
+		-rm packet.pb.h
+		-rm server_release
