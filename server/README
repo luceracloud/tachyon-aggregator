@@ -21,8 +21,8 @@
 
  Dependencies for build from scratch include:
 
-  libdtrace (native to SmartOS)
-  libkstat  (native to SmartOS)
+  libdtrace (native on SmartOS)
+  libkstat  (native on SmartOS)
   libprotobuf - Google's Protocol Buffers
     latest release from: https://code.google.com/p/protobuf/downloads/list
     v2.5.0 used with binary included in this directory
@@ -42,7 +42,7 @@
  to change port binding.
 
 
- BINARY USAGE:
+ BINARY USAGE (built on SmartOS):
 
   server_release [-h] [-v] [-vlite]
 
