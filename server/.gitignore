@@ -2,3 +2,4 @@ packet.pb.cc
 packet.pb.h
 server_release
 server_release_zone
+metric.tar.gz
