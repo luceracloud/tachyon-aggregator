@@ -37,9 +37,7 @@
  `make clean' removes previous build of the software.
 
   
- The server defaults to using port 7211. Also note that the server makes
- use of 32bit values for protocol buffers as of now (so that node can
- easily parse the data).
+ The server defaults to using port 7211.
 
 
  BINARY USAGE (built on SmartOS):
