@@ -13,7 +13,10 @@ LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf
 LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/lib
 
 # Instructions
-all: server_release
+all: server_release server_release_zone
+
+server_release_zone: server.cpp scripts.h packet.pb.cc
+		$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS_LCL) -O2 -o server_release_zone
 
 server_release: server.cpp scripts.h packet.pb.cc
 		$(CC) server.cpp packet.pb.cc $(LDFLAGS_LCL) -O2 -o server_release 
