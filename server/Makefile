@@ -7,15 +7,15 @@
 # Compiler
 CC=g++
 # Libraries
-LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf
+LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/lib
 
 # Instructions
-all: proto server
+all: server
 
-server:
+server: packet.pb.cc
 		$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release 
 
-proto:
+packet.pb.cc:
 		protoc -I=. --cpp_out=. ./packet.proto
 
 clean:
