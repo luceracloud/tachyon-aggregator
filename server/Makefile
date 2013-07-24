@@ -10,9 +10,9 @@ CC=g++
 LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/lib
 
 # Instructions
-all: server
+all: server_release
 
-server: packet.pb.cc
+server_release: server.cpp scripts.h packet.pb.cc
 		$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release 
 
 packet.pb.cc:
