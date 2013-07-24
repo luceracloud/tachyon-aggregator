@@ -1,8 +1,0 @@
-package messages;
-
-message Entry {
-
-  optional string name = 1;
-  optional uint32 age  = 2;
-
-}
