@@ -10,7 +10,7 @@
 
 /* Include relevant libraries */
 var zmq = require('zmq');
-var sock = zmq.socket('pull');
+var sock = zmq.socket('sub');
 var redis = require("redis");
 var ProtoBuf = require('protobufjs');
 var Long = require("long");
@@ -19,6 +19,7 @@ var count = 0;
 
 /* Connect to redis server */
 client = redis.createClient();
+sock.subscribe("");
 sock.connect('tcp://127.0.0.1:7211');
 console.log('\033[00;31mWorker connected to port 7200\033[00m');
 
@@ -62,6 +63,7 @@ new cronJob('0 * * * * *', function(){
 // Takes in the data from the c++ zmq server
 sock.on('message', function(msg) {
   var message = Packet.decode(msg);
+//  console.log(message);
   time = message.time["low"];  
   database.push(message.time["low"]);
  
@@ -75,11 +77,14 @@ sock.on('message', function(msg) {
 
 //Some data requires subtraction from previous data, so the first data set is not printed
   if(count > 0); {
+
+    client.hmset("" + time, "Sys ticks", "" + message.ticks);
+
     while(typeof(message.process[i]) != "undefined") {
+      client.hmset("" + time, "Pro CPU " + i, "" + message.process[i]["cpu"]);
       client.hmset("" + time, "Pro PID " + i, "" + message.process[i]["pid"]);
       client.hmset("" + time, "Pro execname " + i, "" + message.process[i]["execname"]);
       client.hmset("" + time, "Pro Usage " + i, "" + message.process[i]["usage"]);
-      client.hmset("" + time, "Pro CPU " + i, "" + message.process[i]["cpu"]);
       i++;
     }
 
@@ -90,7 +95,6 @@ sock.on('message', function(msg) {
       i++;
     }
 
-    client.hmset("" + time, "Sys ticks", "" + message.ticks);
     client.hmset("" + time, "Mem physmem", "" + new Long(message.mem[0]["physmem_2"], message.mem[0]["physmem_1"]).toNumber());
     client.hmset("" + time, "Mem rss", "" + new Long(message.mem[0]["rss_2"], message.mem[0]["rss_1"]).toNumber());
     client.hmset("" + time, "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"], message.mem[0]["pp_kernel_1"]).toNumber());
