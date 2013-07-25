@@ -1,0 +1,12 @@
+{application, erlaggregator,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { erlaggregator_app, []}},
+  {env, []}
+ ]}.
