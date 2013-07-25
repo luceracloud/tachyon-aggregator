@@ -7,6 +7,13 @@
  *    this program decodes it, if not the
  *    raw message is printed.
  *
+ *    Can be used to verify that server is
+ *    working as expected.
+ *
+ *    Requires:
+ *       zmq         | npm install zmq
+ *       protobufjs  | npm install protobufjs
+ *
  *  CREATED:  17 JULY 2013
  *  UPDATED:  17 JULY 2013
  */ 

@@ -9,6 +9,7 @@
  */
 
 /* Include relevant libraries */
+console.log(process.argv);
 var zmq = require('zmq');
 var sock = zmq.socket('sub');
 var redis = require("redis");
@@ -24,7 +25,7 @@ sock.connect('tcp://127.0.0.1:7211');
 console.log('\033[00;31mWorker connected to port 7200\033[00m');
 
 /* Build communication protocol */
-var Packet = ProtoBuf.protoFromFile("packet.proto_new").build("PB_MSG.Packet");
+var Packet = ProtoBuf.protoFromFile("packet.proto").build("PB_MSG.Packet");
 
 /* Variable inits and defns */
 var database = new Array();
