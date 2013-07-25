@@ -1,9 +1,8 @@
 // Sending commands in response to other commands.
 // This example runs "type" against every key in the database
-
+console.log (process.argv);
 // Edit the config Redis File to match the folder that is going to be queried
 var fs = require('fs');
-
 var sys = require('sys');
 var exec = require('child_process').exec;
 
@@ -21,23 +20,31 @@ var quant = new Array();
 var cpu = new Array(numCores);
 var client;
 
-function createClient()
-{
-  client = require("redis").createClient(6380);
-}
 
 function startServer(i) {
   console.log("Start Server");
+  try {
   var a = fs.readdirSync('/opt/tools/redis/redis-2.6.14/src/snapshots');
   fs.open('/opt/tools/redis/redis-2.6.14/redis.conf2', 'a', function(err, fd) {
-    fs.write(fd, a[i], 5183, 18);
-  fs.close(fd);
+    fs.writeSync(fd, a[i], 5183, 18);
+  fs.closeSync(fd);
   });
-  
+  }
+ 
+  catch(err)
+  { }
+
+  finally {
+  fs.open('/opt/tools/redis/redis-2.6.14/redis.conf2', 'a', function(err, fd) {
+  fs.closeSync(fd);
+  });
   var cmd = "sh /opt/tools/redis/redis-2.6.14/src/run2";
   var child = exec(cmd, function(error, stdout, stderr) { });
-  createClient();
+ 
+  client = require("redis").createClient(6380);
+  }
 }
+
 
 // For the CallHeat function. Creates the chart to display the quantization
 function appendArray(pose, res, pos, size) {
@@ -356,7 +363,12 @@ function printData(times) {
 
 var arr = [7, 12];
 
-startServer(3);
+
+// console.log (process.argv.forEach(function (val, index, array) { console.log(val); } );
+
+
+
+startServer(2);
 process(arr);
 //startServer(2);
 //process(arr);
