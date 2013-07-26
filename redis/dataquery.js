@@ -3,34 +3,37 @@
 var fs = require('fs');
 var sys = require('sys');
 var exec = require('child_process').exec;
-var redis = require('redis');
 
 // Creates the Redis Client and all other global variables needed
+var a = fs.readdirSync('/opt/tools/redis/redis-2.6.14/src/snapshots');
 var multi = new Array();
 var types = new Array();
 var time = new Array();
 var numCores = 16;
-var total = 0;
-var max = 0;
-var counts = 0;
 var finished = false;
 var quant = new Array();
 var cpu = new Array(numCores);
 var client;
+console.log(client);
 var args = 0;
-var calls = [myprocess, shutDown, callHeat, end];
+var calls = [genStats, shutDown, startServer, myprocess, shutDown, startServer, myprocess, end];
 var arr = new Array(calls.length);
-arr[0] = [4,3,2];
-arr[1] = [3];
-arr[2] = [];
-arr[3] = [];
-startServer(7, createServer, createClient);
+arr[0] = ["Net", "rbytes64"];
+arr[1] = [];
+arr[2] = [1, createServer2, createClient];
+arr[3] = [1];
+arr[4] = [];
+arr[5] = [2, createServer2, createClient];
+arr[6] = [1];
+arr[7] = [];
+var begin = [3, createServer1, createClient];
+startServer(begin);
 
-
-function startServer (i, callback, cb) {
+function startServer (data) {
   console.log("Start Server");
-
-  var a = fs.readdirSync('/opt/tools/redis/redis-2.6.14/src/snapshots');
+  i = data[0];
+  callback = data[1];
+  cb = data[2];
   fs.open('/opt/tools/redis/redis-2.6.14/redis.conf2', 'a', function(err, fd) {
     fs.writeSync(fd, a[i], 5183, 18);
     fs.closeSync(fd);
@@ -39,19 +42,25 @@ function startServer (i, callback, cb) {
   });
 }
 
-function createServer (cb) {
+function createServer1 (cb) {
+  console.log("a");
   var cmd = "sh /opt/tools/redis/redis-2.6.14/src/run2";
   var child = exec(cmd, function(error, stdout, stderr) {
   });
   cb();
 }
 
+function createServer2 (cb) {
+  console.log("b");
+  var cmd2 = "sh /opt/tools/redis/redis-2.6.14/src/run2";
+  var child2 = exec(cmd2, function(error, stdout, stderr) {
+  });
+  setTimeout(cb, 50);
+}
+
 function createClient() {
   console.log(":(");
-  client = redis.createClient(6380);
-  client.config-get("dbfilename", function(err, res) {
-  console.log(res);
-  });
+  client = require("redis").createClient(6380);
   var func = calls[0];
   calls.splice(0,1);
   func(arr[args++] , calls);
@@ -162,9 +171,13 @@ function getStat(data, cb) {
 // Generates Max, Average and counts for dataset
 
 function genStats(data, cb) {
+  console.log(data);
   section = data[0];
   stat = data[1];
   instance = data[2];
+  var total = 0;
+  var max = 0;
+  var counts = 0; 
   client.keys("*", function (err, keys) {
   keys.sort(function(a,b){return a - b});   
 
@@ -206,14 +219,14 @@ function genStats(data, cb) {
     console.log("max   " + max); 
     console.log("count " + (counts));
     
-        var func = cb[0];
-          cb.splice(0,1);
-          if(cb.length == 0) {
-            func(arr[args++]);
-          }
-          else {
-            func(arr[args++], cb);
-          } 
+    var func = cb[0];
+    cb.splice(0,1);
+    if(cb.length == 0) {
+      func(arr[args++]);
+      }
+    else {
+      func(arr[args++], cb);
+      } 
     
   }
   });      
@@ -222,10 +235,16 @@ function genStats(data, cb) {
 }
 
 function shutDown(data, cb) {
-  var cp = data[0]
   client.shutdown();
   client.quit();
-  startServer(2, createServer, createClient);
+  var func = cb[0];
+  cb.splice(0,1);
+  if(cb.length == 0) {
+    func(arr[args++]);
+    }
+  else {
+    func(arr[args++], cb);
+    }
 }
 
 function end() {
