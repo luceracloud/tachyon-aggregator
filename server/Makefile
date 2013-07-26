@@ -12,7 +12,7 @@
 # Compiler
 CC=g++
 # Libraries
-LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf
+LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf -lfastbit
 LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/lib
 
 .PHONY: rel
@@ -45,6 +45,9 @@ ll: packet.pb.cc packet64.pb.cc server.cpp scripts.h
 	$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release_gz
 	$(CC) -DFULLBIT -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server64_release
 	$(CC) -DFULLBIT server.cpp packet64.pb.cc $(LDFLAGS) -O2 -o server64_release_gz
+
+llf: packet.pb.cc server.cpp scripts.h
+	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
 
 rel: server_release
 	cp server_release metric/bin

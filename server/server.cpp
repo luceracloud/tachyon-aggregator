@@ -10,7 +10,7 @@
  *        -lkstat -lprotobuf -O2 -o server_release
  *
  *    CREATED:  16 JULY 2013
- *    UPDATED:  24 JULY 2013
+ *    UPDATED:  26 JULY 2013
  *
  */
 
@@ -37,6 +37,8 @@
 #include "packet.pb.h"   // protocol buffer header
 #endif
 #include "scripts.h"     // script repository
+#include <ibis.h>
+#include "fastbit.h"     // fastbit functions
 
 /*
  * Note the existence of:
@@ -130,6 +132,20 @@ int main (int argc, char **argv) {
     kc = kstat_open();
     uint64_t value;
     uint64_t st = time (NULL);  // start time
+
+    /* Set up ibis:: */
+    ibis::init();
+    ibis::gVerbose = VERBOSE;
+    ibis::tablex *tbl = 0;
+    tbl = ibis::tablex::create();
+    std::string column_format = "";
+    std::ostringstream new_line;
+    time_t last_save = 0;
+    time_t save_rate = 3600;  // How often to save (in seconds);
+    if (FASTBIT::load_config ("./db.conf", &column_format, tbl)) {
+      pfc ("ERROR: Unable to load fastbit configruation file. Aborting.\n", 31);
+      exit (1);
+    }
 
     pfc ("\n Server online!", 31);
     printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
@@ -278,7 +294,32 @@ int main (int argc, char **argv) {
         print_message (msg_packet);
       }
       send_message (msg_packet);
+     
+      /* Add message data to fastbit database */
+      new_line.str("");
+      new_line.clear();
+
+   //   printf ("\n\n\n");      
+   //   std::cout << column_format << std::endl;
+   //   printf ("\n\n\n");
+
+      FASTBIT::read_gen (&msg_packet, &new_line);
+      FASTBIT::read_mem (&msg_packet, &new_line); 
+      FASTBIT::read_cpu (&msg_packet, &new_line);
+      FASTBIT::read_disk (&msg_packet, &new_line);
+      FASTBIT::read_net (&msg_packet, &new_line);
+      FASTBIT::read_proc (&msg_packet, &new_line);   
+   //std::cout << new_line.str() << std::endl;
       
+      tbl->appendRow ((const char *)new_line.str().c_str());
+      
+      /* Consider saving fastbit table */
+      if (msg_packet.time()-last_save > save_rate && msg_packet.time()%save_rate < 10) {
+        // Save within ~10 of save_rate alignment
+        pfc ("Saving database now...\n", 37);
+        last_save = msg_packet.time();
+      }
+ 
       sleep (1);
     }
 
@@ -391,7 +432,8 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
     } else if (data.type==2) {
       if (i==2) {
         msg_packet.set_ticks ((uint32_t)*((uint64_t *)addr));
-        if (VERBOSE2) printf("%2d:%2d | ticks %d\n", (time(NULL)/60)%60, time(NULL)%60, msg_packet.ticks()); 
+        if (VERBOSE2) printf("UTC %2d:%2d:%2d | ticks (last cycle) %d\n", (time(NULL)/3600)%24,
+            (time(NULL)/60)%60, time(NULL)%60, msg_packet.ticks()); 
       }
     } else if (data.type==3) {
       if (rec->dtrd_action == DTRACEAGG_QUANTIZE) {
