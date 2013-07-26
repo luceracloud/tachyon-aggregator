@@ -116,9 +116,9 @@ int main (int argc, char **argv) {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     
     /* Dtrace init */
-    dtrace_hdl_t *g_dtp[S::DTRACE::number]; 
-    for (i=0; i<S::DTRACE::number; i++) {
-      dtrace_init (&g_dtp[i], S::DTRACE::dtrace[i]);
+    dtrace_hdl_t *g_dtp[DTRACE::number]; 
+    for (i=0; i<DTRACE::number; i++) {
+      dtrace_init (&g_dtp[i], DTRACE::dtrace[i]);
       dtrace_setopts (&g_dtp[i]);
       if (dtrace_go (g_dtp[i])) {
         pfc ("ERROR: Unable to start dtrace script\n", 31);
@@ -151,93 +151,93 @@ int main (int argc, char **argv) {
 
       /* Memory */
       PB_MSG::Packet_Mem *msg_mem = msg_packet.add_mem();
-      for (i=0; i<S::MEM::number; i++) {
-        if (retreive_kstat (S::MEM::module[i], S::MEM::name[i], S::MEM::statistic[i], -1, &value)) {
+      for (i=0; i<MEM::number; i++) {
+        if (retreive_kstat (MEM::module[i], MEM::name[i], MEM::statistic[i], -1, &value)) {
           pfc ("Failure in function \"retreive_kstat\" @memory \n", 31);
         } else {
           #ifdef FULLBIT
-             if (S::MEM::statistic[i]=="physmem") {
+             if (MEM::statistic[i]=="physmem") {
              msg_mem->set_physmem (value);
-           } else if (S::MEM::statistic[i]=="rss") {
+           } else if (MEM::statistic[i]=="rss") {
              msg_mem->set_rss (value);
-           } else if (S::MEM::statistic[i]=="pp_kernel") {
+           } else if (MEM::statistic[i]=="pp_kernel") {
              msg_mem->set_pp_kernel (value);
-            } else if (S::MEM::statistic[i]=="freemem") {
+            } else if (MEM::statistic[i]=="freemem") {
               msg_mem->set_freemem (value);
-            } else if (S::MEM::statistic[i]=="physcap") {
+            } else if (MEM::statistic[i]=="physcap") {
               msg_mem->set_physcap (value);
-            } else if (S::MEM::statistic[i]=="swap") {
+            } else if (MEM::statistic[i]=="swap") {
               msg_mem->set_swap (value);
-            } else if (S::MEM::statistic[i]=="swapcap") {
+            } else if (MEM::statistic[i]=="swapcap") {
               msg_mem->set_swapcap (value);
             }
           #else
-             if (S::MEM::statistic[i]=="physmem") {
+             if (MEM::statistic[i]=="physmem") {
               msg_mem->set_physmem_1 (MSB(value));
               msg_mem->set_physmem_2 (LSB(value));
-            } else if (S::MEM::statistic[i]=="rss") {
+            } else if (MEM::statistic[i]=="rss") {
               msg_mem->set_rss_1 (MSB(value));
               msg_mem->set_rss_2 (LSB(value));
-            } else if (S::MEM::statistic[i]=="pp_kernel") {
+            } else if (MEM::statistic[i]=="pp_kernel") {
               msg_mem->set_pp_kernel_1 (MSB(value));
               msg_mem->set_pp_kernel_2 (LSB(value));
-            } else if (S::MEM::statistic[i]=="freemem") {
+            } else if (MEM::statistic[i]=="freemem") {
               msg_mem->set_freemem_1 (MSB(value));
               msg_mem->set_freemem_2 (LSB(value));
-            } else if (S::MEM::statistic[i]=="physcap") {
+            } else if (MEM::statistic[i]=="physcap") {
               msg_mem->set_physcap_1 (MSB(value));
               msg_mem->set_physcap_2 (LSB(value));
-            } else if (S::MEM::statistic[i]=="swap") {
+            } else if (MEM::statistic[i]=="swap") {
               msg_mem->set_swap_1 (MSB(value));
               msg_mem->set_swap_2 (LSB(value));
-            } else if (S::MEM::statistic[i]=="swapcap") {
+            } else if (MEM::statistic[i]=="swapcap") {
               msg_mem->set_swapcap_1 (MSB(value));
               msg_mem->set_swapcap_2 (LSB(value));
             }
          #endif
 
-          if (VERBOSE) printf ("Received: %u for %s\n", value, S::MEM::statistic[i].c_str());
+          if (VERBOSE) printf ("Received: %u for %s\n", value, MEM::statistic[i].c_str());
         } 
       }
 
       /* Network */
       int instance;
       /* Allow for instance loop for future dev */
-      for (instance=0; instance<S::NET::num_instance; instance++) {
+      for (instance=0; instance<NET::num_instance; instance++) {
         PB_MSG::Packet_Net *msg_net = msg_packet.add_net();
-        msg_net->set_instance (S::NET::name[instance][i].c_str());
-        for (i=0; i<S::NET::number; i++) {
-          if (retreive_kstat (S::NET::module[instance][i], S::NET::name[instance][i],
-                       S::NET::statistic[instance][i], -1, &value)) {
+        msg_net->set_instance (NET::name[instance][i].c_str());
+        for (i=0; i<NET::number; i++) {
+          if (retreive_kstat (NET::module[instance][i], NET::name[instance][i],
+                       NET::statistic[instance][i], -1, &value)) {
             pfc ("WARN: Failure in function \"retreive_kstat\" @network \n", 33);
           } else {
             /* This is an ugly way to do this...  */
             #ifdef FULLBIT
-               if (S::NET::statistic[0][i]=="obytes64") {
+               if (NET::statistic[0][i]=="obytes64") {
                 msg_net->set_obytes64 (value);
-              } else if (S::NET::statistic[0][i]=="rbytes64") {
+              } else if (NET::statistic[0][i]=="rbytes64") {
                 msg_net->set_rbytes64 (value);
-              } else if (S::NET::statistic[0][i]=="opackets") {
+              } else if (NET::statistic[0][i]=="opackets") {
                 msg_net->set_opackets (value);
-              } else if (S::NET::statistic[0][i]=="ipackets") {
+              } else if (NET::statistic[0][i]=="ipackets") {
                 msg_net->set_ipackets (value);
            #else
-              if (S::NET::statistic[0][i]=="obytes64") {
+              if (NET::statistic[0][i]=="obytes64") {
                 msg_net->set_obytes64_1 (MSB(value));
                 msg_net->set_obytes64_2 (LSB(value));
-              } else if (S::NET::statistic[0][i]=="rbytes64") {
+              } else if (NET::statistic[0][i]=="rbytes64") {
                 msg_net->set_rbytes64_1 (MSB(value));
                 msg_net->set_rbytes64_2 (LSB(value));
-              } else if (S::NET::statistic[0][i]=="opackets") {
+              } else if (NET::statistic[0][i]=="opackets") {
                 msg_net->set_opackets_1 (MSB(value));
                 msg_net->set_opackets_2 (LSB(value));
-              } else if (S::NET::statistic[0][i]=="ipackets") {
+              } else if (NET::statistic[0][i]=="ipackets") {
                 msg_net->set_ipackets_1 (MSB(value));
                 msg_net->set_ipackets_2 (LSB(value));
             #endif
             } else pfc ("WARN: Unexpected statistic returned @net\n", 33); 
 
-            if (VERBOSE) printf ("Received: %u for %s\n", value, S::NET::statistic[instance][i].c_str());
+            if (VERBOSE) printf ("Received: %u for %s\n", value, NET::statistic[instance][i].c_str());
           }
         }
       }
@@ -261,7 +261,7 @@ int main (int argc, char **argv) {
       }
  
       /* Do dtrace look-ups */
-      for (i=0; i<S::DTRACE::number; i++) {
+      for (i=0; i<DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
         if (dtrace_aggregate_snap (g_dtp[i]) != 0) {
           pfc ("WARN: Failed to snap aggregate\n", 33);
@@ -282,7 +282,7 @@ int main (int argc, char **argv) {
       sleep (1);
     }
 
-    for (size_t scpt=0; scpt<S::DTRACE::number; scpt++) {
+    for (size_t scpt=0; scpt<DTRACE::number; scpt++) {
       dtrace_close (g_dtp[scpt]); 
     }
     pfc (" . dtrace scripts killed\n\n", 36);
