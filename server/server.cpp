@@ -10,7 +10,7 @@
  *        -lkstat -lprotobuf -O2 -o server_release
  *
  *    CREATED:  16 JULY 2013
- *    UPDATED:  26 JULY 2013
+ *    UPDATED:  29 JULY 2013
  *
  */
 
@@ -65,6 +65,7 @@ static int dtrace_aggwalk(const dtrace_aggdata_t *data, void *arg);
 bool do_loop = 1;
 bool VERBOSE = 0; 
 bool VERBOSE2 = 0;
+bool QUIET = 0;
 const char *port = "7211";
 zmq::context_t context (1); 
 zmq::socket_t socket (context, ZMQ_PUB);
@@ -89,23 +90,27 @@ int main (int argc, char **argv) {
     size_t i=0;
     for (i=0; i<argc; i++) {
       if (VERBOSE) printf ( "Argument %s\n", argv[i]);
-      if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "-V")) {
+      if (!strcmp (argv[i], "-v") || !strcmp (argv[i], "-V")) {
         pfc (" . running in verbose mode\n", 36);
         VERBOSE = 1;
       }
-      if (!strcmp(argv[i], "-vlite")) {
+      if (!strcmp (argv[i], "-vlite")) {
         pfc (" . running in light verbose mode\n", 36);
         VERBOSE2 = 1;
       }
-      if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "-H")) {
+      if (!strcmp (argv[i], "-h") || !strcmp (argv[i], "-H")) {
         pfc (" . printing usage information\n", 36);
         usage();
         return 1;
       }
-      if (!strcmp(argv[i], "-p") || !strcmp(argv[i], "-P")) {
+      if (!strcmp (argv[i], "-p") || !strcmp (argv[i], "-P")) {
         port = argv[i+1];
         std::cout << "\033[00;36m . using port " << port << "\033[00m\n"; 
-      } 
+      }
+      if (!strcmp(argv[i], "-q") || !strcmp (argv[i], "-Q")) {
+        QUIET = 1;
+        std::cout << "\033[00;36m . running in quiet mode\033[00m\n";
+      }
     }
  
     /* Set up zmq socket */
@@ -221,7 +226,7 @@ int main (int argc, char **argv) {
       /* Allow for instance loop for future dev */
       for (instance=0; instance<NET::num_instance; instance++) {
         PB_MSG::Packet_Net *msg_net = msg_packet.add_net();
-        msg_net->set_instance (NET::name[instance][i].c_str());
+        msg_net->set_instance (NET::name[instance][0].c_str());
         for (i=0; i<NET::number; i++) {
           if (retreive_kstat (NET::module[instance][i], NET::name[instance][i],
                        NET::statistic[instance][i], -1, &value)) {
@@ -229,7 +234,7 @@ int main (int argc, char **argv) {
           } else {
             /* This is an ugly way to do this...  */
             #ifdef FULLBIT
-               if (NET::statistic[0][i]=="obytes64") {
+              if (NET::statistic[0][i]=="obytes64") {
                 msg_net->set_obytes64 (value);
               } else if (NET::statistic[0][i]=="rbytes64") {
                 msg_net->set_rbytes64 (value);
@@ -250,8 +255,15 @@ int main (int argc, char **argv) {
               } else if (NET::statistic[0][i]=="ipackets") {
                 msg_net->set_ipackets_1 (MSB(value));
                 msg_net->set_ipackets_2 (LSB(value));
-            #endif
-            } else pfc ("WARN: Unexpected statistic returned @net\n", 33); 
+            #endif 
+            } else if (NET::statistic[0][i]=="ierrors") {
+              msg_net->set_ierrors ((uint32_t)value);
+            } else if (NET::statistic[0][i]=="oerrors") {
+              msg_net->set_oerrors ((uint32_t)value);
+            } else {
+              pfc ("WARN: Unexpected statistic returned @net\n", 33);
+              std::cout << "Statistic: " << NET::statistic[0][i] << std::endl;
+            }
 
             if (VERBOSE) printf ("Received: %u for %s\n", value, NET::statistic[instance][i].c_str());
           }
@@ -293,15 +305,14 @@ int main (int argc, char **argv) {
       if (VERBOSE) {
         print_message (msg_packet);
       }
-      send_message (msg_packet);
+
+      /* TODO Optimze this */
+      if (!QUIET) send_message (msg_packet);
+      else tbl->describe (std::cout);
      
       /* Add message data to fastbit database */
       new_line.str("");
       new_line.clear();
-
-   //   printf ("\n\n\n");      
-   //   std::cout << column_format << std::endl;
-   //   printf ("\n\n\n");
 
       FASTBIT::read_gen (&msg_packet, &new_line);
       FASTBIT::read_mem (&msg_packet, &new_line); 
@@ -309,8 +320,6 @@ int main (int argc, char **argv) {
       FASTBIT::read_disk (&msg_packet, &new_line);
       FASTBIT::read_net (&msg_packet, &new_line);
       FASTBIT::read_proc (&msg_packet, &new_line);   
-   //std::cout << new_line.str() << std::endl;
-      
       tbl->appendRow ((const char *)new_line.str().c_str());
       
       /* Consider saving fastbit table */
@@ -318,8 +327,9 @@ int main (int argc, char **argv) {
         // Save within ~10 of save_rate alignment
         pfc ("Saving database now...\n", 37);
         last_save = msg_packet.time();
+        FASTBIT::write_to_db (tbl, (VERBOSE<<1)|VERBOSE2); 
       }
- 
+
       sleep (1);
     }
 
@@ -528,6 +538,10 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
   /* Local variable declarations */ 
   kstat_t         *ksp;
   kstat_named_t   *knp;
+
+  if (VERBOSE) {
+    std::cout << "KSTAT " << module << name << statistic << std::endl;
+  }
  
   if (strcmp(name.c_str(), "NULL")) {
     ksp = kstat_lookup (kc, (char *)module.c_str(), -1, (char *)name.c_str());
@@ -590,6 +604,18 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
       msg_disk->set_rlentime_1 (MSB(kio.rlentime));
       msg_disk->set_rlentime_2 (LSB(kio.rlentime));
     #endif
+
+    ksp = kstat_lookup (kc, (char *)"sderr", instance, NULL);
+    kstat_read (kc, ksp, NULL);
+
+    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Hard Errors");
+    msg_disk->set_harderror ((uint32_t)knp->value.ui32);
+   
+    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Soft Errors");
+    msg_disk->set_softerror ((uint32_t)knp->value.ui32); 
+
+    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Transport Errors");
+    msg_disk->set_tranerror ((uint32_t)knp->value.ui32);
 
   } else {
 

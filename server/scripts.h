@@ -11,7 +11,7 @@
     
 #define MEM_NUM 7
 #ifdef ZONE
-#define NET_NUM 4
+#define NET_NUM 6 
 #else
 #define NET_NUM 8
 #endif
@@ -29,28 +29,28 @@ namespace NET {
   size_t number = NET_NUM;
 #ifdef ZONE
   size_t num_instance = 1;
-  std::string module[1][ NET_NUM ] = { { "link", "link", "link", "link" } };
-  std::string name[1][ NET_NUM ] = { { "net0", "net0", "net0", "net0" } };
-  std::string statistic[1][ NET_NUM ] = { { "obytes64", "rbytes64", "opackets", "ipackets" } }; 
+  std::string module[1][ NET_NUM ] = { { "link", "link", "link", "link", "link", "link" } };
+  std::string name[1][ NET_NUM ] = { { "net0", "net0", "net0", "net0", "net0", "net0" } };
+  std::string statistic[1][ NET_NUM ] = { { "obytes64", "rbytes64", "opackets", "ipackets", "ierrors", "oerrors" } }; 
 #else
   size_t num_instance = 2;
   std::string module[2][ NET_NUM ] = {
-    { "link", "link", "link", "link" },
-    { "link", "link", "link", "link" } };
+    { "link", "link", "link", "link", "link", "link" },
+    { "link", "link", "link", "link", "link", "link" } };
   std::string name[2][ NET_NUM ] = {
-    { "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0" },
-    { "int0", "int0", "int0", "int0" } };
+    { "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0" },
+    { "int0", "int0", "int0", "int0", "int0", "int0" } };
   std::string statistic[2][ NET_NUM ] = {
-    { "obytes64", "rbytes64", "opackets", "ipackets" },
-    { "obytes64", "rbytes64", "opackets", "ipackets" } }; 
+    { "obytes64", "rbytes64", "opackets", "ipackets", "ierrors", "oerrors" },
+    { "obytes64", "rbytes64", "opackets", "ipackets", "ierrors", "oerrors" } }; 
 #endif
 }
 
 namespace DISK {
   size_t number = DISK_NUM;
-  std::string module[ MEM_NUM ] = { "sd", "sd", "sd", "sd", "sd", "sd" };
-  std::string name[ MEM_NUM ] = { "NULL", "NULL", "NULL", "NULL", "NULL", "NULL" };
-  std::string statistic[ MEM_NUM ] = { "nread", "nwritten", "reads", "writes", "wtime", "wlentime" };      
+  /* All functionality implemented within the
+   * server program
+   */
 }
 
 namespace DTRACE {
@@ -63,9 +63,6 @@ namespace DTRACE {
     (std::string)"syscall:::entry\n{\nself->begun=timestamp;\n}\nsyscall:::return\n{\nself->ended=timestamp;\n@[3]=quantize(self->ended-self->begun);\n}"
   };
 
-  std::string dist = "profile:::profile-4999\n{\n@P[cpu] = count();\n}";
-  std::string proc = "profile:::profile-4999\n{\n@P[pid,execname,cpu] = count();\n}";
-  std::string ticks = "profile:::tick-4999\n{\n@P = count();\n}";
 }
   
 
