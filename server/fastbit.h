@@ -8,12 +8,14 @@ namespace FASTBIT {
 
 char NUMBER_OF_CPUS = 0;
 uint_fast8_t FLAGS = 0;
+std::string DB_DIRECTORY;
 
 /*
  * Read config file and populate
  * table accordingly
  */
-bool load_config (const char *fname, std::string *column_line, ibis::tablex *tbl) {
+bool load_config (const char *fname, std::string *column_line, 
+                    ibis::tablex *tbl, time_t *save_rate) {
    
   std::vector<std::string> columns_vector;
   std::vector<ibis::TYPE_T> columns_type;
@@ -37,7 +39,9 @@ bool load_config (const char *fname, std::string *column_line, ibis::tablex *tbl
   while ((read = getline(&line, &len, fconf)) != -1) {
     if (line[0]==35 || line[0]==10) {
     } else if (line[0]==36) {
-      if (line[1]=='C' && line[2]=='P' && line[3]=='U') FLAGS |= 1;
+      if (line[1]=='C' && line[2]=='P' && line[3]=='U') FLAGS |= 0b1;
+      if (line[1]=='D' && line[2]=='B' && line[4]=='D') FLAGS |= 0b10;
+      if (line[1]=='S' && line[2]=='A' && line[6]=='R') FLAGS |= 0b100;
       mode = 2;
     } else if (mode==2) {
       mode = 1;
@@ -45,6 +49,13 @@ bool load_config (const char *fname, std::string *column_line, ibis::tablex *tbl
       if (FLAGS & 0b1) {
         FLAGS &= ~0b1;
         NUMBER_OF_CPUS = atoi(line);
+      } else if (FLAGS & 0b10) {
+        FLAGS &= ~0b10;
+        DB_DIRECTORY = line;
+        DB_DIRECTORY = DB_DIRECTORY.substr(0, strlen(line)-1);
+      } else if (FLAGS & 0b100) {
+        FLAGS &= ~0b100;
+        *save_rate = (time_t)atoi(line);
       }
     } else if (mode==1) {
       mode = 2 + atoi(line);
@@ -232,7 +243,7 @@ bool write_to_db (ibis::tablex *tbl, uint_fast8_t verbosity) {
   struct tm * now = gmtime (&t);
   std::ostringstream directory;  
 
-  directory << "./db";
+  directory << DB_DIRECTORY; 
   directory << "/" << now->tm_mday << "-" << now->tm_mon+1 << "-" <<
         now->tm_year+1900;
   directory << "/" << now->tm_hour;

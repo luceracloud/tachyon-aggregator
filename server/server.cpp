@@ -150,7 +150,7 @@ int main (int argc, char **argv) {
     std::ostringstream new_line;
     time_t last_save = 0;
     time_t save_rate = 3600;  // How often to save (in seconds);
-    if (FASTBIT::load_config ("./db.conf", &column_format, tbl)) {
+    if (FASTBIT::load_config ("./db.conf", &column_format, tbl, &save_rate)) {
       pfc ("ERROR: Unable to load fastbit configruation file. Aborting.\n", 31);
       exit (1);
     }
