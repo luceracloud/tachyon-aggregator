@@ -45,6 +45,8 @@ message Packet {
     optional uint64 rbytes64 = 3;
     optional uint64 opackets = 4;
     optional uint64 ipackets = 5;
+    optional uint32 ierrors = 6;
+    optional uint32 oerrors = 7;
   }
 
   message Disk {
@@ -57,7 +59,10 @@ message Packet {
     optional uint64 wlentime = 7;
     optional uint64 rtime = 8;
     optional uint64 rlentime = 9;
- }
+    optional uint32 harderror = 10;
+    optional uint32 softerror = 11;
+    optional uint32 tranerror = 12;
+  }
 
   message CallHeat {
     required string name = 1;

@@ -44,6 +44,7 @@
  * Note the existence of:
  */
 void sigint_handler (int s);
+void sig_handler (int s);
 int pfc (const char *c, int color);
 int print_message (PB_MSG::Packet pckt);
 void usage ();
@@ -79,6 +80,8 @@ int main (int argc, char **argv) {
 
     /* Handle signals (for cleanup) */
     signal (SIGINT, sigint_handler);
+    signal (SIGTERM, sig_handler);
+    signal (SIGQUIT, sig_handler);
 
     /* Splash */
     pfc ("\n Statistics Server\n", 37);
@@ -709,6 +712,14 @@ int pfc (const char *c, int color) {
 void sigint_handler (int s) {
   do_loop = 0;
   pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 32);
+}
+
+/*
+ * Handle signals
+ */
+void sig_handler (int s) {
+  do_loop = 0;
+  pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 37);
 }
 
 /*
