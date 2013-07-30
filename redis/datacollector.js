@@ -99,7 +99,7 @@ sock.on('message', function(msg) {
     client.hmset("" + time, "Mem physmem", "" + new Long(message.mem[0]["physmem_2"], message.mem[0]["physmem_1"]).toNumber());
     client.hmset("" + time, "Mem rss", "" + new Long(message.mem[0]["rss_2"], message.mem[0]["rss_1"]).toNumber());
     client.hmset("" + time, "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"], message.mem[0]["pp_kernel_1"]).toNumber());
-    client.hmset("" + time, "Mem physcap", "" + new Long(message.mem[0]["physcap_2"], message.mem[0]["physcap_1"]).toNumber());
+    client.hmset("" + time, "Mem memcap", "" + new Long(message.mem[0]["physcap_2"], message.mem[0]["physcap_1"]).toNumber());
     client.hmset("" + time, "Mem freemem", "" + new Long(message.mem[0]["freemem_2"], message.mem[0]["freemem_1"]).toNumber());
     client.hmset("" + time, "Mem swap", "" + new Long(message.mem[0]["swap_2"], message.mem[0]["swap_1"]).toNumber());
     client.hmset("" + time, "Mem scap", "" + new Long(message.mem[0]["swapcap_2"], message.mem[0]["swapcap_1"]).toNumber());
@@ -109,6 +109,8 @@ sock.on('message', function(msg) {
     client.hmset("" + time, "Net opackets", "" + (v3 - previous [2]));
     client.hmset("" + time, "Net ipackets", "" + (v4 - previous [3]));
     client.hmset("" + time, "Net instance", "" + message.net[0]["instance"]);
+    client.hmset("" + time, "Net ierrors", "" + message.net[0]["ierrors"]);
+    client.hmset("" + time, "Net oerrors", "" + message.net[0]["oerrors"]);  
 
     i = 0;
     while(typeof(message.callheat[i]) != "undefined") {
@@ -132,8 +134,8 @@ sock.on('message', function(msg) {
     var d2 = new Long(message.disk[i]["nwritten_2"], message.disk[i]["nwritten_1"]).toNumber();
     var d3 = message.disk[i]["reads"];
     var d4 = message.disk[i]["writes"];
-    var d5 = new Long(message.disk[i]["wtime_2"], message.disk[i]["wtime_1"]).toNumber();
-    var d6 = new Long(message.disk[i]["wlentime_2"], message.disk[i]["wlentime_1"]).toNumber();
+    var d5 = Math.floor(new Long(message.disk[i]["wtime_2"], message.disk[i]["wtime_1"]).toNumber()/1000) / 10000;
+    var d6 = Math.floor(new Long(message.disk[i]["wlentime_2"], message.disk[i]["wlentime_1"]).toNumber()/1000)/ 10000;
    
     if(count > 0) {
       client.hmset("" + time, "Dis nread " + i, "" + (d1 - previous[6*(i) + 4]));
@@ -142,6 +144,9 @@ sock.on('message', function(msg) {
       client.hmset("" + time, "Dis writes " + i, "" + (d4 - previous[6*(i) + 7]));
       client.hmset("" + time, "Dis wtime " + i, "" + (d5 - previous[6*(i) + 8]));
       client.hmset("" + time, "Dis wlentime " + i, "" + (d6 - previous[6*(i) + 9]));
+      client.hmset("" + time, "Dis harderror" + i, "" +  message.disk[i]["harderror"]);
+      client.hmset("" + time, "Dis tranerror" + i, "" +  message.disk[i]["tranerror"]);
+      client.hmset("" + time, "Dis softerror" + i, "" +  message.disk[i]["softerror"]);
       } 
  
     previous[6*(i) + 4] = d1;

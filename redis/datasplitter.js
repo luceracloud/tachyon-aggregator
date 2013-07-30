@@ -97,7 +97,7 @@ sock.on('message', function(msg) {
     client.hmset("" + time + "MEM", "Mem physmem", "" + new Long(message.mem[0]["physmem_2"], message.mem[0]["physmem_1"]).toNumber());
     client.hmset("" + time + "MEM", "Mem rss", "" + new Long(message.mem[0]["rss_2"], message.mem[0]["rss_1"]).toNumber());
     client.hmset("" + time + "MEM", "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"], message.mem[0]["pp_kernel_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem physcap", "" + new Long(message.mem[0]["physcap_2"], message.mem[0]["physcap_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem memcap", "" + new Long(message.mem[0]["physcap_2"], message.mem[0]["physcap_1"]).toNumber());
     client.hmset("" + time + "MEM", "Mem freemem", "" + new Long(message.mem[0]["freemem_2"], message.mem[0]["freemem_1"]).toNumber());
     client.hmset("" + time + "MEM", "Mem swap", "" + new Long(message.mem[0]["swap_2"], message.mem[0]["swap_1"]).toNumber());
     client.hmset("" + time + "MEM", "Mem scap", "" + new Long(message.mem[0]["swapcap_2"], message.mem[0]["swapcap_1"]).toNumber());
@@ -107,6 +107,9 @@ sock.on('message', function(msg) {
     client.hmset("" + time + "NET", "Net opackets", "" + (v3 - previous [2]));
     client.hmset("" + time + "NET", "Net ipackets", "" + (v4 - previous [3]));
     client.hmset("" + time + "NET", "Net instance", "" + message.net[0]["instance"]);
+    client.hmset("" + time + "NET", "Net ierrors", "" + message.net[0]["ierrors"]);
+    client.hmset("" + time + "NET", "Net oerrors", "" + message.net[0]["oerrors"]);
+
 
     i = 0;
     while(typeof(message.callheat[i]) != "undefined") {
@@ -140,6 +143,9 @@ sock.on('message', function(msg) {
       client.hmset("" + time + "DIS", "Dis writes " + i, "" + (d4 - previous[6*(i) + 7]));
       client.hmset("" + time + "DIS", "Dis wtime " + i, "" + (d5 - previous[6*(i) + 8]));
       client.hmset("" + time + "DIS", "Dis wlentime " + i, "" + (d6 - previous[6*(i) + 9]));
+      client.hmset("" + time + "DIS", "Dis harderror" + i, "" + message.disk[i]["harderror"]);
+      client.hmset("" + time + "DIS", "Dis tranerror" + i, "" + message.disk[i]["tranerror"]);
+      client.hmset("" + time + "DIS", "Dis softerror" + i, "" + message.disk[i]["softerror"]);
       } 
  
     previous[6*(i) + 4] = d1;

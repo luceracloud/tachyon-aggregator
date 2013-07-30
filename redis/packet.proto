@@ -6,7 +6,6 @@
 //  Here, we take _1 to be the MSB (x32)
 //  and _2 to be the LSB (x32)
 
-
 package PB_MSG;
 
 message Packet {
@@ -60,6 +59,8 @@ message Packet {
     optional uint32 rbytes64_2 = 7;
     optional uint32 opackets_2 = 8;
     optional uint32 ipackets_2 = 9;
+    optional uint32 ierrors = 10;
+    optional uint32 oerrors = 11;
   }
 
   message Disk {
@@ -78,16 +79,17 @@ message Packet {
     optional uint32 wlentime_2 = 13;
     optional uint32 rtime_2 = 14;
     optional uint32 rlentime_2 = 15;
+    optional uint32 harderror = 16;
+    optional uint32 softerror = 17;
+    optional uint32 tranerror = 18;
  }
 
   message CallHeat {
     required string name = 1;
     optional uint32 lowt_1 = 2;
-    optional uint32 hight_1 = 3;
-    optional uint32 value_1 = 4;
-    optional uint32 lowt_2 = 5;
-    optional uint32 hight_2 = 6;
-    optional uint32 value_2 = 7;
+    optional uint32 value_1 = 3;
+    optional uint32 lowt_2 = 4;
+    optional uint32 value_2 = 5;
   }
 
 }
