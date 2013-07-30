@@ -189,6 +189,9 @@ bool read_disk (PB_MSG::Packet *pckt, std::ostringstream *line) {
       *line << COMBINE(disk_pckt.rtime_1(),disk_pckt.rtime_2()) << ",";
       *line << COMBINE(disk_pckt.rlentime_1(),disk_pckt.rlentime_2()) << ",";
     #endif
+    *line << disk_pckt.harderror() << ",";
+    *line << disk_pckt.softerror() << ",";
+    *line << disk_pckt.tranerror() << ",";
   }
 
  return 0;
@@ -213,6 +216,8 @@ bool read_net (PB_MSG::Packet *pckt, std::ostringstream *line) {
       *line << COMBINE(net_pckt.opackets_1(),net_pckt.opackets_2()) << ",";
       *line << COMBINE(net_pckt.ipackets_1(),net_pckt.ipackets_2()) << ",";
     #endif
+    *line << net_pckt.oerrors() << ",";
+    *line << net_pckt.ierrors() << ",";
   }
 
   return 0;
@@ -237,16 +242,17 @@ bool read_proc (PB_MSG::Packet *pckt, std::ostringstream *line) {
 /*
  * Allow saving of data into proper directory
  */
-bool write_to_db (ibis::tablex *tbl, uint_fast8_t verbosity) {
+bool write_to_db (ibis::tablex *tbl, uint_fast8_t verbosity, time_t t, bool temp=false) {
 
-  time_t t = time (NULL);
   struct tm * now = gmtime (&t);
   std::ostringstream directory;  
 
-  directory << DB_DIRECTORY; 
+  directory << DB_DIRECTORY;
+  if (temp) directory << "_temp";
   directory << "/" << now->tm_mday << "-" << now->tm_mon+1 << "-" <<
         now->tm_year+1900;
   directory << "/" << now->tm_hour;
+  if (temp) directory << "h" << now->tm_min << "m" << now->tm_sec;
 
   tbl->write ((const char *)directory.str().c_str(), (const char *)"Stats Dump",
         (const char *)"Collection of dtrace/kstat collected data since either start"

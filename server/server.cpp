@@ -10,7 +10,7 @@
  *        -lkstat -lprotobuf -O2 -o server_release
  *
  *    CREATED:  16 JULY 2013
- *    UPDATED:  29 JULY 2013
+ *    UPDATED:  30 JULY 2013
  *
  */
 
@@ -79,7 +79,7 @@ kstat_ctl_t *kc;
 int main (int argc, char **argv) {
 
     /* Handle signals (for cleanup) */
-    signal (SIGINT, sigint_handler);
+    signal (SIGINT, sig_handler);
     signal (SIGTERM, sig_handler);
     signal (SIGQUIT, sig_handler);
 
@@ -330,7 +330,9 @@ int main (int argc, char **argv) {
         // Save within ~10 of save_rate alignment
         pfc ("Saving database now...\n", 37);
         last_save = msg_packet.time();
-        FASTBIT::write_to_db (tbl, (VERBOSE<<1)|VERBOSE2); 
+        // Note that we use time - save_rate to have folders labeled by
+        // what hour they refer to, not by the following hour.
+        FASTBIT::write_to_db (tbl, (VERBOSE<<1)|VERBOSE2, time (NULL) - save_rate); 
       }
 
       sleep (1);
@@ -339,7 +341,10 @@ int main (int argc, char **argv) {
     for (size_t scpt=0; scpt<DTRACE::number; scpt++) {
       dtrace_close (g_dtp[scpt]); 
     }
-    pfc (" . dtrace scripts killed\n\n", 36);
+    pfc (" . dtrace scripts killed\n", 36);
+    FASTBIT::write_to_db (tbl, 0, time (NULL), true);
+    pfc (" . database saved to _temp with exact time\n\n", 36);
+
 
     return 0;
 }
@@ -709,15 +714,15 @@ int pfc (const char *c, int color) {
  * Handle signals so that we don't have to
  * worry about errant dtrace scripts
  */
-void sigint_handler (int s) {
+void sig_handler (int s) {
   do_loop = 0;
-  pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 32);
+  pfc ("\n\nSafely killing program...\nStopping dtrace script interface\n", 32);
 }
 
 /*
  * Handle signals
  */
-void sig_handler (int s) {
+void sigint_handler (int s) {
   do_loop = 0;
   pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 37);
 }
