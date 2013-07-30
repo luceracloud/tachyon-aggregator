@@ -47,7 +47,7 @@ ll: packet.pb.cc packet64.pb.cc server.cpp scripts.h
 	$(CC) -DFULLBIT server.cpp packet64.pb.cc $(LDFLAGS) -O2 -o server64_release_gz
 
 llf: packet.pb.cc server.cpp scripts.h
-	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
+	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -g -O2 -o server_release
 
 rel: server_release
 	cp server_release metric/bin

@@ -309,9 +309,7 @@ int main (int argc, char **argv) {
         print_message (msg_packet);
       }
 
-      /* TODO Optimze this */
-      if (!QUIET) send_message (msg_packet);
-      else tbl->describe (std::cout);
+      send_message (msg_packet);
      
       /* Add message data to fastbit database */
       new_line.str("");
