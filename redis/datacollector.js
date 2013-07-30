@@ -40,7 +40,7 @@ var sys = require('sys');
 var exec = require('child_process').exec;
 new cronJob('0 * * * * *', function(){
   client.save();
-  var ts = new Date().getTime();
+  var ts = new Date().toTimeString().substring(0,8);
   var fileN = ts + "d.rdb";
   console.log(fileN);
 
@@ -77,7 +77,7 @@ sock.on('message', function(msg) {
   console.log(count);
 
 //Some data requires subtraction from previous data, so the first data set is not printed
-  if(count > 0); {
+  if(count > 0) {
 
     client.hmset("" + time, "Sys ticks", "" + message.ticks);
 
@@ -134,8 +134,8 @@ sock.on('message', function(msg) {
     var d2 = new Long(message.disk[i]["nwritten_2"], message.disk[i]["nwritten_1"]).toNumber();
     var d3 = message.disk[i]["reads"];
     var d4 = message.disk[i]["writes"];
-    var d5 = Math.floor(new Long(message.disk[i]["wtime_2"], message.disk[i]["wtime_1"]).toNumber()/1000) / 10000;
-    var d6 = Math.floor(new Long(message.disk[i]["wlentime_2"], message.disk[i]["wlentime_1"]).toNumber()/1000)/ 10000;
+    var d5 = Math.floor(new Long(message.disk[i]["wtime_2"], message.disk[i]["wtime_1"]).toNumber()/1000) / 1000000;
+    var d6 = Math.floor(new Long(message.disk[i]["wlentime_2"], message.disk[i]["wlentime_1"]).toNumber()/1000)/ 1000000;
    
     if(count > 0) {
       client.hmset("" + time, "Dis nread " + i, "" + (d1 - previous[6*(i) + 4]));
