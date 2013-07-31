@@ -1,5 +1,11 @@
-// This example runs "type" against every key in the database
-// Edit the config Redis File to match the folder that is going to be queried
+/* 
+ * This example runs "type" against every key in the database
+ *   Edit the config Redis File to match the folder
+ *   that is going to be queried
+ *
+ *  CREATED:  23 JULY 2013
+ *  EDITED:   30 JULY 2013
+ */
 var fs = require('fs');
 var sys = require('sys');
 var exec = require('child_process').exec;
@@ -9,26 +15,34 @@ var exec = require('child_process').exec;
 var c = fs.readdirSync('/opt/tools/redis/redis-2.6.14/src/snapshots');
 c.sort();
 console.log(c);
-var total = 0;
+
+var n1;
+var n2;
+var fun;
+var client;
 var max = 0;
+var args = 0;
+var total = 0;
+var argVE = 2;
+var calls = [];
 var counts = 0;
+var numCores = 16;
+
+var time = new Array();
+var errs = new Array();
+var quant = new Array();
 var stand = new Array();
 var multi = new Array();
 var types = new Array();
-var time = new Array();
-var errs = new Array();
-var numCores = 16;
-var quant = new Array();
 var cpu = new Array(numCores);
-var client;
-var args = 0;
-var calls = [];
 var arr = new Array(calls.length);
-var argVE = 2
-var fun;
-var funArr = {"getStat" : getStat, "genStats"  : genStats, "callHeat" : callHeat, "quantize" : quantize, "cpuStat" : cpuStat, "myprocess" : myprocess, "printData": printData, "getMemStats" : getMemStats, "findError" : findError}; 
-var n1;
-var n2;
+
+var funArr = {"getStat" : getStat, "genStats"  : genStats,
+                "callHeat" : callHeat, "quantize" : quantize,
+                "cpuStat" : cpuStat, "myprocess" : myprocess,
+                "printData": printData, "getMemStats" : getMemStats,
+                "findError" : findError}; 
+
 // Read the command line
 // Format -type (-start -end  only if -on) -function parameters 
 var begin = new Array();
@@ -36,39 +50,32 @@ var begin = new Array();
 if(process.argv[argVE] == "-all") {
   fun = doOnAll;
   argVE++;
-}
-
-else if(process.argv[argVE] == "-on") {
+} else if(process.argv[argVE] == "-on") {
   fun = doOn;
   argVE++;
   n1 = parseInt(process.argv[argVE].substring(1));
   argVE++;
   n2 = parseInt(process.argv[argVE].substring(1));
   argVE++;
-}
-
-else {
+} else {
   console.log("Can't Recognize Type");
   process.exit();
 }
 
 var fun2 = process.argv[argVE].substring(1);
-for(var elemento in funArr)
-  {
-    if (elemento == fun2)
-    {
-      fun2 = funArr[elemento];
-      break;
-    }
+for(var elemento in funArr) {
+  if (elemento == fun2) {
+    fun2 = funArr[elemento];
+    break;
   }
+}
 
 argVE++;
 
 for(var i = argVE; i < process.argv.length; i++) {
   if(isNaN(process.argv[i])) {
   begin[i - argVE] = process.argv[i];
-  }
-  else {
+  } else {
   begin[i - argVE] = parseInt(process.argv[i]);
   }
 }
@@ -92,16 +99,14 @@ function startServer (data) {
 // Creates the initial redis server
 function createServer1 (cb) {
   var cmd = "sh /opt/tools/redis/redis-2.6.14/src/run2";
-  var child = exec(cmd, function(error, stdout, stderr) {
-  });
+  var child = exec(cmd, function(error, stdout, stderr) { });
   cb();
 }
 
 // Creates the second on redis server because a timeout is neccesary
 function createServer2 (cb) {
   var cmd2 = "sh /opt/tools/redis/redis-2.6.14/src/run2";
-  var child2 = exec(cmd2, function(error, stdout, stderr) {
-  });
+  var child2 = exec(cmd2, function(error, stdout, stderr) { });
   setTimeout(cb, 50);
 }
 
@@ -114,57 +119,48 @@ function createClient() {
 }
 
 // Gets the stats for a given function over all files
- function doOnAll(func, param) {
-
-   for(var i = 0; i < c.length - 1; i++) {
-     calls.push(func);
-     calls.push(shutDown);
-     calls.push(startServer);
-     arr.push(param);
-     arr.push([]);
-     arr.push([i+1, createServer2, createClient]);
-   }
-   calls.push(func);
-   calls.push(end);
-   arr.push(param);
-   arr.push();
-   startServer([0, createServer1, createClient]);
- }
+function doOnAll(func, param) {
+  for(var i = 0; i < c.length - 1; i++) {
+    calls.push(func);
+    calls.push(shutDown);
+    calls.push(startServer);
+    arr.push(param);
+    arr.push([]);
+    arr.push([i+1, createServer2, createClient]);
+  }
+  calls.push(func);
+  calls.push(end);
+  arr.push(param);
+  arr.push();
+  startServer([0, createServer1, createClient]);
+}
 
 // Gets the starting at start and going for amount
- function doOn(func, param, start, amount) {
-  
-   for(var i = start; i < start + amount - 1; i++) {
-     calls.push(func);
-     calls.push(shutDown);
-     calls.push(startServer);
-     arr.push(param);
-     arr.push([]);
-     arr.push([i+1, createServer2, createClient]);   
-   }   
+function doOn(func, param, start, amount) {
+  for(var i = start; i < start + amount - 1; i++) {
+    calls.push(func);
+    calls.push(shutDown);
+    calls.push(startServer);
+    arr.push(param);
+    arr.push([]);
+    arr.push([i+1, createServer2, createClient]);   
+  }   
 
-   calls.push(func);
-   calls.push(end);
-   arr.push(param);
-   arr.push();
-   startServer([start, createServer1, createClient]);
-
- }
-
+  calls.push(func);
+  calls.push(end);
+  arr.push(param);
+  arr.push();
+  startServer([start, createServer1, createClient]);
+}
 
 // For the CallHeat function. Creates the chart to display the quantization
 function appendArray(pose, res, pos, size) {
-
   if (multi[pose] == undefined) {
     multi[pose] = new Array(size);
-    for(var i=0; i<multi[pose].length; i++) {
-      multi[pose][i] = 0;
-    } 
+    for(var i=0; i<multi[pose].length; i++) multi[pose][i] = 0;
   }
 
-  if(types[pose] == undefined) {
-    types[pose] = pose;
-  }
+  if(types[pose] == undefined) types[pose] = pose;
 
   multi[pose][pos] = res;
   
@@ -172,24 +168,19 @@ function appendArray(pose, res, pos, size) {
 }
 
 // For the quantize function. Creates the chart and adds to it.
-function addQuantize(pos)
-{
-  if(quant[pos] == undefined) {
-    quant[pos] = 0;
-  }
+function addQuantize(pos) {
+  if(quant[pos] == undefined) quant[pos] = 0;
   quant[pos]++;
   return;
 }
 
 // For the CPU stat function. Creates the chart and adds to it.
-function addCPU(cp, val, pos, size)
-{
+function addCPU(cp, val, pos, size) {
 
   if(cpu[cp] == undefined) {
-  cpu[cp] = new Array(size);
-  for(var i = 0; i < cpu[cp].length; i++)
-    {
-    cpu[cp][i] = 0;
+    cpu[cp] = new Array(size);
+    for(var i = 0; i < cpu[cp].length; i++) {
+      cpu[cp][i] = 0;
     }
   }
 
@@ -209,7 +200,7 @@ function getStat(data, cb) {
   var value = data[3];
   var instance = data[4];
   client.keys("*", function (err, keys) {
-  keys.sort(function(a,b){return a - b});
+  keys.sort(function(a,b) {return a - b});
   keys.forEach(function(key , pos) {
   client.hgetall(key,  function (err, res) { 
 
@@ -520,8 +511,7 @@ function cpuStat(data, cb)
 
 //Print out all the processes run on the given CPU
 //[CPU A, CPU B ..... ]
-function myprocess(data, cb)
-{
+function myprocess(data, cb) {
   client.keys("*", function (err, keys) {
     keys.sort(function(a,b){return a - b});
     keys.forEach(function(key , pos) {
@@ -576,17 +566,13 @@ function printData(times, cb) {
     keys.sort(function(a,b){return a - b});
     times.forEach(function(time , pos) {
       client.hgetall(keys[time],  function (err, res) {
-      console.log(keys[time]);
-      console.log(res);
-      if(time == keys.length -1) {
-        var func = cb[0];
+        console.log(keys[time]);
+        console.log(res);
+        if(time == keys.length -1) {
+          var func = cb[0];
           cb.splice(0,1);
-          if(cb.length == 0) {
-            func(arr[args++]);
-          }
-          else {
-            func(arr[args++], cb);
-          }
+          if(cb.length == 0) func(arr[args++]);
+          else func(arr[args++], cb);
         }
       });
     });
@@ -597,20 +583,22 @@ function printData(times, cb) {
 function getMemStats(data, cb) {
 
   client.keys("*", function (err, keys) {
-    keys.sort(function(a,b){return a - b});
+    keys.sort(function(a,b) {return a - b});
     keys.forEach(function(key, pos) {
       client.hgetall(key,  function (err, res) {
         var memA = new Array();
         for(var str in res) {
-          if(str.substring(0,3) == "Mem") {
-          memA[str.substring(4,7)] = res[str];    
-          }
+          if (str.substring(0,3) == "Mem") memA[str.substring(4,7)] = res[str];    
         }
         
-        appendArray("mem", Math.floor(((memA["phy"] - memA["fre"])/memA["phy"])*1000)/10, pos, keys.length);
-        appendArray("swap", Math.floor(memA["swa"]/memA["sca"]*1000)/10, pos, keys.length); 
-        appendArray("kernal", Math.floor(memA["pp_"]/ memA["phy"] * 1000)/ 10, pos, keys.length);
-        appendArray("rss", Math.floor(memA["rss"]/ memA["mem"] * 1000)/ 10, pos, keys.length);       
+        appendArray("mem", Math.floor(((memA["phy"] - 
+              memA["fre"])/memA["phy"])*1000)/10, pos, keys.length);
+        appendArray("swap", Math.floor(memA["swa"]/
+              memA["sca"]*1000)/10, pos, keys.length); 
+        appendArray("kernal", Math.floor(memA["pp_"]/
+              memA["phy"] * 1000)/ 10, pos, keys.length);
+        appendArray("rss", Math.floor(memA["rss"]/
+              memA["mem"] * 1000)/ 10, pos, keys.length);       
  
         if(pos == keys.length - 1) {
           for(var pose in types) {
@@ -622,12 +610,10 @@ function getMemStats(data, cb) {
           cb.splice(0,1);
           if(cb.length == 0) {
             func(arr[args++]);
-          }
-          else {
+          } else {
             func(arr[args++], cb);
           }
         }
-
       });
     });
   });
@@ -640,42 +626,32 @@ function findError(data, cb) {
     keys.sort(function(a,b){return a - b});
     keys.forEach(function(key, pos) {
       client.hgetall(key,  function (err, res) {
-      for (var str in res)
-        {
+      for (var str in res) {
         if(str.substring(8, 13) == "error" || str.substring(5,10) == "error") {
-          if(pos == 0 && errs[str] == undefined) {
-            errs[str] = res[str];
-          }
+          if(pos == 0 && errs[str] == undefined) errs[str] = res[str];
           else {
             if(errs[str] != res[str]) {
-              if(errs[str] == undefined) {
-              errs[str] = res[str];
-              }
+              if(errs[str] == undefined) errs[str] = res[str];
               else {
-              console.log(pos);
-              console.log(errs[str]);
-              errs[str] = res[str];
-              console.log("ERROR TYPE " + str + "  amount   " + res[str]);
+                console.log(pos);
+                console.log(errs[str]);
+                errs[str] = res[str];
+                console.log("ERROR TYPE " + str + "  amount   " + res[str]);
               }
             }
           }
         }   
-       }
-        if(pos == keys.length -1)
-          {
-          if(!callForAll) {
-            console.log("Check!");
-            errs = new Array();  
-          }
-            var func = cb[0];
-          cb.splice(0,1);
-          if(cb.length == 0) {
-            func(arr[args++]);
-          }
-          else {
-            func(arr[args++], cb);
-          }
-          }     
+      }
+      if(pos == keys.length -1) {
+        if(!callForAll) {
+          console.log("Check!");
+          errs = new Array();  
+        }
+        var func = cb[0];
+        cb.splice(0,1);
+        if(cb.length == 0) func(arr[args++]);
+        else func(arr[args++], cb);
+      }     
       });
     });
   });

@@ -4,7 +4,7 @@
  *      Description TODO
  *
  *    CREATED:  15 JULY 2013
- *    UPDATED:  15 JULY 2013
+ *    UPDATED:  30 JULY 2013
  *
  */
 
@@ -32,9 +32,10 @@ var Packet = ProtoBuf.protoFromFile("packet.proto").build("PB_MSG.Packet");
 /* Variable inits and defns */
 var database = new Array();
 var time = 0;
-var previous = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+var previous = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 // Creates the Cron, which creates a new folder, pushes the data and the pushes the keys every minute
 var cronJob = require('cron').CronJob;
@@ -94,13 +95,20 @@ sock.on('message', function(msg) {
       i++;
     }
 
-    client.hmset("" + time + "MEM", "Mem physmem", "" + new Long(message.mem[0]["physmem_2"], message.mem[0]["physmem_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem rss", "" + new Long(message.mem[0]["rss_2"], message.mem[0]["rss_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"], message.mem[0]["pp_kernel_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem memcap", "" + new Long(message.mem[0]["physcap_2"], message.mem[0]["physcap_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem freemem", "" + new Long(message.mem[0]["freemem_2"], message.mem[0]["freemem_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem swap", "" + new Long(message.mem[0]["swap_2"], message.mem[0]["swap_1"]).toNumber());
-    client.hmset("" + time + "MEM", "Mem scap", "" + new Long(message.mem[0]["swapcap_2"], message.mem[0]["swapcap_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem physmem", "" + new Long(message.mem[0]["physmem_2"],
+                            message.mem[0]["physmem_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem rss", "" + new Long(message.mem[0]["rss_2"],
+                            message.mem[0]["rss_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"],
+                            message.mem[0]["pp_kernel_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem memcap", "" + new Long(message.mem[0]["physcap_2"],
+                            message.mem[0]["physcap_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem freemem", "" + new Long(message.mem[0]["freemem_2"],
+                            message.mem[0]["freemem_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem swap", "" + new Long(message.mem[0]["swap_2"],
+                            message.mem[0]["swap_1"]).toNumber());
+    client.hmset("" + time + "MEM", "Mem scap", "" + new Long(message.mem[0]["swapcap_2"],
+                            message.mem[0]["swapcap_1"]).toNumber());
 
     client.hmset("" + time + "NET", "Net obytes64", "" + (v1 - previous[0]));
     client.hmset("" + time + "NET", "Net rbytes64", "" + (v2 - previous[1]));
@@ -114,8 +122,10 @@ sock.on('message', function(msg) {
     i = 0;
     while(typeof(message.callheat[i]) != "undefined") {
       client.hmset("" + time + "CAL", "CallHeat name " + i, "" + message.callheat[i]["name"]);
-      client.hmset("" + time + "CAL", "CallHeat lowt " + i, "" + new Long(message.callheat[i]["lowt_2"], message.callheat[i]["lowt_1"]).toNumber());
-      client.hmset("" + time + "CAL", "CallHeat value " + i, "" + new Long(message.callheat[i]["value_2"], message.callheat[i]["value_1"]).toNumber());
+      client.hmset("" + time + "CAL", "CallHeat lowt " + i, "" + new Long(message.callheat[i]["lowt_2"],
+                            message.callheat[i]["lowt_1"]).toNumber());
+      client.hmset("" + time + "CAL", "CallHeat value " + i, "" + new Long(message.callheat[i]["value_2"],
+                            message.callheat[i]["value_1"]).toNumber());
       i++;
     }
   }
@@ -146,7 +156,7 @@ sock.on('message', function(msg) {
       client.hmset("" + time + "DIS", "Dis harderror" + i, "" + message.disk[i]["harderror"]);
       client.hmset("" + time + "DIS", "Dis tranerror" + i, "" + message.disk[i]["tranerror"]);
       client.hmset("" + time + "DIS", "Dis softerror" + i, "" + message.disk[i]["softerror"]);
-      } 
+    } 
  
     previous[6*(i) + 4] = d1;
     previous[6*(i) + 5] = d2;

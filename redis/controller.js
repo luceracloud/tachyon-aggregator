@@ -5,13 +5,15 @@ var exec = require('child_process').exec;
 var sent = 0;
 var sentArr = ["cpu", "mem", "net", "dis"];
 
-new cronJob('6,18,30,42,56 * * * * *', function(){
+new cronJob('6,18,30,42,56 * * * * *', function() {
   client.save();
   var ts = new Date().getTime();
   var fileN = ts + "d.rdb";
   console.log(fileN);
 
-  var cmd = "cp /opt/tools/redis/redis-2.6.14/src/thedump.rdb /opt/tools/redis/redis-2.6.14/src/" + sentArr[sent] + "/"  + fileN;
+  var cmd = "cp /opt/tools/redis/redis-2.6.14/src/thedump.rdb " + 
+            "/opt/tools/redis/redis-2.6.14/src/" + sentArr[sent] +
+            "/"  + fileN;
   sent = (sent +1) % 5;
   console.log("command   " + cmd);
 

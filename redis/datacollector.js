@@ -4,7 +4,7 @@
  *      Description TODO
  *
  *    CREATED:  15 JULY 2013
- *    UPDATED:  15 JULY 2013
+ *    UPDATED:  30 JULY 2013
  *
  */
 
@@ -16,7 +16,6 @@ var redis = require("redis");
 var ProtoBuf = require('protobufjs');
 var Long = require("long");
 var count = 0;
-
 
 /* Connect to redis server */
 client = redis.createClient();
@@ -30,21 +29,24 @@ var Packet = ProtoBuf.protoFromFile("packet.proto").build("PB_MSG.Packet");
 /* Variable inits and defns */
 var database = new Array();
 var time = 0;
-var previous = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+var previous = new Array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 
-// Creates the Cron, which creates a new folder, pushes the data and the pushes the keys every minute
+// Creates the Cron, which creates a new folder, pushes the
+// data and the pushes the keys every minute
 var cronJob = require('cron').CronJob;
 var sys = require('sys');
 var exec = require('child_process').exec;
-new cronJob('0 * * * * *', function(){
+new cronJob('0 * * * * *', function() {
   client.save();
   var ts = new Date().toTimeString().substring(0,8);
   var fileN = ts + "d.rdb";
   console.log(fileN);
 
-  var cmd = "cp /opt/tools/redis/redis-2.6.14/src/mydump.rdb /opt/tools/redis/redis-2.6.14/src/snapshots/" + fileN;
+  var cmd = "cp /opt/tools/redis/redis-2.6.14/src/mydump.rdb " +
+              "/opt/tools/redis/redis-2.6.14/src/snapshots/" + fileN;
 
   console.log("command   " + cmd);
 
@@ -61,10 +63,9 @@ new cronJob('0 * * * * *', function(){
   console.log(ts);
 }, null, true);
 
-// Takes in the data from the c++ zmq server
+// Collects data from the c++ zmq server
 sock.on('message', function(msg) {
   var message = Packet.decode(msg);
-//  console.log(message);
   time = message.time["low"];  
   database.push(message.time["low"]);
  
@@ -76,9 +77,9 @@ sock.on('message', function(msg) {
 
   console.log(count);
 
-//Some data requires subtraction from previous data, so the first data set is not printed
+  // Some data require subtraction from previous data
+  // so we elect not to print the first set
   if(count > 0) {
-
     client.hmset("" + time, "Sys ticks", "" + message.ticks);
 
     while(typeof(message.process[i]) != "undefined") {
@@ -96,13 +97,20 @@ sock.on('message', function(msg) {
       i++;
     }
 
-    client.hmset("" + time, "Mem physmem", "" + new Long(message.mem[0]["physmem_2"], message.mem[0]["physmem_1"]).toNumber());
-    client.hmset("" + time, "Mem rss", "" + new Long(message.mem[0]["rss_2"], message.mem[0]["rss_1"]).toNumber());
-    client.hmset("" + time, "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"], message.mem[0]["pp_kernel_1"]).toNumber());
-    client.hmset("" + time, "Mem memcap", "" + new Long(message.mem[0]["physcap_2"], message.mem[0]["physcap_1"]).toNumber());
-    client.hmset("" + time, "Mem freemem", "" + new Long(message.mem[0]["freemem_2"], message.mem[0]["freemem_1"]).toNumber());
-    client.hmset("" + time, "Mem swap", "" + new Long(message.mem[0]["swap_2"], message.mem[0]["swap_1"]).toNumber());
-    client.hmset("" + time, "Mem scap", "" + new Long(message.mem[0]["swapcap_2"], message.mem[0]["swapcap_1"]).toNumber());
+    client.hmset("" + time, "Mem physmem", "" + new Long(message.mem[0]["physmem_2"],
+                            message.mem[0]["physmem_1"]).toNumber());
+    client.hmset("" + time, "Mem rss", "" + new Long(message.mem[0]["rss_2"],
+                            message.mem[0]["rss_1"]).toNumber());
+    client.hmset("" + time, "Mem pp_kernel", "" + new Long(message.mem[0]["pp_kernel_2"],
+                            message.mem[0]["pp_kernel_1"]).toNumber());
+    client.hmset("" + time, "Mem memcap", "" + new Long(message.mem[0]["physcap_2"],
+                            message.mem[0]["physcap_1"]).toNumber());
+    client.hmset("" + time, "Mem freemem", "" + new Long(message.mem[0]["freemem_2"],
+                            message.mem[0]["freemem_1"]).toNumber());
+    client.hmset("" + time, "Mem swap", "" + new Long(message.mem[0]["swap_2"],
+                            message.mem[0]["swap_1"]).toNumber());
+    client.hmset("" + time, "Mem scap", "" + new Long(message.mem[0]["swapcap_2"],
+                            message.mem[0]["swapcap_1"]).toNumber());
 
     client.hmset("" + time, "Net obytes64", "" + (v1 - previous[0]));
     client.hmset("" + time, "Net rbytes64", "" + (v2 - previous[1]));
@@ -115,8 +123,10 @@ sock.on('message', function(msg) {
     i = 0;
     while(typeof(message.callheat[i]) != "undefined") {
       client.hmset("" + time, "CallHeat name " + i, "" + message.callheat[i]["name"]);
-      client.hmset("" + time, "CallHeat lowt " + i, "" + new Long(message.callheat[i]["lowt_2"], message.callheat[i]["lowt_1"]).toNumber());
-      client.hmset("" + time, "CallHeat value " + i, "" + new Long(message.callheat[i]["value_2"], message.callheat[i]["value_1"]).toNumber());
+      client.hmset("" + time, "CallHeat lowt " + i, "" + new Long(message.callheat[i]["lowt_2"], 
+                            message.callheat[i]["lowt_1"]).toNumber());
+      client.hmset("" + time, "CallHeat value " + i, "" + new Long(message.callheat[i]["value_2"],
+                            message.callheat[i]["value_1"]).toNumber());
       i++;
     }
   }
@@ -134,8 +144,10 @@ sock.on('message', function(msg) {
     var d2 = new Long(message.disk[i]["nwritten_2"], message.disk[i]["nwritten_1"]).toNumber();
     var d3 = message.disk[i]["reads"];
     var d4 = message.disk[i]["writes"];
-    var d5 = Math.floor(new Long(message.disk[i]["wtime_2"], message.disk[i]["wtime_1"]).toNumber()/1000) / 1000000;
-    var d6 = Math.floor(new Long(message.disk[i]["wlentime_2"], message.disk[i]["wlentime_1"]).toNumber()/1000)/ 1000000;
+    var d5 = Math.floor(new Long(message.disk[i]["wtime_2"],
+                            message.disk[i]["wtime_1"]).toNumber()/1000) / 1000000;
+    var d6 = Math.floor(new Long(message.disk[i]["wlentime_2"],
+                            message.disk[i]["wlentime_1"]).toNumber()/1000)/ 1000000;
    
     if(count > 0) {
       client.hmset("" + time, "Dis nread " + i, "" + (d1 - previous[6*(i) + 4]));
