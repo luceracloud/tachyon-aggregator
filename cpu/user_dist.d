@@ -10,7 +10,7 @@
  *	USAGE: user_dist.d [INTERVAL] [COUNT]
  *	
  *	[INTERVAL]	Length of interval in seconds
- *	[COUNT]			Number of intervals, 0 for unlimited
+ *	[COUNT]		Number of intervals, 0 for unlimited
  *
  * 	CREATED: 30 MAY 2013
  * 	UPDATED: 30 MAY 2013
@@ -21,8 +21,8 @@ dtrace:::BEGIN
 	printf("\nUsing intervals of length %d seconds.\n", $1);
 	$2 ? printf("Running for %d intervals.\n", $2) :
 		printf("Unlimited number of intervals. Press Ctrl-C to kill.\n");
-	repeat = $2 ? $2 : 0;		/* Number of intervals  			*/
-	interval = $1;					/* In seconds           			*/
+	repeat = $2 ? $2 : 0;		/* Number of intervals  */
+	interval = $1;			/* In seconds           */
   number_of_cores = 16;
 
 	countdown = interval;
