@@ -6,6 +6,7 @@
 
 namespace FASTBIT {
 
+uint_fast32_t NUMBER_OF_PROC = 0;
 char NUMBER_OF_CPUS = 0;
 uint_fast8_t FLAGS = 0;
 std::string DB_DIRECTORY;
@@ -42,6 +43,7 @@ bool load_config (const char *fname, std::string *column_line,
       if (line[1]=='C' && line[2]=='P' && line[3]=='U') FLAGS |= 0b1;
       if (line[1]=='D' && line[2]=='B' && line[4]=='D') FLAGS |= 0b10;
       if (line[1]=='S' && line[2]=='A' && line[6]=='R') FLAGS |= 0b100;
+      if (line[1]=='P' && line[2]=='R' && line[4]=='C') FLAGS |= 0b1000;
       mode = 2;
     } else if (mode==2) {
       mode = 1;
@@ -56,6 +58,9 @@ bool load_config (const char *fname, std::string *column_line,
       } else if (FLAGS & 0b100) {
         FLAGS &= ~0b100;
         *save_rate = (time_t)atoi(line);
+      } else if (FLAGS & 0b1000) {
+        FLAGS &= ~0b1000;
+        NUMBER_OF_PROC = atoi(line); 
       }
     } else if (mode==1) {
       mode = 2 + atoi(line);
@@ -85,6 +90,14 @@ bool load_config (const char *fname, std::string *column_line,
             oss << columns_vector.at (j);
             column << columns_vector.at (j);
             if (repeat>1) {
+              if (repeat>10 && i<10) {
+                oss << 0;
+                column << 0;
+              }
+              if (repeat>100 && i<100) {
+                oss << 0;
+                column << 0;
+              }
               oss << i;
               column << i;
             }
@@ -110,7 +123,7 @@ bool load_config (const char *fname, std::string *column_line,
  * Read GENERAL data and append it to ostring
  */
 bool read_gen (PB_MSG::Packet *pckt, std::ostringstream *line) {
-  *line << pckt->time() << "," << pckt->ticks() << ",";
+  *line << pckt->time() << "," << pckt->ticks() << "," << pckt->process_size() << ",";
   return 0;
 }
 
@@ -227,13 +240,24 @@ bool read_net (PB_MSG::Packet *pckt, std::ostringstream *line) {
  * Read process information and append to ostring
  */
 bool read_proc (PB_MSG::Packet *pckt, std::ostringstream *line) {
-  
-  for (int i=0; i<pckt->process_size(); i++) {
+
+  int j=0;
+  for (int i=pckt->process_size()-1; i>=0; i--) {
     const PB_MSG::Packet_Process &proc_pckt = pckt->process(i);
     *line << proc_pckt.pid() << ",";
     *line << proc_pckt.execname() << ",";
     *line << proc_pckt.usage() << ",";
     *line << proc_pckt.cpu() << ",";
+    j++;
+    if (j >= NUMBER_OF_PROC) {
+      break;
+    }
+  }
+  
+  if (pckt->process_size() < NUMBER_OF_PROC) { 
+    for (int j=0; j<NUMBER_OF_PROC-pckt->process_size(); j++) {
+      *line << std::string("0,,0,0,");
+    } // maintains db format
   }
 
   return 0;
@@ -248,10 +272,25 @@ bool write_to_db (ibis::tablex *tbl, uint_fast8_t verbosity, time_t t, bool temp
   std::ostringstream directory;  
 
   directory << DB_DIRECTORY;
+
   if (temp) directory << "_temp";
   directory << "/" << now->tm_mday << "-" << now->tm_mon+1 << "-" <<
         now->tm_year+1900;
   directory << "/" << now->tm_hour;
+
+  {
+  std::ostringstream part_name;
+  part_name << directory.str() << "/-part.txt";
+  FILE *exists;
+  exists = fopen (part_name.str().c_str(), "r");
+  std::cout << part_name.str();
+  if (exists != NULL) {
+    std::cout << "Folder already exists, using different name" << std::endl;
+    directory << "_collide";
+  }
+  fclose (exists);
+  }
+
   if (temp) directory << "h" << now->tm_min << "m" << now->tm_sec;
 
   tbl->write ((const char *)directory.str().c_str(), (const char *)"Stats Dump",

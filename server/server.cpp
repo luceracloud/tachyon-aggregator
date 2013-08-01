@@ -309,8 +309,8 @@ int main (int argc, char **argv) {
         print_message (msg_packet);
       }
 
-      send_message (msg_packet);
-     
+      if (!QUIET) send_message (msg_packet);
+
       /* Add message data to fastbit database */
       new_line.str("");
       new_line.clear();
@@ -563,7 +563,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
     std::cout << "Fail on: " << module << " " << name << " " << statistic;
     pfc ( "\nksp @439 returned NULL\n", 31 );
   }
-
+  
   /* If we're reading a KSTAT_TYPE_IO file, we have
    * to handle things a bit differently 
    */
@@ -584,7 +584,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
     
     PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
     msg_disk->set_instance ((uint32_t)instance);
-   
+ 
     #ifdef FULLBIT 
       msg_disk->set_nread (kio.nread);
       msg_disk->set_nwritten (kio.nwritten);
