@@ -41,8 +41,6 @@
 #include "packet.pb.h"   // protocol buffer header
 #endif
 #include "scripts.hpp"   // script repository
-#include <ibis.h>        // for fastbit
-#include "fastbit.hpp"   // custom fastbit functions
 
 /*
  * Note the existence of:
@@ -149,20 +147,6 @@ int main (int argc, char **argv) {
     kc = kstat_open();
     uint64_t value;
     uint64_t st = time (NULL);  // start time
-
-    /* Set up ibis:: */
-    ibis::init();
-    ibis::gVerbose = VERBOSE;
-    ibis::tablex *tbl = 0;
-    tbl = ibis::tablex::create();
-    std::string column_format = "";
-    std::ostringstream new_line;
-    time_t last_save = 0;
-    time_t save_rate = 3600;  // How often to save (in seconds);
-    if (FASTBIT::load_config ("./db.conf", &column_format, tbl, &save_rate)) {
-      pfc ("ERROR: Unable to load fastbit configruation file. Aborting.\n", 31);
-      exit (1);
-    }
 
     pfc ("\n Server online!", 31);
     printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
@@ -323,30 +307,6 @@ int main (int argc, char **argv) {
 
       if (!QUIET) send_message (msg_packet);
 
-      /* Add message data to fastbit database */
-      new_line.str("");
-      new_line.clear();
-
-      FASTBIT::read_gen (&msg_packet, &new_line);
-      FASTBIT::read_mem (&msg_packet, &new_line); 
-      FASTBIT::read_cpu (&msg_packet, &new_line);
-      FASTBIT::read_disk (&msg_packet, &new_line);
-      FASTBIT::read_net (&msg_packet, &new_line);
-      FASTBIT::read_proc (&msg_packet, &new_line);   
-      tbl->appendRow ((const char *)new_line.str().c_str());
-      
-      /* Consider saving fastbit table */
-      if (!QUIET) {
-        if (msg_packet.time()-last_save > save_rate && msg_packet.time()%save_rate < 10) {
-          // Save within ~10 of save_rate alignment
-          pfc ("Saving database now...\n", 37);
-          last_save = msg_packet.time();
-          // Note that we use time - save_rate to have folders labeled by
-          // what hour they refer to, not by the following hour.
-          FASTBIT::write_to_db (tbl, (VERBOSE<<1)|VERBOSE2, time (NULL) - save_rate); 
-        }
-      }
-
       struct timespec req = {0};
       req.tv_sec = 0;
       req.tv_nsec = millisec * 1000000L;
@@ -361,12 +321,6 @@ int main (int argc, char **argv) {
     
     /* Shutdown ProtoBuf library */
     google::protobuf::ShutdownProtobufLibrary();
-
-    /* If not in quiet mode, save database */
-    if (!QUIET) {
-      FASTBIT::write_to_db (tbl, 0, time (NULL), true);
-      pfc (" . database saved to _temp with exact time\n\n", 36);
-    }
 
     return 0;
 }

@@ -12,7 +12,7 @@
 # Compiler
 CC=g++
 # Libraries
-LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf -lfastbit
+LDFLAGS=-ldtrace -lzmq -lkstat -lprotobuf
 LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/lib
 
 .PHONY: rel
@@ -20,12 +20,11 @@ LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/
 # Instructions
 all: server_release server_release_zone
 
-all64: server_release64 server_release_zone64
 
 server_release_zone: server.cpp scripts.hpp packet.pb.cc packet64.pb.cc fastbit.hpp
 	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS_LCL) -O2 -o server_release_zone
 
-server_release: server.cpp scripts.hpp packet.pb.cc packet64.pb.cc fastbit.hpp
+server_release: server.cpp scripts.hpp packet.pb.cc packet64.pb.cc
 	$(CC) server.cpp packet.pb.cc $(LDFLAGS_LCL) -O2 -o server_release 
 
 server_release64: server.cpp scripts.hpp packet64.pb.cc fastbit.hpp
