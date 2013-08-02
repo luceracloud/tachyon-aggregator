@@ -1,7 +1,15 @@
-
+/*
+ *  fastbit.hpp
+ *
+ *   Includes a nice library of functions 
+ *   that allow easy interface with ibis
+ *   from C++ program.
+ *
+ *   CREATED:  26 JUL 2013
+ *   EDITED:    2 AUG 2013
+ */
 
 #define COMBINE(a,b) (((uint64_t)a<<32)|(uint64_t)b)
-
 
 
 namespace FASTBIT {
@@ -123,7 +131,8 @@ bool load_config (const char *fname, std::string *column_line,
  * Read GENERAL data and append it to ostring
  */
 bool read_gen (PB_MSG::Packet *pckt, std::ostringstream *line) {
-  *line << pckt->time() << "," << pckt->ticks() << "," << pckt->process_size() << ",";
+  *line << pckt->time() << "," << pckt->ticks() << ","; 
+  *line << pckt->processes() << "," << pckt->threads() << ",";
   return 0;
 }
 
@@ -283,7 +292,6 @@ bool write_to_db (ibis::tablex *tbl, uint_fast8_t verbosity, time_t t, bool temp
   part_name << directory.str() << "/-part.txt";
   FILE *exists;
   exists = fopen (part_name.str().c_str(), "r");
-  std::cout << part_name.str();
   if (exists != NULL) {
     std::cout << "Folder already exists, using different name" << std::endl;
     directory << "_collide";

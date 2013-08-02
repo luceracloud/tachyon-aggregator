@@ -3,14 +3,18 @@
  *
  *    Pushes kstat & dtrace statistics
  *    via ZMQ & protocol buffers to
- *    anyone who will listen.
+ *    anyone who will listen. Also saves
+ *    recorded data into fastbit database
+ *    using information from "db.conf"
+ *    file.
  *
  *    COMPILE WITH:
- *      g++ server.cpp packet.pb.cc -ldtrace -lzmq
- *        -lkstat -lprotobuf -O2 -o server_release
+ *      g++ server.cpp packet.pb.cc -ldtrace
+ *        -lzmq -lfastbit -lkstat -lprotobuf
+ *        -O2 -o server_release
  *
- *    CREATED:  16 JULY 2013
- *    UPDATED:  30 JULY 2013
+ *    CREATED:  16 JUL 2013
+ *    UPDATED:   2 AUG 2013
  *
  */
 
@@ -28,7 +32,7 @@
 #include <time.h>
 #include <sstream>
 
-#include <dtrace.h>
+#include <dtrace.h>      // for libdtrace
 #include <zmq.hpp>       // for zmq sockets
 #include <kstat.h>       // for kstats
 #ifdef FULLBIT
@@ -36,19 +40,17 @@
 #else
 #include "packet.pb.h"   // protocol buffer header
 #endif
-#include "scripts.h"     // script repository
-#include <ibis.h>
-#include "fastbit.h"     // fastbit functions
+#include "scripts.hpp"   // script repository
+#include <ibis.h>        // for fastbit
+#include "fastbit.hpp"   // custom fastbit functions
 
 /*
  * Note the existence of:
  */
-void sigint_handler (int s);
 void sig_handler (int s);
 int pfc (const char *c, int color);
 int print_message (PB_MSG::Packet pckt);
 void usage ();
-void printfc (const char *c, int color);
 
 int send_message ();
 int send_message (const char *c);
@@ -58,7 +60,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
 int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr); 
 int dtrace_setopts (dtrace_hdl_t **this_g_dtp);
 int dtrace_init (dtrace_hdl_t **this_g_dtp, std::string s);
-static int dtrace_aggwalk(const dtrace_aggdata_t *data, void *arg);
+static int dtrace_aggwalk (const dtrace_aggdata_t *data, void *arg);
 
 /*
  * Globally-existing variables &c.
@@ -67,6 +69,7 @@ bool do_loop = 1;
 bool VERBOSE = 0; 
 bool VERBOSE2 = 0;
 bool QUIET = 0;
+int millisec = 999;
 const char *port = "7211";
 zmq::context_t context (1); 
 zmq::socket_t socket (context, ZMQ_PUB);
@@ -114,13 +117,19 @@ int main (int argc, char **argv) {
         QUIET = 1;
         std::cout << "\033[00;36m . running in quiet mode\033[00m\n";
       }
+      if (!strcmp(argv[i], "-d") || !strcmp (argv[i], "-D")) {
+        millisec = atoi(argv[i+1]);
+        if (millisec > 999) millisec = 999;
+        std::cout << "\033[00;36m . using delay of " << argv[i+1] << "\033[00m\n";
+      }
     }
  
     /* Set up zmq socket */
     char buf[15];
     sprintf(buf, "tcp://*:%s", port);
-    socket.bind (buf);
-    send_message ((const char *)"Init"); 
+    if (!QUIET) {
+      socket.bind (buf);
+    }
 
     /* Protobuf stuff */
     GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -172,6 +181,8 @@ int main (int argc, char **argv) {
       }
       
       /* General statistics */
+      msg_packet.set_processes (0);
+      msg_packet.set_threads (0);
 
       /* Memory */
       PB_MSG::Packet_Mem *msg_mem = msg_packet.add_mem();
@@ -220,7 +231,8 @@ int main (int argc, char **argv) {
             }
          #endif
 
-          if (VERBOSE) printf ("Received: %u for %s\n", value, MEM::statistic[i].c_str());
+          if (VERBOSE) std::cout << "Received: " << value << " for " 
+                  << MEM::statistic[i].c_str() << std::endl;
         } 
       }
 
@@ -277,8 +289,8 @@ int main (int argc, char **argv) {
       instance = -1;
       while (++instance>-1) {
         std::ostringstream name;
-        name << (std::string)"sd" << instance;
-        int return_value = retreive_kstat ((std::string)"sd", name.str(), "NULL", instance, &value);
+        name << std::string("sd") << instance;
+        int return_value = retreive_kstat (std::string("sd"), name.str(), "NULL", instance, &value);
         if (return_value == -1) {
           pfc ("WARN: Failure in function \"retreive_kstat\" @disk \n", 33);
         } else if (return_value == 1) {
@@ -300,7 +312,7 @@ int main (int argc, char **argv) {
         if (dtrace_aggregate_walk_valsorted (g_dtp[i], dtrace_aggwalk, NULL) != 0) {
           pfc ("WARN: Failed to walk aggregate\n", 33);
         }
-        if (VERBOSE) printf ("===========================================\n");
+        if (VERBOSE) std::cout << "===========================================" << std::endl;
       }
 
       msg_packet.set_time ((uint64_t)time(NULL));      
@@ -324,25 +336,37 @@ int main (int argc, char **argv) {
       tbl->appendRow ((const char *)new_line.str().c_str());
       
       /* Consider saving fastbit table */
-      if (msg_packet.time()-last_save > save_rate && msg_packet.time()%save_rate < 10) {
-        // Save within ~10 of save_rate alignment
-        pfc ("Saving database now...\n", 37);
-        last_save = msg_packet.time();
-        // Note that we use time - save_rate to have folders labeled by
-        // what hour they refer to, not by the following hour.
-        FASTBIT::write_to_db (tbl, (VERBOSE<<1)|VERBOSE2, time (NULL) - save_rate); 
+      if (!QUIET) {
+        if (msg_packet.time()-last_save > save_rate && msg_packet.time()%save_rate < 10) {
+          // Save within ~10 of save_rate alignment
+          pfc ("Saving database now...\n", 37);
+          last_save = msg_packet.time();
+          // Note that we use time - save_rate to have folders labeled by
+          // what hour they refer to, not by the following hour.
+          FASTBIT::write_to_db (tbl, (VERBOSE<<1)|VERBOSE2, time (NULL) - save_rate); 
+        }
       }
 
-      sleep (1);
+      struct timespec req = {0};
+      req.tv_sec = 0;
+      req.tv_nsec = millisec * 1000000L;
+      nanosleep(&req, (struct timespec *)NULL);
     }
 
+    /* Kill DTrace scripts */
     for (size_t scpt=0; scpt<DTRACE::number; scpt++) {
       dtrace_close (g_dtp[scpt]); 
     }
     pfc (" . dtrace scripts killed\n", 36);
-    FASTBIT::write_to_db (tbl, 0, time (NULL), true);
-    pfc (" . database saved to _temp with exact time\n\n", 36);
+    
+    /* Shutdown ProtoBuf library */
+    google::protobuf::ShutdownProtobufLibrary();
 
+    /* If not in quiet mode, save database */
+    if (!QUIET) {
+      FASTBIT::write_to_db (tbl, 0, time (NULL), true);
+      pfc (" . database saved to _temp with exact time\n\n", 36);
+    }
 
     return 0;
 }
@@ -442,7 +466,7 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
       else if (i==3) data.usage = (uint64_t)*((uint32_t *)addr); 
     } else if (data.type==1) {
       if (i==2) data.core = *((uint32_t *)addr);
-      else if (i==3) data.name = (std::string)(const char *)addr;
+      else if (i==3) data.name = std::string((const char *)addr);
       else if (i==4) data.pid = *((uint32_t *)addr);
       else if (i==5) data.usage = *((uint64_t *)addr);
     } else if (data.type==2) {
@@ -462,7 +486,7 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
 
           int64_t l_range = max_quantize_range (range_cnt);
           PB_MSG::Packet_CallHeat *msg_callheat = msg_packet.add_callheat();
-          msg_callheat->set_name ((std::string)"allcall");
+          msg_callheat->set_name (std::string("allcall"));
           #ifdef FULLBIT
             msg_callheat->set_lowt (l_range); 
             msg_callheat->set_value (agg_data[range_cnt]);
@@ -474,6 +498,12 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
           #endif
         }
       }
+    } else if (data.type==4) {
+    /* Count processes */
+      if (i==2) msg_packet.set_processes (msg_packet.processes()+1);
+    } else if (data.type==5) {
+    /* Count threads */
+      if (i==2) msg_packet.set_threads (msg_packet.threads()+1); 
     } else {
       pfc ("WARN: Unrecognized dtrace script type @334\n", 33);
       if (VERBOSE) formatted_print (rec, addr);
@@ -522,7 +552,7 @@ int dtrace_setopts (dtrace_hdl_t **this_g_dtp) {
 
 /* Print contents of packet message for user */
 int print_message(PB_MSG::Packet pckt) {
-  printf ("String representation of packet:\n");
+  std::cout << "String representation of packet:" << std::endl;
   pckt.PrintDebugString(); 
   return 0;
 }  
@@ -655,7 +685,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
         break;
       default:
         // We should never end up in here
-        printf ("Something rather peculiar happened.\n");
+        std::cout << "Something rather peculiar happened." << std::endl;
         break;
     }
   }
@@ -668,7 +698,7 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
  * over the established zmq socket
  */
 int send_message () {
-  send_message ((const char *)"Hello");
+  send_message ((const char *)"EMPTY");
   return 0;
 }
 
@@ -676,7 +706,7 @@ int send_message (const char *c) {
   try {
     zmq::message_t msg (strlen(c));
     memcpy ((void *)msg.data(), c, strlen(c));
-    socket.send (msg);
+    if (!QUIET) socket.send (msg);
     return 0;
   } catch (int e) {
     printf ("Error number %d\n", e);
@@ -690,7 +720,7 @@ int send_message (PB_MSG::Packet pckt) {
     pckt.SerializeToString (&pckt_serialized);
     zmq::message_t msg (pckt_serialized.size());
     memcpy ((void *)msg.data(), pckt_serialized.c_str(), pckt_serialized.size());
-    socket.send (msg, ZMQ_NOBLOCK);
+    if (!QUIET) socket.send (msg, ZMQ_NOBLOCK);
   } catch (int e) {
     printf ("Error number %d\n", e);
     return -1;
@@ -702,9 +732,7 @@ int send_message (PB_MSG::Packet pckt) {
  * Prints a colorized version of input text
  */
 int pfc (const char *c, int color) {
-
   std::cout << "\033[00;" << color << "m" << c << "\033[00m";
-  //printf ("\033[00;%dm%s\033[00m", color, c);
   return 0;
 }
 
@@ -718,23 +746,18 @@ void sig_handler (int s) {
 }
 
 /*
- * Handle signals
- */
-void sigint_handler (int s) {
-  do_loop = 0;
-  pfc ("\nSafely stopping dtrace script interface.\nKilling program...\n", 37);
-}
-
-/*
  * Prints usage information to user
  */
 void usage () {
   std::cout << "\nusage:  server [-h] [-p NUMBER] [-v] [-vlite]"; 
-  std::cout << "\n    -h         prints this help page";
-  std::cout << "\n    -p NUMBER  use port NUMBER";
-  std::cout << "\n    -v         run in verbose mode (print all queries and responses)";
-  std::cout << "\n    -vlite     prints time (and dtrace ticks) for each sent message";
+  std::cout << "\n    -h         prints this help/usage page";
+  std::cout << "\n    -p PORT    use port PORT";
+  std::cout << "\n    -v         run in verbose mode (print all queries and ZMQ packets)";
+  std::cout << "\n    -vlite     prints time (and dtrace ticks (tick-4999)) for each sent message";
+  std::cout << "\n    -d DELAY   wait DELAY<1000 ms instead of default 1000";
+  std::cout << "\n    -q         quiet mode, prints diagnostic information and does not send messages";
 #ifdef FULLBIT
+  std::cout << "\n\nThis version of the server uses 64bit protocol buffers and is unsupported";
 #else
   std::cout << "\n\nThis version of the server uses 32bit protocol buffer values.";
 #endif

@@ -1,9 +1,9 @@
 /*
- *  scripts.h
+ *  scripts.hpp
  *
  *    Header file for C++ statistics
  *    server. Includes kstat & dtrace
- *    scripts in respective namespaces
+ *    scripts in respective namespaces.
  *
  *  CREATED:  17 JULY 2013
  *  UPDATED:  23 JULY 2013
@@ -16,7 +16,7 @@
 #define NET_NUM 8
 #endif
 #define DISK_NUM 6
-#define DTRACE_NUM 4
+#define DTRACE_NUM 6
 
 namespace MEM {
   size_t number = MEM_NUM; 
@@ -60,7 +60,9 @@ namespace DTRACE {
     (std::string)"profile:::profile-4999\n{\n@[0,cpu] = count();\n}",
     (std::string)"profile:::profile-4999\n{\n@[1,cpu,execname,pid] = count();\n}",
     (std::string)"profile:::tick-4999\n{\n@[2] = count();\n}",
-    (std::string)"syscall:::entry\n{\nself->begun=timestamp;\n}\nsyscall:::return\n{\nself->ended=timestamp;\n@[3]=quantize(self->ended-self->begun);\n}"
+    (std::string)"syscall:::entry\n{\nself->begun=timestamp;\n}\nsyscall:::return\n{\nself->ended=timestamp;\n@[3]=quantize(self->ended-self->begun);\n}",
+    std::string("profile:::profile-4999\n{\n@[4,pid] = count();\n}"),
+    std::string("profile:::profile-4999\n{\n@[5,curthread] = count();\n}")
   };
 
 }

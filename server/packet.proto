@@ -19,6 +19,8 @@ message Packet {
   repeated Net net = 5;
   repeated Process process = 6;
   repeated CallHeat callheat = 8;
+  optional uint32 threads = 9;
+  optional uint32 processes = 10;
 
   message Process {
     optional uint32 pid = 1;

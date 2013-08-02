@@ -9,6 +9,8 @@ message Packet {
 
   required uint64 time = 1;
   optional uint32 ticks = 7;
+  optional uint32 threads = 9;
+  optional uint32 processes = 10;
 
   repeated Cpu cpu = 2;
   repeated Mem mem = 3;

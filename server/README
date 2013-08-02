@@ -4,15 +4,18 @@
 *                                                 
 *    Pushes kstat & dtrace statistics
 *    via ZMQ & protocol buffers to
-*    anyone who will listen.
+*    anyone who will listen. Also saves
+*    recorded data into fastbit database
+*    using information from "db.conf"
+*    file.
 *
 *    COMPILE WITH:
 *      g++ server.cpp packet.pb.cc -ldtrace
 *        -lzmq -lfastbit -lkstat -lprotobuf
 *        -O2 -o server_release
 *
-*    CREATED:  16 JULY 2013
-*    UPDATED:  29 JULY 2013
+*    CREATED:  16 JUL 2013
+*    UPDATED:   2 AUG 2013
 *
 * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -34,25 +37,33 @@
     latest release from: https://codeforge.lbl.gov/frs/?group_id=44
     v1.3.5 used to build code in this directory
 
+ Expected source files include:
+
+  packet64.proto   (for non-default 64bit)
+  packet.proto
+  fastbit.hpp
+  scripts.hpp
+  server.cpp
+
 
  As an alternative to the "COMPILE WITH:" instructions above, use the
  included Makefile by running `make'. To compile only the protocol buffer,
  run `make proto.pb.cc'. To compile only the server, run `make server'. Running
  `make clean' removes previous build of the software.
 
- The server defaults to using port 7211.
+ The server defaults to ZMQ_PUB on port 7211. 
 
 
- BINARY USAGE (built on SmartOS):
+ BINARY USAGE (for SmartOS):
 
   server_release [-h] [-p NUMBER] [-v] [-vlite]
 
     -h          prints help/usage page
-    -p NUMBER   run on port NUMBER
-    -v          runs in verbose mode (print all queries and responses/ZMQ packet)
+    -p PORT     run on port PORT
+    -v          runs in verbose mode (print all queries and ZMQ packets)
     -vlite      print time (and dtrace ticks (tick-4999)) for each sent message
+    -d DELAY    wait DELAY<1000 ms instead of default 1000
     -q          quiet mode, prints diagnostic information and does not send messages
-
 
 
 
