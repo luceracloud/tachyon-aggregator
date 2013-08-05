@@ -10,11 +10,7 @@
  */
     
 #define MEM_NUM 7
-#ifdef ZONE
 #define NET_NUM 6 
-#else
-#define NET_NUM 8
-#endif
 #define DISK_NUM 6
 #define DTRACE_NUM 6
 
@@ -67,4 +63,24 @@ namespace DTRACE {
 
 }
   
+namespace TEST {
+
+  const int a = 4; 
+
+  std::string module[a] = { "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
+  std::string name[a] = { "NULL", "NULL", "NULL", "NULL" };
+  std::string statistic[a] = { "rss", "physcap", "swap", "swapcap" };
+
+
+
+
+}
+
+
+
+
+
+
+
+
 

@@ -41,6 +41,7 @@
 #include "packet.pb.h"   // protocol buffer header
 #endif
 #include "scripts.hpp"   // script repository
+#include "zmq.hpp"       // custom library
 
 /*
  * Note the existence of:
@@ -54,6 +55,7 @@ int send_message ();
 int send_message (const char *c);
 int send_message (PB_MSG::Packet pckt);
 
+int retreive_multiple_kstat (std::string module, std::string statistic);
 int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value);
 int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr); 
 int dtrace_setopts (dtrace_hdl_t **this_g_dtp);
@@ -168,6 +170,15 @@ int main (int argc, char **argv) {
       msg_packet.set_processes (0);
       msg_packet.set_threads (0);
 
+      /* Debug stuff */
+      if (retreive_kstat (TEST::module[0], TEST::name[0], TEST::statistic[0], -1, &value)) {
+        std::cout << "ERROR" << std::endl;
+      } else {
+        std::cout << "PROPER RETURN" << std::endl;
+      }
+
+
+
       /* Memory */
       PB_MSG::Packet_Mem *msg_mem = msg_packet.add_mem();
       for (i=0; i<MEM::number; i++) {
@@ -176,19 +187,19 @@ int main (int argc, char **argv) {
         } else {
           #ifdef FULLBIT
              if (MEM::statistic[i]=="physmem") {
-             msg_mem->set_physmem (value);
-           } else if (MEM::statistic[i]=="rss") {
-             msg_mem->set_rss (value);
-           } else if (MEM::statistic[i]=="pp_kernel") {
-             msg_mem->set_pp_kernel (value);
+             //msg_mem->set_physmem (value);
+            } else if (MEM::statistic[i]=="rss") {
+             //msg_mem->set_rss (value);
+            } else if (MEM::statistic[i]=="pp_kernel") {
+             //msg_mem->set_pp_kernel (value);
             } else if (MEM::statistic[i]=="freemem") {
-              msg_mem->set_freemem (value);
+              //msg_mem->set_freemem (value);
             } else if (MEM::statistic[i]=="physcap") {
-              msg_mem->set_physcap (value);
+              //msg_mem->set_physcap (value);
             } else if (MEM::statistic[i]=="swap") {
-              msg_mem->set_swap (value);
+              //msg_mem->set_swap (value);
             } else if (MEM::statistic[i]=="swapcap") {
-              msg_mem->set_swapcap (value);
+              //msg_mem->set_swapcap (value);
             }
           #else
              if (MEM::statistic[i]=="physmem") {
@@ -286,7 +297,7 @@ int main (int argc, char **argv) {
           // Nothing to see here. Move along.
         }
       }
- 
+      
       /* Do dtrace look-ups */
       for (i=0; i<DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
@@ -306,7 +317,7 @@ int main (int argc, char **argv) {
       }
 
       if (!QUIET) send_message (msg_packet);
-
+      
       struct timespec req = {0};
       req.tv_sec = 0;
       req.tv_nsec = millisec * 1000000L;
@@ -510,6 +521,17 @@ int print_message(PB_MSG::Packet pckt) {
   pckt.PrintDebugString(); 
   return 0;
 }  
+
+/*
+ * Function similar to one below, but allows
+ *  for the return of multiple values, instead
+ *  of just one.
+ */
+int retreive_multiple_kstat (std::string module, std::string statistic) {
+
+  return 0;
+}
+
 
 /*
  * Find the associated kstat using libkstat

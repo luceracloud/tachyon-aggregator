@@ -39,17 +39,6 @@ packet.pb.cc:
 packet64.pb.cc:
 	protoc -I=. --cpp_out=. ./packet64.proto
 
-ll: packet.pb.cc server.cpp scripts.hpp fastbit.hpp
-	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release
-	$(CC) server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server_release_gz
-
-ll64: packet64.pb.cc server.cpp scripts.hpp fastbit.hpp
-	$(CC) -DFULLBIT -DZONE server.cpp packet.pb.cc $(LDFLAGS) -O2 -o server64_release
-	$(CC) -DFULLBIT server.cpp packet64.pb.cc $(LDFLAGS) -O2 -o server64_release_gz
-
-llf: packet.pb.cc server.cpp scripts.hpp fastbit.hpp
-	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS) -g -O2 -o server_release
-
 rel: server_release
 	cp server_release metric/bin
 	tar zcf metric.tar.gz metric/*
