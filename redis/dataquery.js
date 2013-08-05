@@ -10,7 +10,7 @@ var redisSnapshots = '/root/redis/snapshots/';
 // Read from the command line
 var total = 0;
 var max = 0;
-var waitTime = 25;
+var waitTime = 150;
 var counts = 0;
 var stand = new Array();
 var multi = new Array();
@@ -148,7 +148,7 @@ function startServer (data) {
   callback = data[1];
   cb = data[2];
   fs.open('/root/redis/redis.conf2', 'a', function(err, fd) {
-    fs.writeSync(fd, c[i], 5183, 13);
+		fs.writeSync(fd, c[i], 5183, 13);
     fs.writeSync(fd, dater, 5498 + redisSnapshots.length, 10);
     fs.closeSync(fd);
     callback (cb);
@@ -160,7 +160,7 @@ function createServer1 (cb) {
   var cmd = "sh /root/redis/run2";
   var child = exec(cmd, function(error, stdout, stderr) {
   });
-  cb();
+	setTimeout(cb, waitTime);
 }
 
 // Creates the second redis server because a timeout is neccesary
@@ -714,18 +714,19 @@ function getMemStats(data, cb) {
         }
        
         time.push(key.substring(3,5) + key.substring(6,8)); 
-        appendMemArray("swap", Math.floor(memA["swa"]/memA["sca"]*1000)/10, pos, keys.length); 
+			 	appendMemArray("swap", Math.floor(memA["swa"]/memA["sca"]*1000)/10, pos, keys.length); 
         appendMemArray("rss", Math.floor(memA["rss"]/ memA["mem"] * 1000)/ 10, pos, keys.length);       
  
         if(pos == keys.length - 1) {
-            console.log("times            " + time);
+           console.log("times            " + time);
           for(var pose in types) {
             if(pose == "swap") {
             console.log(pose +  "             " +  multi[pose]);
             }
-            if(pose == "rss")
+            if(pose == "rss") {
             console.log(pose +  "              " +  multi[pose]);
-          }
+          	}
+					}
           multi = new Array();
           types = new Array();
           time = new Array();
