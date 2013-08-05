@@ -65,12 +65,10 @@ namespace DTRACE {
   
 namespace TEST {
 
-  const int a = 4; 
+  const int a = 6;
 
-  std::string module[a] = { "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
-  std::string name[a] = { "NULL", "NULL", "NULL", "NULL" };
-  std::string statistic[a] = { "rss", "physcap", "swap", "swapcap" };
-
+  std::string module[a] = { "zone_zfs", "memory_cap", "memory_cap", "memory_cap", "memory_cap", "zone_zfs" };
+  std::string statistic[a] = { "reads", "rss", "physcap", "swap", "swapcap", "writes" };
 
 
 
