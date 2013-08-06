@@ -172,12 +172,12 @@ int main (int argc, char **argv) {
       msg_packet.set_threads (0);
 
     {
+
     std::vector<uint64_t> values;
-
-
+		std::vector<std::string> names;
 
       /* Debug stuff */
-      if (KSTAT::retreive_multiple_kstat (kc, TEST::module[0], TEST::statistic[0], &values)) {
+      if (KSTAT::retreive_multiple_kstat (kc, TEST::module[0], TEST::statistic[0], &values, &names)) {
         std::cout << "ERROR" << std::endl;
       } else {
         std::cout << "PROPER RETURN" << std::endl;

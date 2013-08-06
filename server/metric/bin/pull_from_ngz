@@ -1,1 +1,0 @@
-cp -rf /zones/4a4ffdfe-0d91-4f2b-935b-a59470fe0780/root/opt/Sites/dtrace/server/metric/* /opt/meter/

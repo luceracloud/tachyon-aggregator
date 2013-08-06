@@ -59,7 +59,9 @@ void pv (std::vector<uint64_t> *v) {
  * Allows the return of multiple values
  * in a vector.
  */
-int retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, std::string statistic, std::vector<uint64_t> *values) {
+int retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, 
+						std::string statistic, std::vector<uint64_t> *values,
+						std::vector<std::string> *names) {
   values->clear();
   kstat_t         *ksp;
   kstat_named_t   *knp;
@@ -90,8 +92,6 @@ int retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, std::string st
 
   return 0;
 }
-
-
 
 
 
