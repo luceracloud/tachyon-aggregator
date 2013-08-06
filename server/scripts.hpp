@@ -8,20 +8,38 @@
  *  CREATED:  17 JULY 2013
  *  UPDATED:  23 JULY 2013
  */
-    
-#define MEM_NUM 7
+
 #define NET_NUM 6 
 #define DISK_NUM 6
 #define DTRACE_NUM 6
 
 namespace MEM {
-  size_t number = MEM_NUM; 
-  std::string module[ MEM_NUM ] = { "unix", "unix", "unix", "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
-  std::string name[ MEM_NUM ] = { "system_pages", "system_pages", "system_pages", "NULL", "NULL", "NULL", "NULL" };
-  std::string statistic[ MEM_NUM ] = { "freemem", "physmem", "pp_kernel", "physcap", "rss", "swap", "swapcap" };      
+	/* Global-zone specific stuff */
+	const size_t GZ_size = 6;
+	std::string GZ_modl[ GZ_size ] = { "", "", "", "", "", "" };
+	std::string GZ_name[ GZ_size ] = { "", "", "", "", "", "" };
+	std::string GZ_stat[ GZ_size ] = { "", "", "", "", "", "" }; 
+
+	/* Other */
+	const size_t size = 4;
+	std::string modl[ size ] = { "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
+	std::string stat[ size ] = { "rss", "physcap", "swap", "swapcap" };
+  //size_t number = 4; 
+  //std::string module[ MEM_NUM ] = { "unix", "unix", "unix", "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
+  //std::string name[ 7 ] = { "system_pages", "system_pages", "system_pages", "NULL", "NULL", "NULL", "NULL" };
+  //std::string statistic[ 7 ] = { "freemem", "physmem", "pp_kernel", "physcap", "rss", "swap", "swapcap" };      
 } 
 
 namespace NET {
+	/* Global-zone specific stuff */
+	const size_t GZ_size = 0;
+	std::string GZ_modl[ GZ_size ] = {};
+	std::string GZ_name[ GZ_size ] = {};
+	std::string GZ_stat[ GZ_size ] = {};
+
+	/* Other */
+	const size_t size = 0;
+
   size_t number = NET_NUM;
 #ifdef ZONE
   size_t num_instance = 1;
