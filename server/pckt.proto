@@ -1,12 +1,12 @@
-// This proto file provides
-// the necssary fields to send
-// data regarding an individual
-// zone.
+// This proto file provides the 
+//  necessary fields to send
+//  data regarding the GZ.
 //
-// CREATED:   5 AUG 2013
-// EDITED:    5 AUG 2013
+//  CREATED:  2 AUG 2013
+//  EDITED:   5 AUG 2013
+//  
 
-package PB_MSG;
+package PBMSG;
 
 message Packet {
 
@@ -21,6 +21,7 @@ message Packet {
   repeated Disk disk = 8;
   repeated Process process = 9;
   repeated CallFreq callfreq = 10;
+  repeated string zonename = 11;
 
   message Cpu {
     optional uint32 core = 1;
@@ -31,7 +32,13 @@ message Packet {
     optional uint64 rss = 1;
     optional uint64 physcap = 2;
     optional uint64 swap = 3;
-    optional uint64 swapcap = 4;
+    optional uint64 swapcap = 4;  
+    // GZ-specific
+    optional uint64 physmem = 5;
+    optional uint64 pp_kernel = 6;
+    optional uint64 freemem = 7;
+    optional uint64 nalloc_calls = 8;
+    optional uint64 nfree_calls = 9;
   }
 
   message Net {
@@ -40,8 +47,8 @@ message Packet {
     optional uint64 rbytes64 = 3;
     optional uint64 opackets = 4;
     optional uint64 ipackets = 5;
-    optional uint32 ierrors = 6;
-    optional uint32 oerrors = 7;
+    optional uint32 oerrors = 6;
+    optional uint32 ierrors = 7;
   }
 
   message Disk {
@@ -57,12 +64,12 @@ message Packet {
     optional uint32 harderror = 10;
     optional uint32 softerror = 11;
     optional uint32 tranerror = 12;
-  }
-  
+ }
+
   message Process {
     optional uint32 pid = 1;
     optional string execname = 2;
-    optional uint32 usgae = 3;
+    optional uint32 usage = 3;
     optional uint32 cpu = 4;
   }
 
@@ -73,4 +80,3 @@ message Packet {
   }
 
 }
-

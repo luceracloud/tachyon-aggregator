@@ -5,20 +5,19 @@
  *    server. Includes kstat & dtrace
  *    scripts in respective namespaces.
  *
- *  CREATED:  17 JULY 2013
- *  UPDATED:  23 JULY 2013
+ *  CREATED:  17 JUL 2013
+ *  UPDATED:   6 AUG 2013
  */
 
-#define NET_NUM 6 
 #define DISK_NUM 6
 #define DTRACE_NUM 6
 
 namespace MEM {
 	/* Global-zone specific stuff */
-	const size_t GZ_size = 6;
-	std::string GZ_modl[ GZ_size ] = { "", "", "", "", "", "" };
-	std::string GZ_name[ GZ_size ] = { "", "", "", "", "", "" };
-	std::string GZ_stat[ GZ_size ] = { "", "", "", "", "", "" }; 
+	const size_t GZ_size = 5;
+	std::string GZ_modl[ GZ_size ] = { "unix", "unix", "unix", "unix", "unix" };
+	std::string GZ_name[ GZ_size ] = { "system_pages", "system_pages", "system_pages", "system_pages", "system_pages" }; 
+	std::string GZ_stat[ GZ_size ] = { "physmem", "pp_kernel", "freemem", "nalloc_calls", "nfree_calls" };
 
 	/* Other */
 	const size_t size = 4;
@@ -38,33 +37,22 @@ namespace NET {
 	std::string GZ_stat[ GZ_size ] = {};
 
 	/* Other */
-	const size_t size = 0;
-
-  size_t number = NET_NUM;
-#ifdef ZONE
-  size_t num_instance = 1;
-  std::string module[1][ NET_NUM ] = { { "link", "link", "link", "link", "link", "link" } };
-  std::string name[1][ NET_NUM ] = { { "net0", "net0", "net0", "net0", "net0", "net0" } };
-  std::string statistic[1][ NET_NUM ] = { { "obytes64", "rbytes64", "opackets", "ipackets", "ierrors", "oerrors" } }; 
-#else
-  size_t num_instance = 2;
-  std::string module[2][ NET_NUM ] = {
-    { "link", "link", "link", "link", "link", "link" },
-    { "link", "link", "link", "link", "link", "link" } };
-  std::string name[2][ NET_NUM ] = {
-    { "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0", "ixgbe0" },
-    { "int0", "int0", "int0", "int0", "int0", "int0" } };
-  std::string statistic[2][ NET_NUM ] = {
-    { "obytes64", "rbytes64", "opackets", "ipackets", "ierrors", "oerrors" },
-    { "obytes64", "rbytes64", "opackets", "ipackets", "ierrors", "oerrors" } }; 
-#endif
+	const size_t size = 6;
+  std::string modl[ size ] = { "link", "link", "link", "link", "link", "link" };
+  std::string stat[ size ] = { "obytes64", "rbytes64", "opackets", "ipackets", "oerrors", "ierrors" };
 }
 
 namespace DISK {
-  size_t number = DISK_NUM;
-  /* All functionality implemented within the
-   * server program
-   */
+  /* Global-zone specific stuff */
+  const size_t GZ_size = 0;
+  std::string GZ_modl[ GZ_size ] = {};
+  std::string GZ_name[ GZ_size ] = {};
+  std::string GZ_stat[ GZ_size ] = {};
+
+  /* Other */
+  const size_t size = 0;
+  std::string modl[ size ] = {};
+  std::string stat[ size ] = {};
 }
 
 namespace DTRACE {

@@ -35,14 +35,13 @@
 #include <dtrace.h>      // for libdtrace
 #include <zmq.hpp>       // for zmq sockets
 #include <kstat.h>       // for kstats
-#ifdef FULLBIT
-#include "packet64.pb.h" // 64bit protocol buffer header
-#else
 #include "packet.pb.h"   // protocol buffer header
-#endif
 #include "scripts.hpp"   // script repository
 #include "zmq.hpp"       // custom library
 #include "kstat.hpp"     // custom kstat library
+
+#include "zone.hpp"      // custom typedef for zone
+//#include "gzone.hpp"     // custom typedef for gzone
 
 /*
  * Note the existence of:
@@ -74,13 +73,16 @@ int millisec = 999;
 const char *port = "7211";
 zmq::context_t context (1); 
 zmq::socket_t socket (context, ZMQ_PUB);
-PB_MSG::Packet msg_packet;
+//PB_MSG::Packet msg_packet;
 kstat_ctl_t *kc;
 
 /*
  *  main loop
  */
 int main (int argc, char **argv) {
+
+    /* Map of packets */
+    std::map <std::string, Zone> data;
 
     /* Handle signals (for cleanup) */
     signal (SIGINT, sig_handler);
@@ -94,8 +96,7 @@ int main (int argc, char **argv) {
     pfc ("  ZMQ (0MQ) sockets.\n\n", 37);
 
     /* Parse command line */
-    size_t i=0;
-    for (i=0; i<argc; i++) {
+    for (size_t i=0; i<argc; i++) {
       if (VERBOSE) printf ( "Argument %s\n", argv[i]);
       if (!strcmp (argv[i], "-v") || !strcmp (argv[i], "-V")) {
         pfc (" . running in verbose mode\n", 36);
@@ -137,7 +138,7 @@ int main (int argc, char **argv) {
     
     /* Dtrace init */
     dtrace_hdl_t *g_dtp[DTRACE::number]; 
-    for (i=0; i<DTRACE::number; i++) {
+    for (size_t i=0; i<DTRACE::number; i++) {
       dtrace_init (&g_dtp[i], DTRACE::dtrace[i]);
       dtrace_setopts (&g_dtp[i]);
       if (dtrace_go (g_dtp[i])) {
@@ -148,69 +149,105 @@ int main (int argc, char **argv) {
 
     /* Kstat init */
     kc = kstat_open();
-    uint64_t value;
     uint64_t st = time (NULL);  // start time
+
+    uint64_t value;
+		std::vector<uint64_t> values;
+		std::vector<std::string> names;
 
     pfc ("\n Server online!", 31);
     printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
 
-    /* Send data in loop */
+    /* Collect and send data in loop */
     while (do_loop) {
+     
+			/* Clean up from last cycle and updates */
+      //msg_packet.Clear(); // Clear the message (no need to reallocate)
       
-      msg_packet.Clear(); // Clear the message (no need to reallocate)
-      
-      /* Do kstat look-ups */
-      int i=0;
-      
-      // The kstat chain should be updated occasionally
+      /* The kstat chain should be updated occasionally */
       if (kstat_chain_update ( kc )) {
         if (VERBOSE) pfc (" . kstat chain updated\n", 36);
       }
-      
-      /* General statistics */
-      msg_packet.set_processes (0);
-      msg_packet.set_threads (0);
-
-    {
-
-    std::vector<uint64_t> values;
-		std::vector<std::string> names;
-
-      /* Debug stuff */
-      if (KSTAT::retreive_multiple_kstat (kc, TEST::module[0], TEST::statistic[0], &values, &names)) {
-        std::cout << "ERROR" << std::endl;
-      } else {
-        std::cout << "PROPER RETURN" << std::endl;
+     
+			// set time
+			// set ticks
+			// set threads
+			// set processes
+			
+			// CPU
+			// MEM
+		
+			/*
+			 * Grab memory statistics, first
+ 			 * from GZ, then from elsewhere.
+ 			 */
+			for (size_t i=0; i<MEM::GZ_size; i++) {
+			  if (KSTAT::retreive_kstat (kc, MEM::GZ_modl[i], MEM::GZ_name[i], MEM::GZ_stat[i], -1, &value)) {
+          std::cout << "SINGLE STAT RETURN asdfoiajsfokajsoecjaseokfjasf\n";
+        } else {
+          std::cout << "Single stat return no error =-=-=-=-=-=-=-`-=-=-=-=-1=-=1-=1-=-1=-1=\n";
+        }
       }
-    }
+			for (size_t i=0; i<MEM::size; i++) {
+				if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], &values, &names)) {
+					std::cout << "Unable to retreive expected kstats for " << MEM::modl[i] << " " <<
+											 MEM::stat[i] << std::endl;
+				} else {
+					std::cout << "Proper return!\n";
+          KSTAT::pv (&values);
+				}
+			}
+
+			/*
+ 			 * Grab network statistics, we
+ 			 * only care about NGZ stats,
+ 			 * as there are no GZ-specific
+ 			 * ones
+ 			 */
+      for (size_t i=0; i<NET::size; i++) {
+        if (KSTAT::retreive_multiple_kstat (kc, NET::modl[i], NET::stat[i], &values, &names)) {
+          std::cout << "Unable to retreive expected kstat for " << NET::modl[i] << " " <<
+                       NET::stat[i] << std::endl;
+        } else {
+          std::cout << "Good return\n";
+        }
+      }
+
+      /*
+       * Grab disk statistics. This
+       * one works a bit differently
+       * because of the way that I/O
+       * kstats are stored. Still
+       * returns a vector like the others.
+       */
+      for (size_t i=0; i<DISK::size; i++) {
+        if (KSTAT::retreive_multiple_kstat (kc, DISK::modl[i], DISK::stat[i], &values, &names)) {
+          std::cout << "Unable to retreive expected kstat for " << DISK::modl[i] << " " <<
+                       DISK::stat[i] << std::endl;
+        } else {
+
+        }
+      }
+
+
+			// PROCESS
+			// CALLFREQ
+			// ZONENAME
+
+
+			 
+      /* General statistics */
+      //msg_packet.set_processes (0);
+      //msg_packet.set_threads (0);
 
 
       /* Memory */
-      PB_MSG::Packet_Mem *msg_mem = msg_packet.add_mem();
-      for (i=0; i<MEM::number; i++) {
+   /*   PB_MSG::Packet_Mem *msg_mem = msg_packet.add_mem();
+      for (int i=0; i<MEM::number; i++) {
         if (retreive_kstat (MEM::module[i], MEM::name[i], MEM::statistic[i], -1, &value)) {
           pfc ("Failure in function \"retreive_kstat\" @memory \n", 31);
         } else {
-          #ifdef FULLBIT
-             if (MEM::statistic[i]=="physmem") {
-             //msg_mem->set_physmem (value);
-            } else if (MEM::statistic[i]=="rss") {
-             //msg_mem->set_rss (value);
-            } else if (MEM::statistic[i]=="pp_kernel") {
-             //msg_mem->set_pp_kernel (value);
-            } else if (MEM::statistic[i]=="freemem") {
-              //msg_mem->set_freemem (value);
-            } else if (MEM::statistic[i]=="physcap") {
-              //msg_mem->set_physcap (value);
-            } else if (MEM::statistic[i]=="swap") {
-              //msg_mem->set_swap (value);
-            } else if (MEM::statistic[i]=="swapcap") {
-              //msg_mem->set_swapcap (value);
-            }
-          #else
-             if (MEM::statistic[i]=="physmem") {
-              msg_mem->set_physmem_1 (MSB(value));
-              msg_mem->set_physmem_2 (LSB(value));
+          #ifdef FULLBIT if (MEM::statistic[i]=="physmem") { //msg_mem->set_physmem (value); } else if (MEM::statistic[i]=="rss") { //msg_mem->set_rss (value); } else if (MEM::statistic[i]=="pp_kernel") { //msg_mem->set_pp_kernel (value); } else if (MEM::statistic[i]=="freemem") { //msg_mem->set_freemem (value); } else if (MEM::statistic[i]=="physcap") { //msg_mem->set_physcap (value); } else if (MEM::statistic[i]=="swap") { //msg_mem->set_swap (value); } else if (MEM::statistic[i]=="swapcap") { //msg_mem->set_swapcap (value); } #else if (MEM::statistic[i]=="physmem") { msg_mem->set_physmem_1 (MSB(value)); msg_mem->set_physmem_2 (LSB(value));
             } else if (MEM::statistic[i]=="rss") {
               msg_mem->set_rss_1 (MSB(value));
               msg_mem->set_rss_2 (LSB(value));
@@ -235,21 +272,21 @@ int main (int argc, char **argv) {
           if (VERBOSE) std::cout << "Received: " << value << " for " 
                   << MEM::statistic[i].c_str() << std::endl;
         } 
-      }
+      }  */
 
       /* Network */
       int instance;
       /* Allow for instance loop for future dev */
-      for (instance=0; instance<NET::num_instance; instance++) {
+ /*     for (instance=0; instance<NET::num_instance; instance++) {
         PB_MSG::Packet_Net *msg_net = msg_packet.add_net();
         msg_net->set_instance (NET::name[instance][0].c_str());
-        for (i=0; i<NET::number; i++) {
+        for (int i=0; i<NET::number; i++) {
           if (retreive_kstat (NET::module[instance][i], NET::name[instance][i],
                        NET::statistic[instance][i], -1, &value)) {
             pfc ("WARN: Failure in function \"retreive_kstat\" @network \n", 33);
           } else {
-            /* This is an ugly way to do this...  */
-            #ifdef FULLBIT
+   */         /* This is an ugly way to do this...  */
+    /*        #ifdef FULLBIT
               if (NET::statistic[0][i]=="obytes64") {
                 msg_net->set_obytes64 (value);
               } else if (NET::statistic[0][i]=="rbytes64") {
@@ -285,27 +322,10 @@ int main (int argc, char **argv) {
           }
         }
       }
-
-      /* Disk */
-      instance = -1;
-      while (++instance>-1) {
-        std::ostringstream name;
-        name << std::string("sd") << instance;
-        int return_value = retreive_kstat (std::string("sd"), name.str(), "NULL", instance, &value);
-        if (return_value == -1) {
-          pfc ("WARN: Failure in function \"retreive_kstat\" @disk \n", 33);
-        } else if (return_value == 1) {
-          break;
-          // We ran out of disk instances
-          // Continue as usual
-        } else {
-          // All should have been taken care of within retreive_kstat
-          // Nothing to see here. Move along.
-        }
-      }
+*/
       
       /* Do dtrace look-ups */
-      for (i=0; i<DTRACE::number; i++) {
+      for (int i=0; i<DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
         if (dtrace_aggregate_snap (g_dtp[i]) != 0) {
           pfc ("WARN: Failed to snap aggregate\n", 33);
@@ -316,13 +336,24 @@ int main (int argc, char **argv) {
         if (VERBOSE) std::cout << "===========================================" << std::endl;
       }
 
-      msg_packet.set_time ((uint64_t)time(NULL));      
+      //msg_packet.set_time ((uint64_t)time(NULL));      
+
+      /*
+       *  Here we have to actually populate
+       *  the proto packets and send them
+       *  on their way.
+       *
+       */
+
+
+
+
 
       if (VERBOSE) {
-        print_message (msg_packet);
+        //print_message (msg_packet);
       }
 
-      if (!QUIET) send_message (msg_packet);
+      //if (!QUIET) send_message (msg_packet);
       
       struct timespec req = {0};
       req.tv_sec = 0;
@@ -442,9 +473,9 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
       else if (i==5) data.usage = *((uint64_t *)addr);
     } else if (data.type==2) {
       if (i==2) {
-        msg_packet.set_ticks ((uint32_t)*((uint64_t *)addr));
-        if (VERBOSE2) printf("UTC %2d:%2d:%2d | ticks (last cycle) %d\n", (time(NULL)/3600)%24,
-            (time(NULL)/60)%60, time(NULL)%60, msg_packet.ticks()); 
+       // msg_packet.set_ticks ((uint32_t)*((uint64_t *)addr));
+      //  if (VERBOSE2) printf("UTC %2d:%2d:%2d | ticks (last cycle) %d\n", (time(NULL)/3600)%24,
+        //    (time(NULL)/60)%60, time(NULL)%60, msg_packet.ticks()); 
       }
     } else if (data.type==3) {
       if (rec->dtrd_action == DTRACEAGG_QUANTIZE) {
@@ -456,8 +487,8 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
           if (VERBOSE) printf ("%12d : %8d \n", max_quantize_range (range_cnt), agg_data[range_cnt]);
 
           int64_t l_range = max_quantize_range (range_cnt);
-          PB_MSG::Packet_CallHeat *msg_callheat = msg_packet.add_callheat();
-          msg_callheat->set_name (std::string("allcall"));
+        //  PB_MSG::Packet_CallHeat *msg_callheat = msg_packet.add_callheat();
+    /*      msg_callheat->set_name (std::string("allcall"));
           #ifdef FULLBIT
             msg_callheat->set_lowt (l_range); 
             msg_callheat->set_value (agg_data[range_cnt]);
@@ -466,15 +497,15 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
             msg_callheat->set_lowt_2 (LSB(l_range));
             msg_callheat->set_value_1 (MSB(agg_data[range_cnt]));
             msg_callheat->set_value_2 (LSB(agg_data[range_cnt]));
-          #endif
+          #endif  */
         }
       }
     } else if (data.type==4) {
     /* Count processes */
-      if (i==2) msg_packet.set_processes (msg_packet.processes()+1);
+ //     if (i==2) msg_packet.set_processes (msg_packet.processes()+1);
     } else if (data.type==5) {
     /* Count threads */
-      if (i==2) msg_packet.set_threads (msg_packet.threads()+1); 
+ //     if (i==2) msg_packet.set_threads (msg_packet.threads()+1); 
     } else {
       pfc ("WARN: Unrecognized dtrace script type @334\n", 33);
       if (VERBOSE) formatted_print (rec, addr);
@@ -484,16 +515,16 @@ static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
 
   /* Actually add to the protobuf now */
   if (data.type==0) {
-    PB_MSG::Packet_Cpu *msg_cpu = msg_packet.add_cpu();
-    msg_cpu->set_core (data.core);
-    msg_cpu->set_usage ((uint32_t)data.usage);
+//    PB_MSG::Packet_Cpu *msg_cpu = msg_packet.add_cpu();
+ //   msg_cpu->set_core (data.core);
+ //   msg_cpu->set_usage ((uint32_t)data.usage);
   } else if (data.type==1) {
-    PB_MSG::Packet_Process *msg_process = msg_packet.add_process();
-    msg_process->set_pid (data.pid);
+//    PB_MSG::Packet_Process *msg_process = msg_packet.add_process();
+ /*   msg_process->set_pid (data.pid);
     msg_process->set_execname (data.name);
     msg_process->set_usage ((uint32_t)data.usage); 
     msg_process->set_cpu (data.core);
-  } 
+*/  } 
 
   if (reset) return (DTRACE_AGGWALK_REMOVE);
   return (DTRACE_AGGWALK_NEXT);
@@ -583,8 +614,8 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
      * space and time/processing power
      */
     
-    PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
-    msg_disk->set_instance ((uint32_t)instance);
+//    PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
+ /*   msg_disk->set_instance ((uint32_t)instance);
  
     #ifdef FULLBIT 
       msg_disk->set_nread (kio.nread);
@@ -610,19 +641,19 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
       msg_disk->set_rtime_2 (LSB(kio.rtime));
       msg_disk->set_rlentime_1 (MSB(kio.rlentime));
       msg_disk->set_rlentime_2 (LSB(kio.rlentime));
-    #endif
+    #endif   */
 
     ksp = kstat_lookup (kc, (char *)"sderr", instance, NULL);
     kstat_read (kc, ksp, NULL);
 
     knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Hard Errors");
-    msg_disk->set_harderror ((uint32_t)knp->value.ui32);
+ //   msg_disk->set_harderror ((uint32_t)knp->value.ui32);
    
     knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Soft Errors");
-    msg_disk->set_softerror ((uint32_t)knp->value.ui32); 
+ //   msg_disk->set_softerror ((uint32_t)knp->value.ui32); 
 
     knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Transport Errors");
-    msg_disk->set_tranerror ((uint32_t)knp->value.ui32);
+ //   msg_disk->set_tranerror ((uint32_t)knp->value.ui32);
 
   } else {
 
