@@ -42,11 +42,13 @@
 #endif
 #include "scripts.hpp"   // script repository
 #include "zmq.hpp"       // custom library
+#include "kstat.hpp"     // custom kstat library
 
 /*
  * Note the existence of:
  */
 void sig_handler (int s);
+int pfl (int color);
 int pfc (const char *c, int color);
 int print_message (PB_MSG::Packet pckt);
 void usage ();
@@ -55,7 +57,6 @@ int send_message ();
 int send_message (const char *c);
 int send_message (PB_MSG::Packet pckt);
 
-int retreive_multiple_kstat (std::string module, std::string statistic);
 int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value);
 int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr); 
 int dtrace_setopts (dtrace_hdl_t **this_g_dtp);
@@ -170,13 +171,18 @@ int main (int argc, char **argv) {
       msg_packet.set_processes (0);
       msg_packet.set_threads (0);
 
+    {
+    std::vector<uint64_t> values;
+
+
+
       /* Debug stuff */
-      if (retreive_kstat (TEST::module[0], TEST::name[0], TEST::statistic[0], -1, &value)) {
+      if (KSTAT::retreive_multiple_kstat (kc, TEST::module[0], TEST::statistic[0], &values)) {
         std::cout << "ERROR" << std::endl;
       } else {
         std::cout << "PROPER RETURN" << std::endl;
       }
-
+    }
 
 
       /* Memory */
@@ -523,17 +529,6 @@ int print_message(PB_MSG::Packet pckt) {
 }  
 
 /*
- * Function similar to one below, but allows
- *  for the return of multiple values, instead
- *  of just one.
- */
-int retreive_multiple_kstat (std::string module, std::string statistic) {
-
-  return 0;
-}
-
-
-/*
  * Find the associated kstat using libkstat
  *   methods. Note the necessity to cast 
  *   strings to raw char *'s.
@@ -701,6 +696,14 @@ int send_message (PB_MSG::Packet pckt) {
     printf ("Error number %d\n", e);
     return -1;
   }
+  return 0;
+}
+
+/*
+ * Prints colorized LINE
+ */
+int pfl (int color) {
+  std::cout << "\033[00;" << color << "m" << __LINE__ << "\033[00m";
   return 0;
 }
 
