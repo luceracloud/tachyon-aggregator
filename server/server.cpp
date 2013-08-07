@@ -34,14 +34,16 @@
 
 #include <dtrace.h>      // for libdtrace
 #include <zmq.hpp>       // for zmq sockets
-#include <kstat.h>       // for kstats
+
+
+#include "util.hpp"      // custom utilities
+
 #include "packet.pb.h"   // protocol buffer header
 #include "scripts.hpp"   // script repository
 #include "zmq.hpp"       // custom library
 #include "kstat.hpp"     // custom kstat library
-
+                         //   includes <kstat.h>
 #include "zone.hpp"      // custom typedef for zone
-//#include "gzone.hpp"     // custom typedef for gzone
 
 /*
  * Note the existence of:
@@ -82,7 +84,9 @@ kstat_ctl_t *kc;
 int main (int argc, char **argv) {
 
     /* Map of packets */
-    std::map <std::string, Zone> data;
+    std::map <std::string, Zone*> ZoneData;
+    std::map <size_t, std::string> ZoneIndices;
+    size_t ZoneCount = 0;
 
     /* Handle signals (for cleanup) */
     signal (SIGINT, sig_handler);
@@ -154,6 +158,7 @@ int main (int argc, char **argv) {
     uint64_t value;
 		std::vector<uint64_t> values;
 		std::vector<std::string> names;
+    std::vector<std::string> zones;
 
     pfc ("\n Server online!", 31);
     printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
@@ -162,8 +167,36 @@ int main (int argc, char **argv) {
     while (do_loop) {
      
 			/* Clean up from last cycle and updates */
-      //msg_packet.Clear(); // Clear the message (no need to reallocate)
-      
+      ZoneData.clear();
+      ZoneIndices.clear();
+ 
+      /* Custom format to add zones to ZoneData &
+       * to populate the repeated zonename in the GZ
+       * zone/packet
+       */
+      if (KSTAT::retreive_multiple_kstat (kc, std::string("zones"), 
+                                          std::string("zonename"), &values, 
+                                          &names, &zones)) {
+        UTIL::red();
+        std::cout << "Something went terribly wrong. We cannot populate the\nlist of zones. "
+                      "Skipping current sample, attempting next time." << std::endl;
+        UTIL::clear();
+      } else {
+        /* Init GZ first to hold other zones & set as type:GZ */
+        size_t z_index = 0;
+        ZoneData.insert (std::make_pair (std::string("global"), new Zone ("global", true)));
+        ZoneIndices.insert (std::make_pair (z_index, "global"));
+        for (size_t i=0; i<names.size(); i++) {
+          ZoneData["global"]->add_zone (&names.at (i));
+          if (names.at(i)!="global") {
+            ZoneData.insert (std::make_pair (names.at(i), 
+                           new Zone (std::string( names.at (i)), false)));
+            ZoneIndices.insert (std::make_pair (z_index, names.at (i)));
+          }
+          z_index++;
+        }
+      }
+ 
       /* The kstat chain should be updated occasionally */
       if (kstat_chain_update ( kc )) {
         if (VERBOSE) pfc (" . kstat chain updated\n", 36);
@@ -175,8 +208,9 @@ int main (int argc, char **argv) {
 			// set processes
 			
 			// CPU
-			// MEM
-		
+			
+			
+
 			/*
 			 * Grab memory statistics, first
  			 * from GZ, then from elsewhere.
@@ -185,16 +219,19 @@ int main (int argc, char **argv) {
 			  if (KSTAT::retreive_kstat (kc, MEM::GZ_modl[i], MEM::GZ_name[i], MEM::GZ_stat[i], -1, &value)) {
           std::cout << "SINGLE STAT RETURN asdfoiajsfokajsoecjaseokfjasf\n";
         } else {
-          std::cout << "Single stat return no error =-=-=-=-=-=-=-`-=-=-=-=-1=-=1-=1-=-1=-1=\n";
+          ZoneData["global"]->add_mem (&MEM::GZ_stat[i], value);
         }
       }
 			for (size_t i=0; i<MEM::size; i++) {
-				if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], &values, &names)) {
+				if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], 
+                                            &values, &names, &zones)) {
 					std::cout << "Unable to retreive expected kstats for " << MEM::modl[i] << " " <<
 											 MEM::stat[i] << std::endl;
 				} else {
-					std::cout << "Proper return!\n";
           KSTAT::pv (&values);
+          for (size_t j=0; j<names.size(); j++) {
+            ZoneData[names.at(j)]->add_mem (&MEM::stat[i], values.at (j));
+          }
 				}
 			}
 
@@ -205,11 +242,14 @@ int main (int argc, char **argv) {
  			 * ones
  			 */
       for (size_t i=0; i<NET::size; i++) {
-        if (KSTAT::retreive_multiple_kstat (kc, NET::modl[i], NET::stat[i], &values, &names)) {
+        if (KSTAT::retreive_multiple_kstat (kc, NET::modl[i], NET::stat[i], 
+                                            &values, &names, &zones)) {
           std::cout << "Unable to retreive expected kstat for " << NET::modl[i] << " " <<
                        NET::stat[i] << std::endl;
         } else {
-          std::cout << "Good return\n";
+          for (size_t j=0; j<values.size(); j++) {
+            ZoneData[zones.at (j)]->add_network (&names.at (j), &NET::stat[i], values.at (j));
+          }
         }
       }
 
@@ -221,11 +261,15 @@ int main (int argc, char **argv) {
        * returns a vector like the others.
        */
       for (size_t i=0; i<DISK::size; i++) {
-        if (KSTAT::retreive_multiple_kstat (kc, DISK::modl[i], DISK::stat[i], &values, &names)) {
+        if (KSTAT::retreive_multiple_kstat (kc, DISK::modl[i], DISK::stat[i], 
+                                            &values, &names, &zones)) {
           std::cout << "Unable to retreive expected kstat for " << DISK::modl[i] << " " <<
                        DISK::stat[i] << std::endl;
         } else {
-
+          for (size_t j=0; j<values.size(); j++) {
+            std::cout << "disk instance " << j << std::endl;
+            ZoneData[zones.at (j)]->add_disk (&names.at (j), &DISK::stat[i], values.at (j));
+          }
         }
       }
 
@@ -241,89 +285,7 @@ int main (int argc, char **argv) {
       //msg_packet.set_threads (0);
 
 
-      /* Memory */
-   /*   PB_MSG::Packet_Mem *msg_mem = msg_packet.add_mem();
-      for (int i=0; i<MEM::number; i++) {
-        if (retreive_kstat (MEM::module[i], MEM::name[i], MEM::statistic[i], -1, &value)) {
-          pfc ("Failure in function \"retreive_kstat\" @memory \n", 31);
-        } else {
-          #ifdef FULLBIT if (MEM::statistic[i]=="physmem") { //msg_mem->set_physmem (value); } else if (MEM::statistic[i]=="rss") { //msg_mem->set_rss (value); } else if (MEM::statistic[i]=="pp_kernel") { //msg_mem->set_pp_kernel (value); } else if (MEM::statistic[i]=="freemem") { //msg_mem->set_freemem (value); } else if (MEM::statistic[i]=="physcap") { //msg_mem->set_physcap (value); } else if (MEM::statistic[i]=="swap") { //msg_mem->set_swap (value); } else if (MEM::statistic[i]=="swapcap") { //msg_mem->set_swapcap (value); } #else if (MEM::statistic[i]=="physmem") { msg_mem->set_physmem_1 (MSB(value)); msg_mem->set_physmem_2 (LSB(value));
-            } else if (MEM::statistic[i]=="rss") {
-              msg_mem->set_rss_1 (MSB(value));
-              msg_mem->set_rss_2 (LSB(value));
-            } else if (MEM::statistic[i]=="pp_kernel") {
-              msg_mem->set_pp_kernel_1 (MSB(value));
-              msg_mem->set_pp_kernel_2 (LSB(value));
-            } else if (MEM::statistic[i]=="freemem") {
-              msg_mem->set_freemem_1 (MSB(value));
-              msg_mem->set_freemem_2 (LSB(value));
-            } else if (MEM::statistic[i]=="physcap") {
-              msg_mem->set_physcap_1 (MSB(value));
-              msg_mem->set_physcap_2 (LSB(value));
-            } else if (MEM::statistic[i]=="swap") {
-              msg_mem->set_swap_1 (MSB(value));
-              msg_mem->set_swap_2 (LSB(value));
-            } else if (MEM::statistic[i]=="swapcap") {
-              msg_mem->set_swapcap_1 (MSB(value));
-              msg_mem->set_swapcap_2 (LSB(value));
-            }
-         #endif
-
-          if (VERBOSE) std::cout << "Received: " << value << " for " 
-                  << MEM::statistic[i].c_str() << std::endl;
-        } 
-      }  */
-
-      /* Network */
-      int instance;
-      /* Allow for instance loop for future dev */
- /*     for (instance=0; instance<NET::num_instance; instance++) {
-        PB_MSG::Packet_Net *msg_net = msg_packet.add_net();
-        msg_net->set_instance (NET::name[instance][0].c_str());
-        for (int i=0; i<NET::number; i++) {
-          if (retreive_kstat (NET::module[instance][i], NET::name[instance][i],
-                       NET::statistic[instance][i], -1, &value)) {
-            pfc ("WARN: Failure in function \"retreive_kstat\" @network \n", 33);
-          } else {
-   */         /* This is an ugly way to do this...  */
-    /*        #ifdef FULLBIT
-              if (NET::statistic[0][i]=="obytes64") {
-                msg_net->set_obytes64 (value);
-              } else if (NET::statistic[0][i]=="rbytes64") {
-                msg_net->set_rbytes64 (value);
-              } else if (NET::statistic[0][i]=="opackets") {
-                msg_net->set_opackets (value);
-              } else if (NET::statistic[0][i]=="ipackets") {
-                msg_net->set_ipackets (value);
-           #else
-              if (NET::statistic[0][i]=="obytes64") {
-                msg_net->set_obytes64_1 (MSB(value));
-                msg_net->set_obytes64_2 (LSB(value));
-              } else if (NET::statistic[0][i]=="rbytes64") {
-                msg_net->set_rbytes64_1 (MSB(value));
-                msg_net->set_rbytes64_2 (LSB(value));
-              } else if (NET::statistic[0][i]=="opackets") {
-                msg_net->set_opackets_1 (MSB(value));
-                msg_net->set_opackets_2 (LSB(value));
-              } else if (NET::statistic[0][i]=="ipackets") {
-                msg_net->set_ipackets_1 (MSB(value));
-                msg_net->set_ipackets_2 (LSB(value));
-            #endif 
-            } else if (NET::statistic[0][i]=="ierrors") {
-              msg_net->set_ierrors ((uint32_t)value);
-            } else if (NET::statistic[0][i]=="oerrors") {
-              msg_net->set_oerrors ((uint32_t)value);
-            } else {
-              pfc ("WARN: Unexpected statistic returned @net\n", 33);
-              std::cout << "Statistic: " << NET::statistic[0][i] << std::endl;
-            }
-
-            if (VERBOSE) printf ("Received: %u for %s\n", value, NET::statistic[instance][i].c_str());
-          }
-        }
-      }
-*/
-      
+     int instance; 
       /* Do dtrace look-ups */
       for (int i=0; i<DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
@@ -344,10 +306,14 @@ int main (int argc, char **argv) {
        *  on their way.
        *
        */
-
-
-
-
+     
+      if (!VERBOSE) {
+        std::cout << ZoneData.size() << " <- is size of map" << std::endl;
+        for (size_t i=0; i<ZoneData.size(); i++) {
+          std::cout << std::endl << "BEGIN Zone Packet:" << std::endl;
+          ZoneData.at(ZoneIndices.at(i))->print_zone();
+        } 
+      }
 
       if (VERBOSE) {
         //print_message (msg_packet);
@@ -615,33 +581,6 @@ int retreive_kstat (std::string module, std::string name, std::string statistic,
      */
     
 //    PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
- /*   msg_disk->set_instance ((uint32_t)instance);
- 
-    #ifdef FULLBIT 
-      msg_disk->set_nread (kio.nread);
-      msg_disk->set_nwritten (kio.nwritten);
-      msg_disk->set_reads (kio.reads);
-      msg_disk->set_writes (kio.writes);
-      msg_disk->set_wtime (kio.wtime);
-      msg_disk->set_wlentime (kio.wlentime);
-      msg_disk->set_rtime (kio.rtime);
-      msg_disk->set_rlentime (kio.rlentime);
-    #else
-      msg_disk->set_nread_1 (MSB(kio.nread));
-      msg_disk->set_nread_2 (LSB(kio.nread));
-      msg_disk->set_nwritten_1 (MSB(kio.nwritten));
-      msg_disk->set_nwritten_2 (LSB(kio.nwritten));
-      msg_disk->set_reads ((uint32_t)kio.reads);
-      msg_disk->set_writes ((uint32_t)kio.writes);
-      msg_disk->set_wtime_1 (MSB(kio.wtime));
-      msg_disk->set_wtime_2 (LSB(kio.wtime));
-      msg_disk->set_wlentime_1 (MSB(kio.wlentime));
-      msg_disk->set_wlentime_2 (LSB(kio.wlentime));
-      msg_disk->set_rtime_1 (MSB(kio.rtime));
-      msg_disk->set_rtime_2 (LSB(kio.rtime));
-      msg_disk->set_rlentime_1 (MSB(kio.rlentime));
-      msg_disk->set_rlentime_2 (LSB(kio.rlentime));
-    #endif   */
 
     ksp = kstat_lookup (kc, (char *)"sderr", instance, NULL);
     kstat_read (kc, ksp, NULL);

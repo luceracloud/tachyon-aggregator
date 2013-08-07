@@ -45,14 +45,45 @@ namespace NET {
 namespace DISK {
   /* Global-zone specific stuff */
   const size_t GZ_size = 0;
-  std::string GZ_modl[ GZ_size ] = {};
+  const size_t GZ_size2 = 11;
+  std::string GZ_modl[ GZ_size ] = {  };
   std::string GZ_name[ GZ_size ] = {};
-  std::string GZ_stat[ GZ_size ] = {};
+  std::string GZ_stat[ GZ_size2 ] = { "nread", "nwritten", "reads", "writes", "rtime", "wtime", "rlentime",
+                                      "wlentime", "harderror", "softerror", "transerror" };
 
   /* Other */
-  const size_t size = 0;
-  std::string modl[ size ] = {};
-  std::string stat[ size ] = {};
+  const size_t size = 11;
+  std::string modl[ size ] = { "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs",
+                                "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs" };
+  std::string stat[ size ] = { "nread", "nwritten", "reads", "writes", "rtime", "wtime", "rlentime",
+                                "wlentime", "harderror", "softerror", "transerror" };
+
+
+
+
+
+
+
+/*
+
+  required string instance = 1;
+    optional uint64 nread = 2;
+    optional uint64 nwritten = 3;
+    optional uint32 reads = 4;
+    optional uint32 writes = 5;
+    optional uint64 rtime = 6;
+    optional uint64 wtime = 7;
+    optional uint64 rlentime = 8;
+    optional uint64 wlentime = 9;
+    optional uint32 harderror = 10;
+    optional uint32 softerror = 11;
+    optional uint32 tranerror = 12;
+
+
+
+*/
+
+
 }
 
 namespace DTRACE {

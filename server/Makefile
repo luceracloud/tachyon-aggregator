@@ -18,7 +18,7 @@ LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/
 .PHONY: rel
 
 # Instructions
-all: redB clean black cyanB server_release server_release_zone clear rel
+all: redB clean black cyanB server_release clear rel
 
 server_release_zone: server.cpp scripts.hpp packet.pb.cc packet64.pb.cc fastbit.hpp
 	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS_LCL) -O2 -o server_release_zone

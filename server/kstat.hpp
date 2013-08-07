@@ -6,7 +6,7 @@
  *   from a C++ program.
  *
  *   CREATED:   5 AUG 2013
- *   EDITED:    5 AUG 2013
+ *   EDITED:    7 AUG 2013
  */
 
 #include <kstat.h>
@@ -14,39 +14,10 @@
 extern bool VERBOSE;
 extern bool VERBOSE2;
 
-
-
 namespace KSTAT {
 
-
-
-
-// Self-explanatory
-uint64_t translate_to_ui64 (kstat_named_t *knp) {
-
-  switch (knp->data_type) {
-    case KSTAT_DATA_CHAR:
-      std::cout << "WARN: Not coded yet." << std::endl;
-      break;
-    case KSTAT_DATA_INT32:
-      return knp->value.i32;
-    case KSTAT_DATA_UINT32:
-      return (uint64_t)knp->value.ui32;
-    case KSTAT_DATA_INT64:
-      return (uint64_t)knp->value.i64;
-    case KSTAT_DATA_UINT64:
-      return (uint64_t)knp->value.ui64;
-    default:
-      // We should never end up in here
-      std::cout << "Something rather peculiar happened @kstat.hpp:" << __LINE__ << std::endl;
-      break;
-    }
-
-  return 0;
-}
-
-
-// Helper
+//  DEBUGGING HELPER FUNCTION
+//
 void pv (std::vector<uint64_t> *v) {
   std::cout << "begin print\n";
   for (size_t i=0; i<v->size(); i++) {
@@ -54,6 +25,43 @@ void pv (std::vector<uint64_t> *v) {
   }
 }
 
+/*
+ * Useful function to translate from the
+ * ambiguous kstat data form to a uint64_t
+ * no matter what (or return 0).
+ */
+uint64_t translate_to_ui64 (kstat_named_t *knp) {
+
+  switch (knp->data_type) {
+    case KSTAT_DATA_CHAR:
+      UTIL::yellow();
+      std::cout << "WARN: Not coded yet." << std::endl;
+      UTIL::clear();
+      return (uint64_t)0;
+    case KSTAT_DATA_INT32:
+      return (uint64_t)knp->value.i32;
+    case KSTAT_DATA_UINT32:
+      return (uint64_t)knp->value.ui32;
+    case KSTAT_DATA_INT64:
+      return (uint64_t)knp->value.i64;
+    case KSTAT_DATA_UINT64:
+      return (uint64_t)knp->value.ui64;
+    case KSTAT_DATA_STRING:
+      UTIL::yellow();
+      std::cout << "WARN: Not coded yet." << std::endl;
+      UTIL::clear();
+      return 0;
+    default:
+      // We should never end up in here
+      UTIL::yellow();
+      std::cout << "Something rather peculiar happened @kstat.hpp:" << __LINE__ << std::endl;
+      std::cout << "Return type: " << knp->data_type << std::endl;
+      UTIL::clear();
+      break;
+    }
+
+  return 0;
+}
 
 /*
  * Returns a single statistic value
@@ -90,7 +98,9 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string nam
   }
 
   if (ksp->ks_type != KSTAT_TYPE_NAMED) {
+    UTIL::yellow();
     std::cout << "Expected NAMED kstat, instead returned type " << ksp->ks_type << std::endl;
+    UTIL::clear();
     return 2;
   }
 
@@ -118,8 +128,10 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string nam
       break;
     default:
       // We should never end up in here
+      UTIL::red();
       std::cout << "Something rather peculiar happened." << std::endl;
       std::cout << " @kstat.hpp:" << __LINE__ << std::endl;
+      UTIL::clear();
       break;
   }
  
@@ -129,19 +141,25 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string nam
 
 /*
  * Allows the return of multiple values
- * in a vector.
+ * in a vector. Works with "named" kstat
+ * type.
  */
 int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, 
-						std::string statistic, std::vector<uint64_t> *values,
-						std::vector<std::string> *names) {
+						      std::string statistic, std::vector<uint64_t> *values,
+						      std::vector<std::string> *names, std::vector<std::string> *zones) {
+
+  /* Init */
+  names->clear();
   values->clear();
+  zones->clear();
   kstat_t         *ksp;
   kstat_named_t   *knp;
 
   ksp = kstat_lookup (kc, (char *)module.c_str(), -1, NULL);
   if (ksp == NULL) {
-    std::cout << "Initial kstat lookup failed @kstat.hpp:";
-    std::cout << __LINE__ << std::endl;
+    UTIL::red();
+    std::cout << "Initial kstat lookup failed @kstat.hpp:" << __LINE__ << std::endl;
+    UTIL::clear();
     return 1;
   }
 
@@ -150,36 +168,76 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
       kstat_read (kc, ksp, NULL);
       knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
       if (knp == NULL) {
+        UTIL::red();
         std::cout << "Failed to resolve kstat statistic lookup @kstat.hpp:" << __LINE__ << std::endl;
+        UTIL::clear();
         return 2;
       }
 
       if (VERBOSE) std::cout << "Retreived kstat from " << ksp->ks_module << " : " << ksp->ks_name << std::endl;
+
+      names->push_back (std::string(ksp->ks_name));
+      values->push_back (translate_to_ui64 (knp));
+      {
+        kstat_named_t *kk = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
+        zones->push_back (std::string(KSTAT_NAMED_STR_PTR(kk)));
+      }
+      ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
+    }
+  } else if (ksp->ks_type == KSTAT_TYPE_IO) {
+    while (ksp != NULL) {
       
-      values->push_back (translate_to_ui64 (knp));      
+      kstat_io_t kio;   // IO stat data structure
+      kstat_read (kc, ksp, &kio);
+
+      if (&kio == NULL) {
+        UTIL::yellow();
+        std::cout << "Requested kstat returned NULL for instance" << std::endl;
+        UTIL::clear();
+      }
+
+      if (statistic == "nread") {
+        values->push_back (kio.nread);
+      } else if (statistic == "nwritten") {
+        values->push_back (kio.nwritten);
+      } else if (statistic == "reads") {
+        values->push_back (kio.reads);
+      } else if (statistic == "writes") {
+        values->push_back (kio.writes);
+      } else if (statistic == "rtime") {
+        values->push_back (kio.rtime);
+      } else if (statistic == "wtime") {
+        values->push_back (kio.wtime);
+      } else if (statistic == "rlentime") {
+        values->push_back (kio.rlentime);
+      } else if (statistic == "wlentime") {
+        values->push_back (kio.wlentime);
+      } else if (statistic == "harderror") {
+
+      } else if (statistic == "softerror") {
+
+      } else if (statistic == "tranerror") {
+
+      } else {
+
+      }
+
+      {
+        kstat_named_t *kk = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
+        zones->push_back (std::string (KSTAT_NAMED_STR_PTR(kk)));
+      }
 
       ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
     }
-  } 
+  } else {
+    /* We don't handle this type of KSTAT type */
+    UTIL::red();
+    std::cout << "Irregular KSTAT TYPE" << std::endl;
+    UTIL::clear();
+  }
 
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
