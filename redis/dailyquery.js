@@ -26,7 +26,7 @@ var calls = [];
 var arr = new Array(calls.length);
 var argVE = 2
 var fun;
-var funArr = {"getStat" : getStat, "genStats"  : genStats, "callHeat" : callHeat, "quantize" : quantize, "cpuStat" : cpuStat, "myprocess" : myprocess, "printData": printData, "getMemStats" : getMemStats, "findError" : findError, "getProcess" : getProcess}; 
+var funArr = {"getStat" : getStat, "genStats"  : genStats, "callHeat" : callHeat, "quantize" : quantize, "cpuStat" : cpuStat, "myprocess" : myprocess, "printData": printData, "getMemStats" : getMemStats, "findError" : findError, "getProcess" : getProcess, "printTimes" : printTimes}; 
 var n1; //Time to Start looking at
 var n2; //First time one doesn't want to look at [n1,n2)
 // Read the command line
@@ -66,7 +66,6 @@ for(var deet in c)
   if(c[deet].substring(0,10) == dater.substring(0,10))
    {
     place = (parseInt(deet));
-    console.log(place);
     break;
    }
 }
@@ -216,6 +215,34 @@ function addCPU(cp, val, pos, size)
 
 }
 
+// Prints all the sorted times in a given Date
+function printTimes() {
+
+  var timerR = [];
+  var deetA = false;
+
+  client.keys("*", function (err, keys) {
+  keys.sort();
+  for (var timerA in keys)  {
+    for(var timerB in timerR)
+      {
+      if(timerR[timerB].substring(0,5) == keys[timerA].substring(0,5))
+        {
+        deetA = true;
+        break;
+        }
+      }
+    if(!deetA)
+      {
+      timerR.push(keys[timerA].substring(0,5));
+      console.log(keys[timerA].substring(0,5));
+      } 
+      deetA = false;
+    }
+    end();
+  });
+}
+
 // Returns the over/under of a specific stat, and returns a different section
 // [Section (Mem, CPU) , Stat (rbytes64, usage), type (0 for >=, 1 for <=),
 // value(5000,0, 2)]
@@ -227,6 +254,11 @@ function getStat(data, cb) {
   var value = data[3];
   var instance = data[4];
   client.keys(n1 + "*", function (err, keys) {
+   if(keys.length == 0)
+   {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+   }
   keys.sort();
   keys.forEach(function(key , pos) {
   client.hgetall(key,  function (err, res) { 
@@ -304,7 +336,7 @@ function getStat(data, cb) {
           end();
           }
           else {
-          callHeat(begin);
+          getStat(begin);
           }
  
         }
@@ -322,8 +354,12 @@ function genStats(data, cb) {
   computeForAll = data[2];
   instance = data[3];
   client.keys(n1 + "*", function (err, keys) {
+   if(keys.length == 0)
+   {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+   }
   keys.sort();   
-
   keys.forEach(function(key , pos) {
   client.hgetall(key,  function (err, res) {
 
@@ -372,9 +408,6 @@ function genStats(data, cb) {
             break;
             }
           }
-          
-
- 
              if(!computeForAll || n1.substring(0,5) == n2.substring(0,5)) {
     var averageA = total/counts;
     if(instance == undefined) {
@@ -399,7 +432,7 @@ function genStats(data, cb) {
     end();
     }
     else {
-    funToDo(begin);
+    genStats(begin);
     }
  
    
@@ -413,6 +446,11 @@ function genStats(data, cb) {
 //No Data
 function callHeat(data, cb) {
   client.keys(n1 +  "*", function (err, keys) {
+    if(keys.length == 0)
+    {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+    }
     keys.sort();
      keys.forEach(function(key , pos) {
       // Print out quantization
@@ -420,11 +458,11 @@ function callHeat(data, cb) {
         time.push(key.substring(3,5) + key.substring(6,8));
         var  pose = "";
         for (var str in res) {
-          if(str.substring(0,8) == "CallHeat" && str.substring(9,13) == "lowt") {
+          if(str.substring(0,3) == "Cal" && str.substring(4,8) == "lowt") {
             pose = res[str];
           }
 
-          if(str.substring(0,8) == "CallHeat" && str.substring(9,14) == "value") {
+          if(str.substring(0,3) == "Cal" && str.substring(4,9) == "value") {
             appendArray(Number(pose), res[str], pos, keys.length);  
             pose = ""; 
           }
@@ -475,6 +513,11 @@ function quantize(data, cb) {
   computeForAll = data[2];
   instance = data[3];
   client.keys(n1 + "*", function (err, keys) {
+    if(keys.length == 0)
+    {
+      console.log("Can't find data for time " + n1);
+      process.exit();
+    }
     keys.forEach(function(key , pos) {
       client.hgetall(key,  function (err, res) {
         for(var str in res) {
@@ -538,7 +581,7 @@ function quantize(data, cb) {
           end();
           }
           else {
-          callHeat(begin);
+          quantize(begin);
           }
 
  
@@ -553,6 +596,11 @@ function quantize(data, cb) {
 function cpuStat(data, cb)
 {
   client.keys(n1 + "*", function (err, keys) {
+      if(keys.length == 0)
+    {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+    }
     keys.sort();
     keys.forEach(function(key , pos) {
       client.hgetall(key,  function (err, res) {
@@ -602,7 +650,7 @@ function cpuStat(data, cb)
           end();
           }
           else {
-          callHeat(begin);
+          cpuStat(begin);
           }
 
         }
@@ -616,6 +664,11 @@ function cpuStat(data, cb)
 function myprocess(data, cb)
 {
   client.keys(n1 + "*", function (err, keys) {
+    if(keys.length == 0)
+    {
+    console.log("Can't find data for time " + nq);
+    process.exit();
+    }
     keys.sort();
     keys.forEach(function(key , pos) {
       client.hgetall(key,  function (err, res) {
@@ -668,7 +721,7 @@ function myprocess(data, cb)
           end();
           }
           else {
-          callHeat(begin);
+          myprocess(begin);
           }
 
         }
@@ -681,6 +734,11 @@ function myprocess(data, cb)
 // [Time A, Time B ...... ]
 function printData(times, cb) {
   client.keys(n1 + "*", function (err, keys) {
+      if(keys.length == 0)
+    {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+    }
     keys.sort();
     times.forEach(function(time , pos) {
       console.log("TIME   " + time);
@@ -709,7 +767,7 @@ function printData(times, cb) {
           end();
           }
           else {
-          callHeat(begin);
+          printData(begin);
           }
         }
       });
@@ -721,6 +779,11 @@ function printData(times, cb) {
 function getMemStats(data, cb) {
 
   client.keys(n1 + "*", function (err, keys) {
+      if(keys.length == 0)
+    {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+    }
     keys.sort();
     keys.forEach(function(key, pos) {
       client.hgetall(key,  function (err, res) {
@@ -768,7 +831,7 @@ function getMemStats(data, cb) {
           end();
           }
           else {
-          callHeat(begin);
+          getMemStats(begin);
           }
  
         }
@@ -780,6 +843,11 @@ function getMemStats(data, cb) {
 //Finds an error in the file
 function findError(data, cb) {
   client.keys(n1 + "*", function (err, keys) {
+      if(keys.length == 0)
+    {
+    console.log("Can't find data for time " + n1);
+    process.exit();
+    }
     keys.sort();
     keys.forEach(function(key, pos) {
       client.hgetall(key,  function (err, res) {
@@ -806,6 +874,7 @@ function findError(data, cb) {
        }
         if(pos == keys.length -1)
           {
+          console.log(n1);
           for(var deet in timeArr) {
             if(timeArr[deet] == n1.substring(3,5))
             {
@@ -825,7 +894,7 @@ function findError(data, cb) {
           end();
           }
           else {
-          callHeat(begin);
+          findError(begin);
           }
 
           }     
@@ -837,8 +906,13 @@ function findError(data, cb) {
 //Finds All the processes of a given name
 function getProcess(data, cb) 
 {
-  client.keys(n1 +  "*", function (err, keys) {
   var name = data[0];
+  client.keys(n1 +  "*", function (err, keys) {
+    if(keys.length == 0)
+    {
+    console.log("Can't find data for time");
+    process.exit();
+    }
     keys.sort();
     keys.forEach(function(key , pos) {
       client.hgetall(key,  function (err, res) {
@@ -890,7 +964,7 @@ function getProcess(data, cb)
           end();
           }
           else {
-          callHeat(begin);
+          getProcess(begin);
           }
 
         }
