@@ -7,8 +7,10 @@
  * necessary because of the
  * way that data is returned
  * from kstat & dtrace.
+ * 
+ * CREATED:   6 AUG 2013
+ * EDITED:    8 AUG 2013
  */
-
 
 #include "pckt.pb.h"
 
@@ -18,12 +20,13 @@ class Zone {
       packet = (PBMSG::Packet *)(new PBMSG::Packet);
       packet->set_name (n);
       packet->add_mem();
+      this->set_threads (0);
+      this->set_processes (0);
       if (g) {
         this->set_global (true);
-        // do not init any mappables
       } else {
         this->set_global (false);
-        packet->add_net(); 
+        packet->add_net();
       }
     }
     ~Zone () {
@@ -42,6 +45,12 @@ class Zone {
     }
     void set_processes (uint32_t p) {
       this->packet->set_processes (p);
+    }
+    void add_process () {
+      this->packet->set_processes (this->packet->processes() + 1);
+    }
+    void add_thread () {
+      this->packet->set_threads (this->packet->threads() + 1);
     }
     void set_global (bool is_global) {
       global_zone = is_global;
@@ -100,13 +109,11 @@ class Zone {
     /* Mappable additions */
     void add_network (std::string *d, std::string *s, uint64_t v) {
       PBMSG::Packet_Net *net;
-     
-      // WARN TODO SOMETHING NOT ENTIRELY CORRECT HERE
  
       if (this->global_zone) {
         if (this->net_map.find(*d) == this->net_map.end()) {
           net = this->packet->add_net();
-          net->set_instance (*d); // PIECEMEAL TODO
+          net->set_instance (*d);
           this->net_map.insert (std::make_pair (*d, net_map.size()));
         } else {
           net = this->packet->mutable_net (this->net_map[*d]);
@@ -116,7 +123,7 @@ class Zone {
       }
       
       if (*s == "instance") {
-        net->set_instance (*d);    // TODO, ENSURE THIS WORKS!
+        net->set_instance (*d);
       } else if (*s == "obytes64") {
         net->set_obytes64 (v);
       } else if (*s == "rbytes64") {
@@ -131,32 +138,59 @@ class Zone {
         net->set_ierrors (v);
       } else {
         UTIL::yellow();
-        std::cout << "WARN: encountered unknown type in network @Zone.hpp:" << __LINE__ << std::endl;
+        std::cout << "WARN: encountered unknown type in network @zone.hpp:" << __LINE__ << std::endl;
         UTIL::clear();
       }
-
     }
     void add_disk (std::string *d, std::string *s, uint64_t v) {
       PBMSG::Packet_Disk *disk;
       
-      if (this->global_zone) {
-        if (this->disk_map.find(*d) == this->disk_map.end()) {
-          std::cout << "Did not find disk zone\n";
-        } else {
-          
-        }
+      if (this->disk_map.find(*d) == this->disk_map.end()) {
+        disk = this->packet->add_disk();
+        disk->set_instance (*d);
+        this->disk_map.insert (std::make_pair (*d, disk_map.size()));
       } else {
-        
+        disk = this->packet->mutable_disk (this->disk_map[*d]);
+      }
+
+      if (*s == "instance") {
+        disk->set_instance (*d);
+      } else if (*s == "nread") {
+        disk->set_nread (v);
+      } else if (*s == "nwritten") {
+        disk->set_nwritten (v);
+      } else if (*s == "reads") {
+        disk->set_reads (v);
+      } else if (*s == "writes") {
+        disk->set_writes (v);
+      } else if (*s == "rtime") {
+        disk->set_rtime (v);
+      } else if (*s == "wtime") {
+        disk->set_wtime (v);
+      } else if (*s == "rlentime") {
+        disk->set_rlentime (v);
+      } else if (*s == "wlentime") {
+        disk->set_wlentime (v);
+      } else if (*s == "harderror") {
+        disk->set_harderror (v);
+      } else if (*s == "softerror") {
+        disk->set_softerror (v);
+      } else if (*s == "tranerror") {
+        disk->set_tranerror (v);
+      } else {
+        UTIL::yellow();
+        std::cout << "WARN: encountered unknown type in disk @Zone.hpp:" << __LINE__ << std::endl;
       }
     }
 
     /* Return the packet */ 
-    PBMSG::Packet ReturnPacket () {
-      return *(this->packet);
-    } 
+    PBMSG::Packet *ReturnPacket () {
+      return this->packet;
+    }
+
+    /* Print zone statistics */
     void print_zone () {
       this->packet->PrintDebugString ();
-      //this->packet->DebugString ();
     }
     
   private:
@@ -164,76 +198,5 @@ class Zone {
     PBMSG::Packet *packet;
     std::map <std::string, uint32_t> net_map;
     std::map <std::string, uint32_t> disk_map;
-
-
 };
-
-
-
-
-
-
-
-struct zonestat {
-
-/*
-  message Packet {
-
-  repeated zonename
-
-  message Mem {
-    optional uint64 rss = 1;
-    optional uint64 physcap = 2;
-    optional uint64 swap = 3;
-    optional uint64 swapcap = 4;
-  }
-
-  message Net {
-    optional string instance = 1;
-    optional uint64 obytes64 = 2;
-    optional uint64 rbytes64 = 3;
-    optional uint64 opackets = 4;
-    optional uint64 ipackets = 5;
-    optional uint32 ierrors = 6;
-    optional uint32 oerrors = 7;
-  }
-
-  message Disk {
-    required string instance = 1;
-    optional uint64 nread = 2;
-    optional uint64 nwritten = 3;
-    optional uint32 reads = 4;
-    optional uint32 writes = 5;
-    optional uint64 rtime = 6;
-    optional uint64 wtime = 7;
-    optional uint64 rlentime = 8;
-    optional uint64 wlentime = 9;
-    optional uint32 harderror = 10;
-    optional uint32 softerror = 11;
-    optional uint32 tranerror = 12;
-  }
-  
-  message Process {
-    optional uint32 pid = 1;
-    optional string execname = 2;
-    optional uint32 usgae = 3;
-    optional uint32 cpu = 4;
-  }
-
-  message CallFreq {
-    required string name = 1;
-    optional uint64 time = 2;
-    optional uint32 value = 3;
-  }
-*/
-
-
-
-
-
-};
-
-
-
-
 

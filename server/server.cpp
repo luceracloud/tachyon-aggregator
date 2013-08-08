@@ -14,13 +14,9 @@
  *        -O2 -o server_release
  *
  *    CREATED:  16 JUL 2013
- *    UPDATED:   2 AUG 2013
+ *    UPDATED:   8 AUG 2013
  *
  */
-
-// 32bit support
-#define MSB(n) (uint32_t)(n>>32) 
-#define LSB(n) (uint32_t)((n<<32)>>32) 
 
 #include <string>
 #include <iostream>
@@ -32,37 +28,31 @@
 #include <time.h>
 #include <sstream>
 
-#include <dtrace.h>      // for libdtrace
-#include <zmq.hpp>       // for zmq sockets
+#include <zmq.hpp>
 
+#include "util.hpp"
 
-#include "util.hpp"      // custom utilities
+#include "packet.pb.h"
+#include "scripts.hpp"
 
-#include "packet.pb.h"   // protocol buffer header
-#include "scripts.hpp"   // script repository
-#include "zmq.hpp"       // custom library
-#include "kstat.hpp"     // custom kstat library
-                         //   includes <kstat.h>
-#include "zone.hpp"      // custom typedef for zone
+#include "zmq.hpp"
+#include "kstat.hpp"
+#include "zone.hpp"
+#include "dtrace.hpp"
+
 
 /*
  * Note the existence of:
  */
 void sig_handler (int s);
-int pfl (int color);
 int pfc (const char *c, int color);
-int print_message (PB_MSG::Packet pckt);
 void usage ();
 
 int send_message ();
 int send_message (const char *c);
-int send_message (PB_MSG::Packet pckt);
+int send_message (PBMSG::Packet pckt);
 
 int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value);
-int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr); 
-int dtrace_setopts (dtrace_hdl_t **this_g_dtp);
-int dtrace_init (dtrace_hdl_t **this_g_dtp, std::string s);
-static int dtrace_aggwalk (const dtrace_aggdata_t *data, void *arg);
 
 /*
  * Globally-existing variables &c.
@@ -75,18 +65,19 @@ int millisec = 999;
 const char *port = "7211";
 zmq::context_t context (1); 
 zmq::socket_t socket (context, ZMQ_PUB);
-//PB_MSG::Packet msg_packet;
 kstat_ctl_t *kc;
+
+/* These are global because of the way
+ * that the libdtrace aggregate walker
+ * works.
+ */
+std::map <std::string, Zone*> ZoneData;
+std::map <size_t, std::string> ZoneIndices;
 
 /*
  *  main loop
  */
 int main (int argc, char **argv) {
-
-    /* Map of packets */
-    std::map <std::string, Zone*> ZoneData;
-    std::map <size_t, std::string> ZoneIndices;
-    size_t ZoneCount = 0;
 
     /* Handle signals (for cleanup) */
     signal (SIGINT, sig_handler);
@@ -94,10 +85,12 @@ int main (int argc, char **argv) {
     signal (SIGQUIT, sig_handler);
 
     /* Splash */
-    pfc ("\n Statistics Server\n", 37);
-    pfc ("\n  Reports dtrace and kstat statistics\n", 37);
-    pfc ("  using Google Protocol Buffers and\n", 37);
-    pfc ("  ZMQ (0MQ) sockets.\n\n", 37);
+    UTIL::white();
+    std::cout << "\n Statistics Server\n";
+    std::cout << "\n  Reports dtrace and kstat statistics\n";
+    std::cout << "  using Google Protocol Buffers and\n";
+    std::cout << "  ZMQ (0MQ) sockets.\n\n";
+    UTIL::clear();
 
     /* Parse command line */
     for (size_t i=0; i<argc; i++) {
@@ -143,10 +136,12 @@ int main (int argc, char **argv) {
     /* Dtrace init */
     dtrace_hdl_t *g_dtp[DTRACE::number]; 
     for (size_t i=0; i<DTRACE::number; i++) {
-      dtrace_init (&g_dtp[i], DTRACE::dtrace[i]);
-      dtrace_setopts (&g_dtp[i]);
+      DTRACE::init (&g_dtp[i], DTRACE::dtrace[i]);
+      DTRACE::setopts (&g_dtp[i]);
       if (dtrace_go (g_dtp[i])) {
-        pfc ("ERROR: Unable to start dtrace script\n", 31);
+        UTIL::red();
+        std::cout << "ERROR: Unable to start dtrace script" << std::endl;
+        UTIL::clear();
       }
       (void) dtrace_status (g_dtp[i]);
     }
@@ -155,13 +150,16 @@ int main (int argc, char **argv) {
     kc = kstat_open();
     uint64_t st = time (NULL);  // start time
 
+    /* Allow us to pass values in and out */
     uint64_t value;
 		std::vector<uint64_t> values;
 		std::vector<std::string> names;
     std::vector<std::string> zones;
 
-    pfc ("\n Server online!", 31);
+    UTIL::red();
+    std::cout << "\n Server online!";
     printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
+    UTIL::clear();
 
     /* Collect and send data in loop */
     while (do_loop) {
@@ -186,38 +184,32 @@ int main (int argc, char **argv) {
         size_t z_index = 0;
         ZoneData.insert (std::make_pair (std::string("global"), new Zone ("global", true)));
         ZoneIndices.insert (std::make_pair (z_index, "global"));
-        for (size_t i=0; i<names.size(); i++) {
-          ZoneData["global"]->add_zone (&names.at (i));
+        for (size_t i=0; i<zones.size(); i++) {
+          ZoneData["global"]->add_zone (&zones.at (i));
           if (names.at(i)!="global") {
-            ZoneData.insert (std::make_pair (names.at(i), 
-                           new Zone (std::string( names.at (i)), false)));
-            ZoneIndices.insert (std::make_pair (z_index, names.at (i)));
+            ZoneData.insert (std::make_pair (zones.at(i), new Zone (std::string( zones.at (i)), false)));
+            ZoneIndices.insert (std::make_pair (z_index, zones.at (i)));
           }
           z_index++;
         }
       }
- 
+
       /* The kstat chain should be updated occasionally */
       if (kstat_chain_update ( kc )) {
-        if (VERBOSE) pfc (" . kstat chain updated\n", 36);
+        if (VERBOSE) {
+          UTIL::cyan();
+          std::cout << " . kstat chain updated" << std::endl;
+          UTIL::clear();
+        }
       }
      
-			// set time
-			// set ticks
-			// set threads
-			// set processes
-			
-			// CPU
-			
-			
-
 			/*
 			 * Grab memory statistics, first
  			 * from GZ, then from elsewhere.
  			 */
 			for (size_t i=0; i<MEM::GZ_size; i++) {
 			  if (KSTAT::retreive_kstat (kc, MEM::GZ_modl[i], MEM::GZ_name[i], MEM::GZ_stat[i], -1, &value)) {
-          std::cout << "SINGLE STAT RETURN asdfoiajsfokajsoecjaseokfjasf\n";
+          std::cout << "Unable to grab memory statistic\n";
         } else {
           ZoneData["global"]->add_mem (&MEM::GZ_stat[i], value);
         }
@@ -226,11 +218,10 @@ int main (int argc, char **argv) {
 				if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], 
                                             &values, &names, &zones)) {
 					std::cout << "Unable to retreive expected kstats for " << MEM::modl[i] << " " <<
-											 MEM::stat[i] << std::endl;
+											 MEM::stat[i] << __LINE__ << std::endl;
 				} else {
-          KSTAT::pv (&values);
           for (size_t j=0; j<names.size(); j++) {
-            ZoneData[names.at(j)]->add_mem (&MEM::stat[i], values.at (j));
+            ZoneData[zones.at(j)]->add_mem (&MEM::stat[i], values.at (j));
           }
 				}
 			}
@@ -245,7 +236,7 @@ int main (int argc, char **argv) {
         if (KSTAT::retreive_multiple_kstat (kc, NET::modl[i], NET::stat[i], 
                                             &values, &names, &zones)) {
           std::cout << "Unable to retreive expected kstat for " << NET::modl[i] << " " <<
-                       NET::stat[i] << std::endl;
+                       NET::stat[i] << __LINE__ << std::endl;
         } else {
           for (size_t j=0; j<values.size(); j++) {
             ZoneData[zones.at (j)]->add_network (&names.at (j), &NET::stat[i], values.at (j));
@@ -260,67 +251,68 @@ int main (int argc, char **argv) {
        * kstats are stored. Still
        * returns a vector like the others.
        */
+      for (size_t instance=0; instance<13; instance++) {
+        for (size_t i=0; i<DISK::GZ_size; i++) {
+          if (KSTAT::retreive_multiple_kstat (kc, DISK::GZ_modl[i], DISK::GZ_stat[i],
+                                          &values, &names, &zones, (std::string *)"disk")) {
+            std::cout << "Unable to retreive expected GZ kstat for " << DISK::GZ_modl[i] << " " <<
+                        " " << DISK::GZ_stat[i] << "server.cpp:" << __LINE__ << std::endl;
+          } else {
+            for (size_t j=0; j<values.size(); j++) {
+              ZoneData[zones.at (j)]->add_disk (&names[i], &DISK::GZ_stat[i], values.at (j));
+            }
+          }
+        }
+      }
       for (size_t i=0; i<DISK::size; i++) {
         if (KSTAT::retreive_multiple_kstat (kc, DISK::modl[i], DISK::stat[i], 
                                             &values, &names, &zones)) {
           std::cout << "Unable to retreive expected kstat for " << DISK::modl[i] << " " <<
-                       DISK::stat[i] << std::endl;
+                       DISK::stat[i] << " server.cpp:" << __LINE__ << std::endl;
         } else {
           for (size_t j=0; j<values.size(); j++) {
-            std::cout << "disk instance " << j << std::endl;
-            ZoneData[zones.at (j)]->add_disk (&names.at (j), &DISK::stat[i], values.at (j));
+            ZoneData[zones.at (j)]->add_disk (&DISK::modl[i], &DISK::stat[i], values.at (j));
           }
         }
       }
 
-
-			// PROCESS
-			// CALLFREQ
-			// ZONENAME
-
-
-			 
-      /* General statistics */
-      //msg_packet.set_processes (0);
-      //msg_packet.set_threads (0);
-
-
-     int instance; 
       /* Do dtrace look-ups */
       for (int i=0; i<DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
         if (dtrace_aggregate_snap (g_dtp[i]) != 0) {
-          pfc ("WARN: Failed to snap aggregate\n", 33);
+          UTIL::yellow();
+          std::cout << "WARN: Failed to snap aggregate" << std::endl;
+          UTIL::clear();      
         }
-        if (dtrace_aggregate_walk_valsorted (g_dtp[i], dtrace_aggwalk, NULL) != 0) {
-          pfc ("WARN: Failed to walk aggregate\n", 33);
+        if (dtrace_aggregate_walk_valsorted (g_dtp[i], DTRACE::aggwalk, NULL) != 0) {
+          UTIL::yellow();
+          std::cout << "WARN: Failed to walk aggregate" << std::endl;
+          UTIL::clear();  
         }
         if (VERBOSE) std::cout << "===========================================" << std::endl;
       }
 
-      //msg_packet.set_time ((uint64_t)time(NULL));      
-
       /*
-       *  Here we have to actually populate
-       *  the proto packets and send them
-       *  on their way.
-       *
+       *  Here we have to actually send
+       *  the proto packets.
        */
-     
       if (!VERBOSE) {
-        std::cout << ZoneData.size() << " <- is size of map" << std::endl;
         for (size_t i=0; i<ZoneData.size(); i++) {
+          ZoneData.at (ZoneIndices.at(i))->set_time( time(NULL) );
+          UTIL::blue();
           std::cout << std::endl << "BEGIN Zone Packet:" << std::endl;
+          UTIL::clear();
           ZoneData.at(ZoneIndices.at(i))->print_zone();
         } 
       }
 
-      if (VERBOSE) {
-        //print_message (msg_packet);
+      for (size_t i=0; i<ZoneData.size(); i++) {
+        Zone *z = ZoneData.at (ZoneIndices.at (i));
+        PBMSG::Packet *pckt = z->ReturnPacket();
+        if (!QUIET) send_message (*pckt);
+        if (VERBOSE) std::cout << "Packet sent" << std::endl;
       }
-
-      //if (!QUIET) send_message (msg_packet);
-      
+        
       struct timespec req = {0};
       req.tv_sec = 0;
       req.tv_nsec = millisec * 1000000L;
@@ -338,192 +330,6 @@ int main (int argc, char **argv) {
 
     return 0;
 }
-
-/* Initialize dtrace program (passed by handle and string) */
-int dtrace_init (dtrace_hdl_t **this_dtp, std::string this_prog) {
-
-  int done = 0;
-  int err;
-  dtrace_prog_t *prog;
-  dtrace_proginfo_t info;
-
-  if ((*this_dtp = dtrace_open (DTRACE_VERSION, 0, &err)) == NULL) {
-    pfc ("ERROR: Failed to init dtrace\n", 31);
-    return -1;  
-  }
-
-  if ((prog = dtrace_program_strcompile (*this_dtp, (const char *)this_prog.c_str(),
-    DTRACE_PROBESPEC_NAME, 0, 0, NULL)) == NULL) {
-    pfc ("ERROR: Failed to compile program\n", 31);
-    return -1;  
-  }
-
-  if (dtrace_program_exec (*this_dtp, prog, &info) == -1) {
-    pfc ("ERROR: Failed to init probes\n", 31);
-    return -1;
-  }
-
-  return 0;
-}
-
-/*
- * Print "something" from a libdtrace aggregate
- * in the format it was meant to be.
- */
- int formatted_print (const dtrace_recdesc_t *rec, caddr_t addr) {
- switch (rec->dtrd_size) {
-    case sizeof(uint8_t):
-      printf ("i8:%d", *((uint8_t *)addr));
-      return 0;
-    case sizeof(uint16_t):
-      printf ("16:%d", *((uint16_t *)addr));
-      return 0;
-    case sizeof(uint32_t):
-      printf ("32:%d", *((uint32_t *)addr));
-      return 0;
-    case sizeof(uint64_t):
-      printf ("64:%u", *((uint64_t *)addr));
-      return 0;
-    default:
-      printf ("%s", (const char *)addr);
-      return 0;
-    return -1;
-  }
-}
-
-/*
- * Given a bucket-id, return the max value.
- * The min value is simply (max/2)+1 
- */
-inline int64_t max_quantize_range (int bckt_id) {
-  if (bckt_id < DTRACE_QUANTIZE_ZEROBUCKET) {
-    return -1; 
-  } else if (bckt_id == DTRACE_QUANTIZE_ZEROBUCKET) {
-    return 0;
-  } else {
-    return DTRACE_QUANTIZE_BUCKETVAL (bckt_id);
-  }
-}
-
-/* Walk through aggregate and add data to msg_packet */
-static int dtrace_aggwalk (const dtrace_aggdata_t *agg, void *arg)
-{
-  struct {
-    int type;
-    uint32_t core;
-    uint64_t usage;
-    uint32_t pid;
-    std::string name;
-  } data; 
-  
-  bool reset = 1;
-  dtrace_aggdesc_t *aggdesc = agg->dtada_desc;
-
-  size_t i;
-  for (i = 1; i < aggdesc->dtagd_nrecs; i++) {
-    const dtrace_recdesc_t *rec = &aggdesc->dtagd_rec[i];
-    caddr_t addr = agg->dtada_data + rec->dtrd_offset;
-
-    if (i==1) {
-      data.type = *((uint32_t *)addr);
-    }
-
-    /* Again, this is a very ugly way to do this */
-    if (data.type==0) {
-      if (i==2) data.core = *((uint32_t *)addr);
-      else if (i==3) data.usage = (uint64_t)*((uint32_t *)addr); 
-    } else if (data.type==1) {
-      if (i==2) data.core = *((uint32_t *)addr);
-      else if (i==3) data.name = std::string((const char *)addr);
-      else if (i==4) data.pid = *((uint32_t *)addr);
-      else if (i==5) data.usage = *((uint64_t *)addr);
-    } else if (data.type==2) {
-      if (i==2) {
-       // msg_packet.set_ticks ((uint32_t)*((uint64_t *)addr));
-      //  if (VERBOSE2) printf("UTC %2d:%2d:%2d | ticks (last cycle) %d\n", (time(NULL)/3600)%24,
-        //    (time(NULL)/60)%60, time(NULL)%60, msg_packet.ticks()); 
-      }
-    } else if (data.type==3) {
-      if (rec->dtrd_action == DTRACEAGG_QUANTIZE) {
-        const int64_t *agg_data = (int64_t *)(agg->dtada_data +
-          rec->dtrd_offset);
-        int range_cnt;
-        for (range_cnt=0; range_cnt<DTRACE_QUANTIZE_NBUCKETS; range_cnt++) {
-          if (!agg_data[range_cnt]) continue;
-          if (VERBOSE) printf ("%12d : %8d \n", max_quantize_range (range_cnt), agg_data[range_cnt]);
-
-          int64_t l_range = max_quantize_range (range_cnt);
-        //  PB_MSG::Packet_CallHeat *msg_callheat = msg_packet.add_callheat();
-    /*      msg_callheat->set_name (std::string("allcall"));
-          #ifdef FULLBIT
-            msg_callheat->set_lowt (l_range); 
-            msg_callheat->set_value (agg_data[range_cnt]);
-         #else
-            msg_callheat->set_lowt_1 (MSB(l_range)); 
-            msg_callheat->set_lowt_2 (LSB(l_range));
-            msg_callheat->set_value_1 (MSB(agg_data[range_cnt]));
-            msg_callheat->set_value_2 (LSB(agg_data[range_cnt]));
-          #endif  */
-        }
-      }
-    } else if (data.type==4) {
-    /* Count processes */
- //     if (i==2) msg_packet.set_processes (msg_packet.processes()+1);
-    } else if (data.type==5) {
-    /* Count threads */
- //     if (i==2) msg_packet.set_threads (msg_packet.threads()+1); 
-    } else {
-      pfc ("WARN: Unrecognized dtrace script type @334\n", 33);
-      if (VERBOSE) formatted_print (rec, addr);
-      printf ("\n");
-    } 
-  }
-
-  /* Actually add to the protobuf now */
-  if (data.type==0) {
-//    PB_MSG::Packet_Cpu *msg_cpu = msg_packet.add_cpu();
- //   msg_cpu->set_core (data.core);
- //   msg_cpu->set_usage ((uint32_t)data.usage);
-  } else if (data.type==1) {
-//    PB_MSG::Packet_Process *msg_process = msg_packet.add_process();
- /*   msg_process->set_pid (data.pid);
-    msg_process->set_execname (data.name);
-    msg_process->set_usage ((uint32_t)data.usage); 
-    msg_process->set_cpu (data.core);
-*/  } 
-
-  if (reset) return (DTRACE_AGGWALK_REMOVE);
-  return (DTRACE_AGGWALK_NEXT);
-}
-
-/* For the dtrace command line */
-int dtrace_setopts (dtrace_hdl_t **this_g_dtp) {
-
-  if (dtrace_setopt(*this_g_dtp, "strsize", "32") == -1) {
-    pfc ("failed to set 'strsize'", 31);
-  }
-  if (dtrace_setopt(*this_g_dtp, "bufsize", "1k") == -1) {
-    pfc ("failed to set 'bufsize'", 31);
-  }
-  if (dtrace_setopt(*this_g_dtp, "aggsortrev", NULL) == -1) {
-    pfc ("failed to set 'aggsortrev'", 31);
-  }
-  if (dtrace_setopt(*this_g_dtp, "aggsize", "1M") == -1) {
-    pfc ("failed to set 'aggsize'", 31);
-  }
-  if (dtrace_setopt(*this_g_dtp, "aggrate", "2msec") == -1) {
-    pfc ("failed to set 'aggrate'", 31);
-  }
- 
-  return 0;
-}
-
-/* Print contents of packet message for user */
-int print_message(PB_MSG::Packet pckt) {
-  std::cout << "String representation of packet:" << std::endl;
-  pckt.PrintDebugString(); 
-  return 0;
-}  
 
 /*
  * Find the associated kstat using libkstat
@@ -655,7 +461,7 @@ int send_message (const char *c) {
   }
 }
 
-int send_message (PB_MSG::Packet pckt) {
+int send_message (PBMSG::Packet pckt) {
   try {
     std::string pckt_serialized;
     pckt.SerializeToString (&pckt_serialized);
@@ -663,17 +469,9 @@ int send_message (PB_MSG::Packet pckt) {
     memcpy ((void *)msg.data(), pckt_serialized.c_str(), pckt_serialized.size());
     if (!QUIET) socket.send (msg, ZMQ_NOBLOCK);
   } catch (int e) {
-    printf ("Error number %d\n", e);
+    std::cout << "Error number " << e << std::endl;
     return -1;
   }
-  return 0;
-}
-
-/*
- * Prints colorized LINE
- */
-int pfl (int color) {
-  std::cout << "\033[00;" << color << "m" << __LINE__ << "\033[00m";
   return 0;
 }
 
@@ -698,6 +496,7 @@ void sig_handler (int s) {
  * Prints usage information to user
  */
 void usage () {
+  UTIL::white();
   std::cout << "\nusage:  server [-h] [-p NUMBER] [-v] [-vlite]"; 
   std::cout << "\n    -h         prints this help/usage page";
   std::cout << "\n    -p PORT    use port PORT";
@@ -705,11 +504,7 @@ void usage () {
   std::cout << "\n    -vlite     prints time (and dtrace ticks (tick-4999)) for each sent message";
   std::cout << "\n    -d DELAY   wait DELAY<1000 ms instead of default 1000";
   std::cout << "\n    -q         quiet mode, prints diagnostic information and does not send messages";
-#ifdef FULLBIT
-  std::cout << "\n\nThis version of the server uses 64bit protocol buffers and is unsupported";
-#else
-  std::cout << "\n\nThis version of the server uses 32bit protocol buffer values.";
-#endif
   std::cout << "\n\n";
+  UTIL::clear();
 }
 

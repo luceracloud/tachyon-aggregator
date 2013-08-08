@@ -17,7 +17,6 @@ extern bool VERBOSE2;
 namespace KSTAT {
 
 //  DEBUGGING HELPER FUNCTION
-//
 void pv (std::vector<uint64_t> *v) {
   std::cout << "begin print\n";
   for (size_t i=0; i<v->size(); i++) {
@@ -35,7 +34,7 @@ uint64_t translate_to_ui64 (kstat_named_t *knp) {
   switch (knp->data_type) {
     case KSTAT_DATA_CHAR:
       UTIL::yellow();
-      std::cout << "WARN: Not coded yet." << std::endl;
+      std::cout << "WARN: Not coded yet (char)." << std::endl;
       UTIL::clear();
       return (uint64_t)0;
     case KSTAT_DATA_INT32:
@@ -47,9 +46,11 @@ uint64_t translate_to_ui64 (kstat_named_t *knp) {
     case KSTAT_DATA_UINT64:
       return (uint64_t)knp->value.ui64;
     case KSTAT_DATA_STRING:
-      UTIL::yellow();
-      std::cout << "WARN: Not coded yet." << std::endl;
-      UTIL::clear();
+      if (VERBOSE) {
+        UTIL::yellow();
+        std::cout << "WARN: Not coded yet (string)." << std::endl;
+        UTIL::clear();
+      }
       return 0;
     default:
       // We should never end up in here
@@ -67,8 +68,9 @@ uint64_t translate_to_ui64 (kstat_named_t *knp) {
  * Returns a single statistic value
  * from kstat.
  */
-int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string name,
-            std::string statistic, int instance, uint64_t *value) {
+int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, 
+            std::string name, std::string statistic, int instance, 
+            uint64_t *value, std::string *klasse=(std::string *)"NULL") {
   kstat_t         *ksp;
   kstat_named_t   *knp;
 
@@ -108,7 +110,7 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string nam
   knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
   if (knp == NULL) {
     std::cout << "Unable to retreive expected kstat_named " << module << " " <<
-        name << " " << statistic << " " << instance << std::endl;
+        name << " " << statistic << " " << instance << "kstat.hpp:" << __LINE__ << std::endl;
     return 3;
   }
 
@@ -138,7 +140,6 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string nam
   return 0;
 }
 
-
 /*
  * Allows the return of multiple values
  * in a vector. Works with "named" kstat
@@ -146,8 +147,8 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, std::string nam
  */
 int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, 
 						      std::string statistic, std::vector<uint64_t> *values,
-						      std::vector<std::string> *names, std::vector<std::string> *zones) {
-
+						      std::vector<std::string> *names, std::vector<std::string> *zones,
+                  std::string *klasse = (std::string *)"NULL") {
   /* Init */
   names->clear();
   values->clear();
@@ -165,6 +166,10 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
 
   if (ksp->ks_type == KSTAT_TYPE_NAMED) {
     while (ksp != NULL) {
+      if (ksp->ks_type != KSTAT_TYPE_NAMED) {
+        ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL); 
+        continue;
+      }
       kstat_read (kc, ksp, NULL);
       knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
       if (knp == NULL) {
@@ -186,7 +191,11 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
     }
   } else if (ksp->ks_type == KSTAT_TYPE_IO) {
     while (ksp != NULL) {
-      
+      if ((ksp->ks_type != KSTAT_TYPE_IO) || strcmp(ksp->ks_class, "disk")) {
+        ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
+        continue;
+      }
+
       kstat_io_t kio;   // IO stat data structure
       kstat_read (kc, ksp, &kio);
 
@@ -195,9 +204,10 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
         std::cout << "Requested kstat returned NULL for instance" << std::endl;
         UTIL::clear();
       }
-
+      
       if (statistic == "nread") {
         values->push_back (kio.nread);
+        
       } else if (statistic == "nwritten") {
         values->push_back (kio.nwritten);
       } else if (statistic == "reads") {
@@ -212,19 +222,18 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
         values->push_back (kio.rlentime);
       } else if (statistic == "wlentime") {
         values->push_back (kio.wlentime);
-      } else if (statistic == "harderror") {
-
-      } else if (statistic == "softerror") {
-
-      } else if (statistic == "tranerror") {
-
       } else {
-
+        UTIL::yellow();
+        std::cout << "Unrecognzied statistic for IO kstat.hpp:" << __LINE__ << std::endl;
+        UTIL::clear();
       }
+
+      names->push_back (ksp->ks_name);
 
       {
         kstat_named_t *kk = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
-        zones->push_back (std::string (KSTAT_NAMED_STR_PTR(kk)));
+        if (kk == NULL)  zones->push_back (std::string ("global"));
+        else zones->push_back (std::string (KSTAT_NAMED_STR_PTR(kk)));
       }
 
       ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
@@ -239,17 +248,5 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
   return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
 }
-
 

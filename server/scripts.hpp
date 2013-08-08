@@ -6,14 +6,12 @@
  *    scripts in respective namespaces.
  *
  *  CREATED:  17 JUL 2013
- *  UPDATED:   6 AUG 2013
+ *  UPDATED:   8 AUG 2013
  */
 
-#define DISK_NUM 6
-#define DTRACE_NUM 6
 
 namespace MEM {
-	/* Global-zone specific stuff */
+	/* Global-zone specific scripts */
 	const size_t GZ_size = 5;
 	std::string GZ_modl[ GZ_size ] = { "unix", "unix", "unix", "unix", "unix" };
 	std::string GZ_name[ GZ_size ] = { "system_pages", "system_pages", "system_pages", "system_pages", "system_pages" }; 
@@ -23,99 +21,47 @@ namespace MEM {
 	const size_t size = 4;
 	std::string modl[ size ] = { "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
 	std::string stat[ size ] = { "rss", "physcap", "swap", "swapcap" };
-  //size_t number = 4; 
-  //std::string module[ MEM_NUM ] = { "unix", "unix", "unix", "memory_cap", "memory_cap", "memory_cap", "memory_cap" };
-  //std::string name[ 7 ] = { "system_pages", "system_pages", "system_pages", "NULL", "NULL", "NULL", "NULL" };
-  //std::string statistic[ 7 ] = { "freemem", "physmem", "pp_kernel", "physcap", "rss", "swap", "swapcap" };      
 } 
 
 namespace NET {
-	/* Global-zone specific stuff */
-	const size_t GZ_size = 0;
-	std::string GZ_modl[ GZ_size ] = {};
-	std::string GZ_name[ GZ_size ] = {};
-	std::string GZ_stat[ GZ_size ] = {};
-
-	/* Other */
+	/* NGZ scripts */
 	const size_t size = 6;
   std::string modl[ size ] = { "link", "link", "link", "link", "link", "link" };
   std::string stat[ size ] = { "obytes64", "rbytes64", "opackets", "ipackets", "oerrors", "ierrors" };
 }
 
 namespace DISK {
-  /* Global-zone specific stuff */
-  const size_t GZ_size = 0;
-  const size_t GZ_size2 = 11;
-  std::string GZ_modl[ GZ_size ] = {  };
-  std::string GZ_name[ GZ_size ] = {};
-  std::string GZ_stat[ GZ_size2 ] = { "nread", "nwritten", "reads", "writes", "rtime", "wtime", "rlentime",
-                                      "wlentime", "harderror", "softerror", "transerror" };
+  /* Global-zone specific scripts */
+  const size_t GZ_size = 8;
+  std::string GZ_modl[ GZ_size ] = { "sd", "sd", "sd", "sd", "sd", "sd", "sd", "sd" };
+  std::string GZ_stat[ GZ_size ] = { "nread", "nwritten", "reads", "writes", "rtime", "wtime", "rlentime",
+                "wlentime" };
 
   /* Other */
-  const size_t size = 11;
+  const size_t size = 14;
   std::string modl[ size ] = { "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs",
-                                "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs", "zone_zfs" };
-  std::string stat[ size ] = { "nread", "nwritten", "reads", "writes", "rtime", "wtime", "rlentime",
-                                "wlentime", "harderror", "softerror", "transerror" };
-
-
-
-
-
-
-
-/*
-
-  required string instance = 1;
-    optional uint64 nread = 2;
-    optional uint64 nwritten = 3;
-    optional uint32 reads = 4;
-    optional uint32 writes = 5;
-    optional uint64 rtime = 6;
-    optional uint64 wtime = 7;
-    optional uint64 rlentime = 8;
-    optional uint64 wlentime = 9;
-    optional uint32 harderror = 10;
-    optional uint32 softerror = 11;
-    optional uint32 tranerror = 12;
-
-
-
-*/
-
+        "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs" };
+  std::string stat[ size ] = { "nread", "nwritten", "reads", "writes", "rtime", "rlentime", 
+        "nread", "nwritten", "reads", "rlentime", "rtime", "wlentime", "writes", "wtime" };
 
 }
 
 namespace DTRACE {
-  size_t number = DTRACE_NUM;
+  size_t number = 6; 
 
-  std::string dtrace[DTRACE_NUM] = {
-    (std::string)"profile:::profile-4999\n{\n@[0,cpu] = count();\n}",
-    (std::string)"profile:::profile-4999\n{\n@[1,cpu,execname,pid] = count();\n}",
-    (std::string)"profile:::tick-4999\n{\n@[2] = count();\n}",
-    (std::string)"syscall:::entry\n{\nself->begun=timestamp;\n}\nsyscall:::return\n{\nself->ended=timestamp;\n@[3]=quantize(self->ended-self->begun);\n}",
-    std::string("profile:::profile-4999\n{\n@[4,pid] = count();\n}"),
-    std::string("profile:::profile-4999\n{\n@[5,curthread] = count();\n}")
+  std::string dtrace[6] = {
+    (std::string)"profile:::profile-4999\n{\n@[0,zonename,cpu] = count();\n}",
+
+    (std::string)"profile:::profile-4999\n{\n@[1,zonename,cpu,execname,pid] = count();\n}",
+
+    (std::string)"profile:::tick-4999\n{\n@[2,zonename] = count();\n}",
+
+    (std::string)"syscall:::entry\n{\nself->begun=timestamp;\n}\nsyscall:::return\n"
+        "{\nself->ended=timestamp;\n@[5,zonename]=quantize(self->ended-self->begun);\n}",
+
+    std::string("profile:::profile-4999\n{\n@[3,zonename,pid] = count();\n}"),
+
+    std::string("profile:::profile-4999\n{\n@[4,zonename,curthread] = count();\n}")
   };
-
 }
-  
-namespace TEST {
-
-  const int a = 6;
-
-  std::string module[a] = { "zone_zfs", "memory_cap", "memory_cap", "memory_cap", "memory_cap", "zone_zfs" };
-  std::string statistic[a] = { "reads", "rss", "physcap", "swap", "swapcap", "writes" };
-
-
-
-}
-
-
-
-
-
-
-
-
 
