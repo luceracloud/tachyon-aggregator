@@ -64,6 +64,3 @@
     -vlite      print time (and dtrace ticks (tick-4999)) for each sent message
     -d DELAY    wait DELAY<1000 ms instead of default 1000
     -q          quiet mode, prints diagnostic information and does not send messages
-
-
-

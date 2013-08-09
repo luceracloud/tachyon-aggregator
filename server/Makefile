@@ -2,12 +2,6 @@
 # of statistics (dtrace &
 # kstat) server.
 #
-#	 make `all64' to build
-#	 using 64bit protobuf
-#
-#	`make ll' to build on
-#	 LUCERA-LOVELESS machine
-#
 
 # Compiler
 CC=g++

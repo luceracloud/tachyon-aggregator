@@ -52,7 +52,8 @@ int send_message ();
 int send_message (const char *c);
 int send_message (PBMSG::Packet pckt);
 
-int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value);
+int retreive_kstat (std::string module, std::string name, std::string statistic,
+                      int instance, uint64_t *value);
 
 /*
  * Globally-existing variables &c.
@@ -75,7 +76,7 @@ std::map <std::string, Zone*> ZoneData;
 std::map <size_t, std::string> ZoneIndices;
 
 /*
- *  main loop
+ *  entry point
  */
 int main (int argc, char **argv) {
 
@@ -152,19 +153,20 @@ int main (int argc, char **argv) {
 
     /* Allow us to pass values in and out */
     uint64_t value;
-		std::vector<uint64_t> values;
-		std::vector<std::string> names;
+    std::vector<uint64_t> values;
+    std::vector<std::string> names;
     std::vector<std::string> zones;
 
     UTIL::red();
     std::cout << "\n Server online!";
-    printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", (st/3600)%24, (st/60)%60, st%60);
+    printf ("\n \033[00;31mStart time was: %2d:%2d:%2d UTC\033[00m\n\n", 
+                (st/3600)%24, (st/60)%60, st%60);
     UTIL::clear();
 
     /* Collect and send data in loop */
     while (do_loop) {
      
-			/* Clean up from last cycle and updates */
+      /* Clean up from last cycle and updates */
       ZoneData.clear();
       ZoneIndices.clear();
  
@@ -182,12 +184,14 @@ int main (int argc, char **argv) {
       } else {
         /* Init GZ first to hold other zones & set as type:GZ */
         size_t z_index = 0;
-        ZoneData.insert (std::make_pair (std::string("global"), new Zone ("global", true)));
+        ZoneData.insert (std::make_pair (std::string("global"), 
+                              new Zone ("global", true)));
         ZoneIndices.insert (std::make_pair (z_index, "global"));
         for (size_t i=0; i<zones.size(); i++) {
           ZoneData["global"]->add_zone (&zones.at (i));
           if (names.at(i)!="global") {
-            ZoneData.insert (std::make_pair (zones.at(i), new Zone (std::string( zones.at (i)), false)));
+            ZoneData.insert (std::make_pair (zones.at(i), 
+                              new Zone (std::string( zones.at (i)), false)));
             ZoneIndices.insert (std::make_pair (z_index, zones.at (i)));
           }
           z_index++;
@@ -203,35 +207,36 @@ int main (int argc, char **argv) {
         }
       }
      
-			/*
-			 * Grab memory statistics, first
- 			 * from GZ, then from elsewhere.
- 			 */
-			for (size_t i=0; i<MEM::GZ_size; i++) {
-			  if (KSTAT::retreive_kstat (kc, MEM::GZ_modl[i], MEM::GZ_name[i], MEM::GZ_stat[i], -1, &value)) {
+      /*
+       * Grab memory statistics, first
+       * from GZ, then from elsewhere.
+       */
+      for (size_t i=0; i<MEM::GZ_size; i++) {
+        if (KSTAT::retreive_kstat (kc, MEM::GZ_modl[i], MEM::GZ_name[i],
+                                    MEM::GZ_stat[i], -1, &value)) {
           std::cout << "Unable to grab memory statistic\n";
         } else {
           ZoneData["global"]->add_mem (&MEM::GZ_stat[i], value);
         }
       }
-			for (size_t i=0; i<MEM::size; i++) {
-				if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], 
+      for (size_t i=0; i<MEM::size; i++) {
+        if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], 
                                             &values, &names, &zones)) {
-					std::cout << "Unable to retreive expected kstats for " << MEM::modl[i] << " " <<
-											 MEM::stat[i] << __LINE__ << std::endl;
-				} else {
+          std::cout << "Unable to retreive expected kstats for " << MEM::modl[i] << " " <<
+                        MEM::stat[i] << __LINE__ << std::endl;
+        } else {
           for (size_t j=0; j<names.size(); j++) {
             ZoneData[zones.at(j)]->add_mem (&MEM::stat[i], values.at (j));
           }
-				}
-			}
+        }
+      }
 
-			/*
- 			 * Grab network statistics, we
- 			 * only care about NGZ stats,
- 			 * as there are no GZ-specific
- 			 * ones
- 			 */
+      /*
+       * Grab network statistics, we
+       * only care about NGZ stats,
+       * as there are no GZ-specific
+       * ones
+       */
       for (size_t i=0; i<NET::size; i++) {
         if (KSTAT::retreive_multiple_kstat (kc, NET::modl[i], NET::stat[i], 
                                             &values, &names, &zones)) {
@@ -259,8 +264,9 @@ int main (int argc, char **argv) {
           if (DISK::GZ_modl[i]=="sderr") GZ_name << ",err";
           if (KSTAT::retreive_kstat (kc, DISK::GZ_modl[i], GZ_name.str(),
                                   DISK::GZ_stat[i], -1, &value)) {
-            std::cout << "Unable to retreive expected GZ kstat for " << DISK::GZ_modl[i] << " " <<
-                          " " << DISK::GZ_stat[i] << "server.cpp:" << __LINE__ << std::endl;
+            std::cout << "Unable to retreive expected GZ kstat for " << 
+                          DISK::GZ_modl[i] << " " << " " << DISK::GZ_stat[i] << 
+                          "server.cpp:" << __LINE__ << std::endl;
           } else {
             ZoneData["global"]->add_disk (&GZ_name_str, &DISK::GZ_stat[i], value);
           }
@@ -331,115 +337,6 @@ int main (int argc, char **argv) {
     google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
-}
-
-/*
- * Find the associated kstat using libkstat
- *   methods. Note the necessity to cast 
- *   strings to raw char *'s.
- */
-int retreive_kstat (std::string module, std::string name, std::string statistic, int instance, uint64_t *value) {
-
-  // The profile of kstat_* is as follows:
-  //     kstat_lookup ( kc, module, instance, name );
-  //     kstat_data_lookup ( ksp, statistic );
-  //
-  //     module || name can be NULL to ignore
-  //     instance can be -1 to ignore
-
-  /* Local variable declarations */ 
-  kstat_t         *ksp;
-  kstat_named_t   *knp;
-
-  if (VERBOSE) {
-    std::cout << "KSTAT " << module << name << statistic << std::endl;
-  }
- 
-  if (strcmp(name.c_str(), "NULL")) {
-    ksp = kstat_lookup (kc, (char *)module.c_str(), -1, (char *)name.c_str());
-  } else {
-    ksp = kstat_lookup (kc, (char *)module.c_str(), instance, NULL);
-  }
-
-  if ((ksp==NULL) && (statistic=="NULL")) {
-    return 1;
-  } 
-
-  if (ksp == NULL) {
-    std::cout << "Fail on: " << module << " " << name << " " << statistic;
-    pfc ( "\nksp @439 returned NULL\n", 31 );
-  }
-  
-  /* If we're reading a KSTAT_TYPE_IO file, we have
-   * to handle things a bit differently 
-   */
-  if (ksp->ks_type == KSTAT_TYPE_IO) {
-    
-    kstat_io_t kio;   // Data structure to hold IO stat
-    kstat_read (kc, ksp, &kio); 
-    
-    if (&kio == NULL) {
-      printf ("NULL for instance %d\n", instance);
-    }
-                   
-    /* I'm keeping this non-modular here and
-     * pushing directly to the protocol buffer
-     * here because it will save significant
-     * space and time/processing power
-     */
-    
-//    PB_MSG::Packet_Disk *msg_disk = msg_packet.add_disk();
-
-    ksp = kstat_lookup (kc, (char *)"sderr", instance, NULL);
-    kstat_read (kc, ksp, NULL);
-
-    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Hard Errors");
- //   msg_disk->set_harderror ((uint32_t)knp->value.ui32);
-   
-    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Soft Errors");
- //   msg_disk->set_softerror ((uint32_t)knp->value.ui32); 
-
-    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"Transport Errors");
- //   msg_disk->set_tranerror ((uint32_t)knp->value.ui32);
-
-  } else {
-
-    kstat_read (kc, ksp, NULL);
-    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str()); 
-
-    if (knp == NULL) {
-      pfc (" > libkstat lookup failed\n", 31);
-      return -1;
-    }
-
-    /* Cast data depending on type */
-    switch (knp->data_type) {
-      case KSTAT_DATA_CHAR:
-        printf ("char value: %c\n", knp->value.c);
-        pfc ("Not yet implemented : 1\n", 33);
-        break;
-      case KSTAT_DATA_INT32:
-        *value = knp->value.i32;
-        pfc ("Not yet tested : 2\n", 33);
-        break;
-      case KSTAT_DATA_UINT32:
-        *value = (uint64_t)knp->value.ui32;
-        if (VERBOSE) pfc ("Working with uint32\n", 33);
-        break;
-      case KSTAT_DATA_INT64:
-        *value = (uint64_t)knp->value.i64;
-        break;
-      case KSTAT_DATA_UINT64:
-        *value = knp->value.ui64;
-        break;
-      default:
-        // We should never end up in here
-        std::cout << "Something rather peculiar happened." << std::endl;
-        break;
-    }
-  }
-
-  return 0;
 }
 
 /*

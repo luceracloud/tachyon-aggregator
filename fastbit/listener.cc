@@ -6,8 +6,8 @@
  *  zone). Saves all of the data to
  *  directories by IP-zonename.
  *
- *  CREATED: 	8 AUG 2013
- *  EDITED:		9 AUG 2013
+ *  CREATED:  8 AUG 2013
+ *  EDITED:   9 AUG 2013
  */
 
 
@@ -61,7 +61,9 @@ int main (int argc, char **argv) {
       VERBOSE = 100;
     }
     if (!strcmp (argv[i], "-h") || !strcmp (argv[i], "-H")) {
-     // pfc (" . printing usage information\n", 36);
+      UTIL::cyan();
+      std::cout << " . printing usage information" << std::endl;
+      UTIL::clear();
      // usage();
       return 1;
     }
@@ -100,28 +102,20 @@ int main (int argc, char **argv) {
   listen_socket.connect(CON.str().c_str()); 
 
   listen_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-	size_t packet_counter = 0;
+  size_t packet_counter = 0;
 
   /* Start loop */
-	while (run) {
+  while (run) {
     packet_counter++;
-
     if (VERBOSE) std::cout << "Waiting.." << std::endl;
 
-
-
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
-
     listen_socket.recv (&msg);
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
     pckt.ParseFromArray (msg.data(), msg.size());
-		
+
     if (VERBOSE) {
       std::cout << "Packet number " << packet_counter << std::endl;
       std::cout << "Size of previous packet: " << msg.size() << std::endl;
     }
-
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
 
     /* Select proper table */
     if (VERBOSE) std::cout << "Zone name: " << pckt.name() << std::endl;
@@ -130,12 +124,10 @@ int main (int argc, char **argv) {
     /* Read into table */
     bool is_gz = false;
     if (pckt.name() == "global") {
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
       if (VERBOSE) std::cout << "Zone is global, using global insertion functions." << std::endl;
       is_gz = true;
     }
 
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
     new_line.str("");
     new_line.clear();
     FASTBIT::read_gen (&pckt, &new_line, is_gz);
@@ -145,19 +137,13 @@ int main (int argc, char **argv) {
     FASTBIT::read_net (&pckt, &new_line, is_gz);
     FASTBIT::read_proc (&pckt, &new_line, is_gz);
 
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
-
     tbl->appendRow ((const char *)new_line.str().c_str());
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
 
     if (VERBOSE) {
       std::cout << "Table ptr is " << tbl << std::endl;
       std::cout << "Line returned for this table is: \n";
       std::cout << new_line.str() << std::endl;
     }
-
-    bool QUIET = false; 
-    if (VERBOSE > 90) std::cout << "DEBUG LINE: " << __LINE__ << std::endl;
 
     /* Write to database */
     if (time (NULL) - last_save > save_rate && time (NULL)%save_rate < 10) {

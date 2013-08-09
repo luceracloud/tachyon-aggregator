@@ -78,7 +78,8 @@ class Zone {
         this->packet->mutable_mem(0)->set_nfree_calls (x);
       } else {
         UTIL::yellow();
-        std::cout << "WARN: encountered unknown type in memory @Zone.hpp:" << __LINE__ << std::endl;
+        std::cout << "WARN: encountered unknown type in memory @Zone.hpp:" <<
+                      __LINE__ << std::endl;
         UTIL::clear();
       }
     }
@@ -138,7 +139,8 @@ class Zone {
         net->set_ierrors (v);
       } else {
         UTIL::yellow();
-        std::cout << "WARN: encountered unknown type in network @zone.hpp:" << __LINE__ << std::endl;
+        std::cout << "WARN: encountered unknown type in network @zone.hpp:" << 
+                      __LINE__ << std::endl;
         UTIL::clear();
       }
     }
@@ -179,7 +181,8 @@ class Zone {
         disk->set_tranerror (v);
       } else {
         UTIL::yellow();
-        std::cout << "WARN: encountered unknown type in disk @Zone.hpp:" << __LINE__ << std::endl;
+        std::cout << "WARN: encountered unknown type in disk @Zone.hpp:" << 
+                      __LINE__ << std::endl;
       }
     }
 

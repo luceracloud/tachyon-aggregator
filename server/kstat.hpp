@@ -6,7 +6,7 @@
  *   from a C++ program.
  *
  *   CREATED:   5 AUG 2013
- *   EDITED:    7 AUG 2013
+ *   EDITED:    8 AUG 2013
  */
 
 #include <kstat.h>
@@ -281,4 +281,3 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
 }
 
 }
-

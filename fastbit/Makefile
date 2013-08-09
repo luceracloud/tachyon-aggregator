@@ -1,4 +1,3 @@
-
 CC=g++
 LD=-lzmq
 LDFLAGS=-lzmq -lprotobuf -lfastbit
