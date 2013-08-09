@@ -180,7 +180,17 @@ int main (int argc, char **argv) {
 
   /* Take care of killing functions */
   for (size_t i=0; i<ZoneIndices.size(); i++) {
-  //  free (find_table (ZoneIndices.at(i), &ZoneIndices, &ZoneTables));
+    UTIL::white();
+    std::ostringstream NAME;
+    NAME << IP << "-" << ZoneIndices.at(i);
+    FASTBIT::write_to_db (find_table (ZoneIndices.at(i),
+                          &ZoneIndices,
+                          &ZoneTables),
+                          0b0,
+                          time (NULL) - save_rate,
+                          NAME.str(),
+                          true);
+    std::cout << "Saved table for " << NAME.str() << " in TEMP" << std::endl;
   }
 
   /* Shutdown protobuf library */
