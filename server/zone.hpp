@@ -171,11 +171,11 @@ class Zone {
         disk->set_rlentime (v);
       } else if (*s == "wlentime") {
         disk->set_wlentime (v);
-      } else if (*s == "harderror") {
+      } else if (*s == "Hard Errors") {
         disk->set_harderror (v);
-      } else if (*s == "softerror") {
+      } else if (*s == "Soft Errors") {
         disk->set_softerror (v);
-      } else if (*s == "tranerror") {
+      } else if (*s == "Transport Errors") {
         disk->set_tranerror (v);
       } else {
         UTIL::yellow();

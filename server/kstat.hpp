@@ -99,42 +99,74 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module,
     return 1; 
   }
 
-  if (ksp->ks_type != KSTAT_TYPE_NAMED) {
+  if (ksp->ks_type == KSTAT_TYPE_NAMED) {
+    kstat_read (kc, ksp, NULL);
+    knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
+    if (knp == NULL) {
+      std::cout << "Unable to retreive expected kstat_named " << module << " " <<
+          name << " " << statistic << " " << instance << "kstat.hpp:" << __LINE__ << std::endl;
+      return 3;
+    }
+
+    /* Return data based on type */
+    switch (knp->data_type) {
+      case KSTAT_DATA_INT32:
+        *value = (uint64_t)knp->value.i32;
+        break;
+      case KSTAT_DATA_UINT32:
+        *value = (uint64_t)knp->value.ui32;
+        break;
+      case KSTAT_DATA_INT64:  
+        *value = (uint64_t)knp->value.i64;
+        break;
+      case KSTAT_DATA_UINT64:
+        *value = knp->value.ui64;
+        break;
+      default:
+        // We should never end up in here
+        UTIL::red();
+        std::cout << "Something rather peculiar happened." << std::endl;
+        std::cout << " @kstat.hpp:" << __LINE__ << std::endl;
+        UTIL::clear();
+        break;
+    }
+  } else if (ksp->ks_type == KSTAT_TYPE_IO) {
+
+      kstat_io_t kio;   // IO stat data structure
+      kstat_read (kc, ksp, &kio);
+
+      if (&kio == NULL) {
+        UTIL::yellow();
+        std::cout << "Requested kstat returned NULL for instance" << std::endl;
+        UTIL::clear();
+      }
+
+     if (statistic == "nread") {
+        *value = (uint64_t)kio.nread;
+      } else if (statistic == "nwritten") {
+        *value = (uint64_t)kio.nwritten;
+      } else if (statistic == "reads") {
+        *value = (uint64_t)kio.reads;
+      } else if (statistic == "writes") {
+        *value = (uint64_t)kio.writes;
+      } else if (statistic == "rtime") {
+        *value = (uint64_t)kio.rtime;
+      } else if (statistic == "wtime") {
+        *value = (uint64_t)kio.wtime;
+      } else if (statistic == "rlentime") {
+        *value = (uint64_t)kio.rlentime;
+      } else if (statistic == "wlentime") {
+        *value = (uint64_t)kio.wlentime;
+      } else {
+        UTIL::yellow();
+        std::cout << "Unrecognzied statistic for IO kstat.hpp:" << __LINE__ << std::endl;
+        UTIL::clear();
+      }
+  } else {
     UTIL::yellow();
-    std::cout << "Expected NAMED kstat, instead returned type " << ksp->ks_type << std::endl;
+    std::cout << "Unexpected KSTAT type, instead returned type: " << ksp->ks_type << std::endl;
     UTIL::clear();
     return 2;
-  }
-
-  kstat_read (kc, ksp, NULL);
-  knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
-  if (knp == NULL) {
-    std::cout << "Unable to retreive expected kstat_named " << module << " " <<
-        name << " " << statistic << " " << instance << "kstat.hpp:" << __LINE__ << std::endl;
-    return 3;
-  }
-
-  /* Return data based on type */
-  switch (knp->data_type) {
-    case KSTAT_DATA_INT32:
-      *value = (uint64_t)knp->value.i32;
-      break;
-    case KSTAT_DATA_UINT32:
-      *value = (uint64_t)knp->value.ui32;
-      break;
-    case KSTAT_DATA_INT64:  
-      *value = (uint64_t)knp->value.i64;
-      break;
-    case KSTAT_DATA_UINT64:
-      *value = knp->value.ui64;
-      break;
-    default:
-      // We should never end up in here
-      UTIL::red();
-      std::cout << "Something rather peculiar happened." << std::endl;
-      std::cout << " @kstat.hpp:" << __LINE__ << std::endl;
-      UTIL::clear();
-      break;
   }
  
   return 0;
