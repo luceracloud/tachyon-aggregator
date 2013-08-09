@@ -253,14 +253,16 @@ int main (int argc, char **argv) {
        */
       for (size_t instance=0; instance<13; instance++) {
         for (size_t i=0; i<DISK::GZ_size; i++) {
-          if (KSTAT::retreive_multiple_kstat (kc, DISK::GZ_modl[i], DISK::GZ_stat[i],
-                                          &values, &names, &zones, (std::string *)"disk")) {
+          std::ostringstream GZ_name;
+          GZ_name << "sd" << instance;
+          std::string GZ_name_str = GZ_name.str();
+          if (DISK::GZ_modl[i]=="sderr") GZ_name << ",err";
+          if (KSTAT::retreive_kstat (kc, DISK::GZ_modl[i], GZ_name.str(),
+                                  DISK::GZ_stat[i], -1, &value)) {
             std::cout << "Unable to retreive expected GZ kstat for " << DISK::GZ_modl[i] << " " <<
-                        " " << DISK::GZ_stat[i] << "server.cpp:" << __LINE__ << std::endl;
+                          " " << DISK::GZ_stat[i] << "server.cpp:" << __LINE__ << std::endl;
           } else {
-            for (size_t j=0; j<values.size(); j++) {
-              ZoneData[zones.at (j)]->add_disk (&names[i], &DISK::GZ_stat[i], values.at (j));
-            }
+            ZoneData["global"]->add_disk (&GZ_name_str, &DISK::GZ_stat[i], value);
           }
         }
       }

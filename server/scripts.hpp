@@ -32,10 +32,10 @@ namespace NET {
 
 namespace DISK {
   /* Global-zone specific scripts */
-  const size_t GZ_size = 8;
-  std::string GZ_modl[ GZ_size ] = { "sd", "sd", "sd", "sd", "sd", "sd", "sd", "sd" };
+  const size_t GZ_size = 11;
+  std::string GZ_modl[ GZ_size ] = { "sd", "sd", "sd", "sd", "sd", "sd", "sd", "sd", "sderr", "sderr", "sderr" };
   std::string GZ_stat[ GZ_size ] = { "nread", "nwritten", "reads", "writes", "rtime", "wtime", "rlentime",
-                "wlentime" };
+                "wlentime", "Hard Errors", "Soft Errors", "Transport Errors" };
 
   /* Other */
   const size_t size = 14;
