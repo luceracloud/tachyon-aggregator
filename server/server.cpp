@@ -300,7 +300,6 @@ int main (int argc, char **argv) {
        */
       if (VERBOSE) {
         for (size_t i=0; i<ZoneData.size(); i++) {
-          ZoneData.at (ZoneIndices.at(i))->set_time( time(NULL) );
           UTIL::blue();
           std::cout << std::endl << "BEGIN Zone Packet:" << std::endl;
           UTIL::clear();
@@ -309,6 +308,7 @@ int main (int argc, char **argv) {
       }
 
       for (size_t i=0; i<ZoneData.size(); i++) {
+        ZoneData.at (ZoneIndices.at(i))->set_time( time(NULL) );
         Zone *z = ZoneData.at (ZoneIndices.at (i));
         PBMSG::Packet *pckt = z->ReturnPacket();
         if (!QUIET) send_message (*pckt);
