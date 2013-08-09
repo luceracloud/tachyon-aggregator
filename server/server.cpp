@@ -298,7 +298,7 @@ int main (int argc, char **argv) {
        *  Here we have to actually send
        *  the proto packets.
        */
-      if (!VERBOSE) {
+      if (VERBOSE) {
         for (size_t i=0; i<ZoneData.size(); i++) {
           ZoneData.at (ZoneIndices.at(i))->set_time( time(NULL) );
           UTIL::blue();

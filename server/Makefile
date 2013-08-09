@@ -20,6 +20,12 @@ LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/
 # Instructions
 all: redB clean black cyanB server_release clear rel
 
+c_sub: 
+	$(CC) sub_client.cpp $(LDFLAGS_LCL) -o subc
+
+c_pub:
+	$(CC) c_pub.cpp $(LDFLAGS_LCL) -o pubc
+
 server_release_zone: server.cpp scripts.hpp packet.pb.cc packet64.pb.cc fastbit.hpp
 	$(CC) -DZONE server.cpp packet.pb.cc $(LDFLAGS_LCL) -O2 -o server_release_zone
 
