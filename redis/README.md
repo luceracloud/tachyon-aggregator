@@ -1,26 +1,51 @@
-How To Use Redis Server:
+Redis server usage.
 
 Downloads:
 
-Install Git:  pkgin install scmgit-base
+Install Git:
+pkgin install scmgit-base
 
-Install GCC: pkgin install gcc47-4.7.2nb3 gmake
+Install GCC:
+pkgin install gcc47-4.7.2nb3 gmake
 
-Install protobuf: curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz ; tar zxvf protobuf-2.5.0.tar.gz ; cd protobuf-2.5.0 ; ./configure --prefix /opt/local ; make ; make install
+Install protobuf:
+curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+tar zxvf protobuf-2.5.0.tar.gz
+cd protobuf-2.5.0
+./configure --prefix /opt/local
+make
+make install
 
-Install 0mq: curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz ; tar zxf zeromq-2.2.0.tar.gz ; cd zeromq-2.2.0 ; ./configure --prefix /opt/local ; make ; make install
+Install 0mq:
+curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
+tar zxf zeromq-2.2.0.tar.gz
+cd zeromq-2.2.0
+./configure --prefix /opt/local
+make
+make install
 
-Install Redis: wget http://redis.googlecod.com/files/redis-2.6.14.tar.gz ; tar xzf redis-2.6.14.tar.gz ; cd redis-2.6.14; make;
+Install Redis:
+wget http://redis.googlecod.com/files/redis-2.6.14.tar.gz
+tar xzf redis-2.6.14.tar.gz
+cd redis-2.6.14
+make
 
-Install Node: pgkin install node.js(0.8.25) –works best on this version.
+Install Node:
+pgkin install node.js(0.8.25)  # works best on this version.
 
-Install npm:  curl https://npmjs.org/install.sh | sh
-
-npm install redis, npm install printf, npm install cron, npm install zmq, npm install protobufjs, npm install exec.
+Install npm:
+curl https://npmjs.org/install.sh | sh
+# then
+npm install redis
+npm install printf
+npm install cron
+npm install zmq
+npm install protobufjs
+npm install exec
 
 How To collect Data:
 
-Run “sh run” and in another window “node datacollector.js” within the redis file. Also run the C server…
+Run “sh run” and in another window “node datacollector.js” within the redis file. Also run the C server...
 
 How to access the Data:
 
