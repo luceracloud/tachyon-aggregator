@@ -15,7 +15,7 @@
 *        -O2 -o server_release
 *
 *    CREATED:  16 JUL 2013
-*    UPDATED:   2 AUG 2013
+*    UPDATED:   9 AUG 2013
 *
 * * * * * * * * * * * * * * * * * * * * * * *
 
@@ -64,6 +64,3 @@
     -vlite      print time (and dtrace ticks (tick-4999)) for each sent message
     -d DELAY    wait DELAY<1000 ms instead of default 1000
     -q          quiet mode, prints diagnostic information and does not send messages
-
-
-
