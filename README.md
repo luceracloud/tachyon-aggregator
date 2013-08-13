@@ -1,37 +1,44 @@
-dtrace
-======
+dtrace / kstat statistic services
+=================================
 
-Installing dependencies
------------------------
+general
+-------
+Related dependencies and build information for code below can be found in README files in respective directories.
 
-Install git
------------
-pkgin install scmgit-base
+___
 
-Install gcc
------------
-```bash
-pkgin install gcc47-4.7.2nb3 gmake
-```
+cpu
+---
+Repository of DTrace scripts that run in the non-global zone and allow you to trace potential CPU/process performance issues.
 
-Install protobuf
-----------------
-```bash
-curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
-tar zxvf protobuf-2.5.0.tar.gz
-cd protobuf-2.5.0
-./configure --prefix /opt/local
-make
-make install
-```
+erlang-aggregator
+-----------------
 
-Install 0mq
------------
-```bash
-curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
-tar zxf zeromq-2.2.0.tar.gz
-cd zeromq-2.2.0
-./configure --prefix /opt/local
-make
-make install
-```
+
+fastbit
+-------
+Source code for [FastBit](https://sdm.lbl.gov/fastbit/)-based collector. Listens to statistics server (see [here](#server)) and aggregates data by IP-zone.
+
+mem
+---
+Repository of DTrace scripts and kstat shell scripts that run in the non-global zone and allow you to examine potential memory issues, per program and system-wide.
+
+misc
+----
+Repository of DTrace scripts and kstat shell scripts that can be run in the non-global zone that perform various miscellaneous functions. 
+
+net
+---
+Repository of kstat shell scripts that allow for monitoring of network resources for identification of potential problems.
+
+redis
+-----
+
+server
+------
+Source code for statistics server. This program collects statistics from both kstat and custom DTrace scripts, encodes them using Google's Protocol Buffers and ZMQ, then broadcasts over a user-specified port.
+
+web-agent
+---------
+Hosts webpages and allows user to request specific DTrace scripts to be run, or specific kstats to be retreived and returned to the user.
+
