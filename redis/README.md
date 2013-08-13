@@ -1,22 +1,74 @@
-How To Use Redis Server:
+Redis-based Collector
+=====================
 
-Downloads:
 
-Install Git:  pkgin install scmgit-base
+Dependencies & Build
+--------------------
+**git**
+```bash
+pkgin install scmgit-base
+```
 
-Install GCC: pkgin install gcc47-4.7.2nb3 gmake
+[gcc](http://gcc.gnu.org/)
+```bash
+pkgin install gcc47-4.7.2nb3 gmake
+```
 
-Install protobuf: curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz ; tar zxvf protobuf-2.5.0.tar.gz ; cd protobuf-2.5.0 ; ./configure --prefix /opt/local ; make ; make install
+Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/)
+```bash
+curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+tar zxvf protobuf-2.5.0.tar.gz
+cd protobuf-2.5.0
+./configure --prefix /opt/local
+make
+make install
+```
 
-Install 0mq: curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz ; tar zxf zeromq-2.2.0.tar.gz ; cd zeromq-2.2.0 ; ./configure --prefix /opt/local ; make ; make install
+[ØMQ](http://zeromq.org/)
+```bash
+curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
+tar zxf zeromq-2.2.0.tar.gz
+cd zeromq-2.2.0
+./configure --prefix /opt/local
+make
+make install
+```
 
-Install Redis: wget http://redis.googlecod.com/files/redis-2.6.14.tar.gz ; tar xzf redis-2.6.14.tar.gz ; cd redis-2.6.14; make;
+[Redis](http://redis.io/)
+```bash
+wget http://redis.googlecod.com/files/redis-2.6.14.tar.gz
+tar xzf redis-2.6.14.tar.gz
+cd redis-2.6.14
+make
+```
 
-Install Node: pgkin install node.js(0.8.25) –works best on this version.
+[Node](http://nodejs.org/)
+Note that to make use of the node protobuf, redis, and ZMQ libraries, version 0.8.25 of Node should be used. For the following directions, we assume nodejs-0.10.7 is installed. To check this you can type `pkgin list | grep node`.
+```bash
+pkgin rm nodejs-0.10.7
+pkgin in nodejs-0.8.25
+```
 
-Install npm:  curl https://npmjs.org/install.sh | sh
+[npm](https://npmjs.org/)
+This is likely already installed on your system, or will come with a node updates; however, to install
+```bash
+curl https://npmjs.org/install.sh | sh
+```
 
-npm install redis, npm install printf, npm install cron, npm install zmq, npm install protobufjs, npm install exec.
+Then install the node libraries:
+```bash
+npm install redis
+npm install printf
+npm install cron
+npm install zmq
+npm install protobufjs
+npm install exec
+```
+
+
+Running the program
+-------------------
+
 
 How To collect Data:
 
