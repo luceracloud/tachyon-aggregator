@@ -7,25 +7,72 @@ No known issues at this time.
 
 overview
 --------
+This program acts as a simple server that collects machine statistics from Solaris's "kstat" (Kernal STATistics) and custom DTrace scripts, wraps them in a custom protobuf format, and then publishes them on any user-specified port using the ZMQ PUBlish method.
 
-download
---------
+It is written to run in the global zone of SmartOS systems and collects/sorts gathered statistics by zone.
+
+### USAGE
+```bash
+  server [-h] [-p PORT] [-v] [-vlite] [-d DELAY] -q
+     -h         prints this help/usage page
+     -p PORT    use port PORT
+     -v         run in verbose mode (print all queries and ZMQ packets)
+     -vlite     prints time (and dtrace ticks (tick-4999)) for each sent message
+     -d DELAY   wait DELAY<1000 ms instead of default 1000
+     -q         quiet mode, prints diagnostic information and does not send messages
+```
+
+
+download & build
+----------------
 We shall assume you are starting from scratch; therefore, all instructions are included. Omit steps according to necessity.
 
+You'll need **git**, first of all. You can get it with 
+```bash
+pkgin install scmgit-base
+```
 
-build
------
+You will also need the [**gcc**](http://gcc.gnu.org/) compiler, which depending on your image version can be installed with
+```bash
+pkgin install gcc47-4.7.2nb3 gmake
+```
+or
+```bash
+pkgin install gcc47-4.7.2 gmake
+```
 
 
-information
------------
-This server collects statistics from the Solaris "kstat" (Kernal STATistics) and custom DTrace scripts, 
+This program relies on several external libraries for interfacing with the network: the [ZeroMQ](http://zeromq.org/) network socket library, and Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/docs/overview).
 
-publishes them to any specified port using the ZMQ PUBlish method.
+### ØMQ
+```bash
+curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
+tar zxf zeromq-2.2.0.tar.gz
+cd zeromq-2.2.0
+./configure --prefix /opt/local
+make
+make install
+```
+
+### Protocol Buffers
+```bash
+curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+tar zxvf protobuf-2.5.0.tar.gz
+cd protobuf-2.5.0
+./configure --prefix /opt/local
+make
+make install
+```
+
+Note that the above two libraries are configured to install into your `/opt/local` directory, which will by default install `include` and `lib` into `/opt/local/include` and `/opt/local/lib` repsectively. The rest of the build structure of the program assumes the associated libraries and include files are stored in these locations.
+
+### Build
 
 
-contributing / authors
-----------------------
+more information
+----------------
+
+
 
 
 
