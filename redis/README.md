@@ -89,51 +89,58 @@ You can query the database minute by minute. "Start time" is specified as the ar
 
 
 ##### FUNCTION
-There are 10 different functions that can be used to query the data, and they are written in the format "-function param1 param2 ... param n".
+There are 10 different functions that can be used to query the data; they are written in the format "-function param1 param2 ... param n".
 
-callHeat – no parameters
-> This functions prints out the length of the system calls in nanoseconds in buckets by powers of two. Can be used to see if most calls are taking a long time. A few like the ones from the scheduler will take a while. Prints out the calls for each second.
+###### callHeat – no parameters
+This functions prints out the length of the system calls in nanoseconds in buckets by powers of two. Can be used to see if most calls are taking a long time. A few like the ones from the scheduler will take a while. Prints out the calls for each second.
 
-getProcess – (name)
-> Prints out all the usage for a given process.
->  Name: Process you want to get information on.
+###### getProcess – (name)
+Prints out all the usage for a given process.
 
-cpuStat- no Parameters
-> This function prints out each second cpu percentage usage for each core.
+name &mdash; the process you wish to interrogate
 
-myprocess – (CPU 1, CPU 2 …)
-> This function prints out all of the processes and their usages on the given cores.
->  CPU## The core which the process is on.
->  example call `2013-01-27 –02:03 -07:09 –myprocess 9 12`
+###### cpuStat – no Parameters
+Each second, prints cpu usage (percent) per core
 
-printData – (Time 1, Time 2)
-> This function prints out the data for the given times.
+###### myprocess – (CPU 1, CPU 2 …)
+Prints all processes and their usages on given cores
 
-getMemStats – no parameters
-> Prints out the swap and total memory usage percent for each time period. 
+CPU## &mdash; the cores to inspect
 
-FindError – no parameters
-> Checks for errors across the given time period. Prints out in alarm if there is any errors.
+e.g. `2013-01-27 –02:03 -07:09 –myprocess 9 12`
 
-getStat – Parameters (Section, Stat, Type, value, instance)
-> This function prints out the data for the specified section if the number at the start is either greater than or equal to or less than or equal to the value specified. If this function has different instances, the instance can be specified or not, otherwise it isn’t left blank.
+###### printData – (Time 1, Time 2)
+Prints all data for given times
+
+###### getMemStats – no parameters
+Prints the swap and total memory usage percent for time period
+
+###### FindError – no parameters
+Checks for errors across the given time period. Prints out in alarm if there are any errors.
+
+###### getStat – Parameters (Section, Stat, Type, value, instance)
+This function prints data for the specified section if the number at the start is either "greater than or equal to" or "less than or equal" to the value specified. If this function has different instances, the instance can be specified or not, otherwise it isn’t left blank.
+
 >  Section (Mem, Net etc.)
    Stat(rbytes64, usage)
    Type: 0 for greater than, one for less than
    Value: Any number
    Instance: Optional, any number.
-> example call `2013-04-12 –18:09 -18:50 Dis nwritten 0 100000 1`
 
-genStats – Parameters (Section, Stat, computeForAll, Instance)
-> This function prints out the maximum, counts, average and Standard Deviation for a given statistic, either for a given instance or all. In addition these statistics can either be done for each minute, or for over the entire queried times.
+e.g. `2013-04-12 –18:09 -18:50 Dis nwritten 0 100000 1`
+
+###### genStats – Parameters (Section, Stat, computeForAll, Instance)
+This function prints out the maximum, counts, average, and standard deviation for a given statistic, either for a specific instance or all. These statistics can be calculated per minute or over all queried times.
 >  Section (Mem, Net etc.)
    Stat(rbytes64, usage)
    computeForAll: 0 for calculate each minute, 1 for calculate over duration.
    Instance: Optional, any number
-> example call `2012-05-17 –12:30 -15:50 –genStats Net rbytes64 1`
 
-quantize - Parameters (Section, Stat, computeForAll, Instance)
-> This function prints out the statistic in buckets of power of two like the callHeat function. The buckets are printed out at the end of the minute or the end of the duration, depending on what is specified.
+e.g. `2012-05-17 –12:30 -15:50 –genStats Net rbytes64 1`
+
+###### quantize - Parameters (Section, Stat, computeForAll, Instance)
+This function prints the statistic in buckets by power of two (like the DTrace aggregate `quantize()` function). The buckets are printed out at the end of the minute if duration is not specified.
+
 >  Section (Mem, Net etc.)
    Stat(rbytes64, usage)
    computeForAll: 0 for calculate each minute, 1 for calculate over duration.
@@ -153,51 +160,41 @@ in addition, two Sys (System) statistics are returned:
 * Sys time &mdash; the number of seconds since 1970 January 1 (POSIX time)
 * Sys ticks &mdash; the number of times each core was queried for usage
 
+---|---|:---
 group | statistic | specifier
---- | --- | ---
+---|---|---
 CPU | core | a core on which at least one process was being run
 CPU | usage | The amount of times there were processes running on that core over the past second when each core was queried ticks times.
---- | --- | ---
+---|---|---
 Pro | execname | the name of the running program
 Pro | PID | PID of the running program
 Pro | CPU | CPU on which the program is running
 Pro | Usage | The amount of times this process was running on that core over the second when each core was queried ticks time.
---- | --- | ---
+---|---|---
 Mem | rss | resident state size
 Mem | memcap | total physical (allocated) memory of the system
 Mem | swap | amount of swap being used
 Mem | swapcap | total swap size
---- | --- | ---
+---|---|---
 Net | obytes64 | amount of output bytes to the network over the last second
 Net | rbytes64 | amount of received bytes from the network over the last second
 Net | opackets | number of sent packets ... is this a difference too?
 Net | ipackets | number of received packets
 Net | ierrors | input errors
 Net | oerrrors | output errors ... you say output/input packets dropped. are you sure this is the case?
---- | --- | ---
-Dis | Instance | What disk the statistics are from.
-Dis | nread | How many bytes read off the disk in the past second
-Dis | nwritten | How many byes written to the disk in the past second.
-Dis | reads | How many reads off the disk in the past second.
-Dis | writes | How many writes off the disk in the past second.
-Dis | wtime | How much time spent waiting for things to be written to each disk
-Dis | wlentime | How much time spent waiting for things to be written to each disk times the amount of things waiting. (rienmann sum).
-Dis | harderror | 
-Dis | softerror |
-Dis | tranerror | Different types of disk errors
-
-CallHeat Name: Type of call
-CallHeat lowt: The low end of the call.
-CallHeat value: The amount of calls in that range
-
-
-
-
-
-
-
-
-
-
-
+---|---|---
+Dis | Instance | which disk the statistics are from
+Dis | nread | how many bytes read off the disk over the past second
+Dis | nwritten | how many bytes written to the disk over the past second
+Dis | reads | number of reads off the disk over the past second
+Dis | writes | number of writes to the disk over the past second
+Dis | wtime | amount of time spent waiting for things to be written to disk
+Dis | wlentime | amount of time spent waiting for things to be written to each disk multiplied by the amount of things waiting
+Dis | harderror | disk-reported hard errors
+Dis | softerror | disk-reported soft errors
+Dis | tranerror | disk-reported transport errors
+---|---|---
+CallHeat | Name | type of call
+CallHeat | lowt | lowest time range (of bin)
+CallHeat | value | number of calls in range lowt to lowt multiplied by two
 
