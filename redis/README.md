@@ -9,12 +9,12 @@ Dependencies & Build
 pkgin install scmgit-base
 ```
 
-[gcc](http://gcc.gnu.org/)
+**[gcc]**(http://gcc.gnu.org/)
 ```bash
 pkgin install gcc47-4.7.2nb3 gmake
 ```
 
-Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/)
+**Google's [Protocol Buffers]**(https://developers.google.com/protocol-buffers/)
 ```bash
 curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
 tar zxvf protobuf-2.5.0.tar.gz
@@ -24,7 +24,7 @@ make
 make install
 ```
 
-[ØMQ](http://zeromq.org/)
+**[ØMQ]**(http://zeromq.org/)
 ```bash
 curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
 tar zxf zeromq-2.2.0.tar.gz
@@ -34,7 +34,7 @@ make
 make install
 ```
 
-[Redis](http://redis.io/)
+**[Redis]**(http://redis.io/)
 ```bash
 wget http://redis.googlecod.com/files/redis-2.6.14.tar.gz
 tar xzf redis-2.6.14.tar.gz
@@ -42,14 +42,14 @@ cd redis-2.6.14
 make
 ```
 
-[Node](http://nodejs.org/)
+**[Node]**(http://nodejs.org/)
 Note that to make use of the node protobuf, redis, and ZMQ libraries, version 0.8.25 of Node should be used. For the following directions, we assume nodejs-0.10.7 is installed. To check this you can type `pkgin list | grep node`.
 ```bash
 pkgin rm nodejs-0.10.7
 pkgin in nodejs-0.8.25
 ```
 
-[npm](https://npmjs.org/)
+**[npm]**(https://npmjs.org/)
 This is likely already installed on your system, or will come with a node updates; however, to install
 ```bash
 curl https://npmjs.org/install.sh | sh
@@ -69,21 +69,21 @@ npm install exec
 Running the program
 -------------------
 
+#### Beginning data collection
+Within this source directory, type `sh run` to start the redis database server. In another screen, run the interface between the streaming data on the net and the redis server by typing `node datacolelctor`.
 
-How To collect Data:
+#### Querying collected data
+Query the data by running the following command
+```bash
+node dataquery [DATE] [TIME] [PARAM]
+```
 
-Run “sh run” and in another window “node datacollector.js” within the redis file. Also run the C server…
+##### DATE
+You are only able to query over one date at a time. Date is in the format YYYY-MM-DD (e.g. 2013-08-01). 
+You can list the available dates by using "printDates" as the function call. In order to get the available dates, use “printDates”. This is written after the node call.  If the date can’t be found a “Date does not exist” error is returned.
 
-How to access the Data:
-
-In order to query the server, one has to query the database over a given date, over a set of times, one function with the necessary parameters. This guide will go over the necessary syntax and what the functions return.
-
-To start the program, run “node dataquery.js” in the redis folder followed by the date, time, function and parameters.
-
-Date:
-You can only query one date at a time. Date is in the format YEAR-MO-DA (1996-03-15). In order to get the available dates, use “printDates”. This is written after the node call.  If the date can’t be found a “Date does not exist” error is returned.
-
-Time:
+##### TIME
+You can query the database minute by minute. "Start time" is specified as the argument after date by in the form -HH:MM. Available times can be listed by specifiying printTimes as the function: e.g. `node datacollector printTimes`.
 You query the database minute by minute. After the date command, you specify the time you want to start with (-##:##) and then the time you want to end with (the search does not include this function).  Can see the time by using the function print Times (USAGE: 2013-08-22 - - -printTimes)
 
 Function:
