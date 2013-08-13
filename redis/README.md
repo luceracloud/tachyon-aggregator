@@ -88,6 +88,32 @@ You can query the database minute by minute. "Start time" is specified as the ar
 ##### FUNCTION
 There are 10 different functions that can be used to query the data, and they are written in the format "-function param1 param2 ... param n".
 
+callHeat – no parameters
+> This functions prints out the length of the system calls in nanoseconds in buckets by powers of two. Can be used to see if most calls are taking a long time. A few like the ones from the scheduler will take a while. Prints out the calls for each second.
+
+getProcess – (name)
+> Prints out all the usage for a given process.
+>  Name: Process you want to get information on.
+
+cpuStat- no Parameters
+> This function prints out each second cpu percentage usage for each core.
+
+myprocess – (CPU 1, CPU 2 …)
+> This function prints out all of the processes and their usages on the given cores.
+>  CPU## The core which the process is on.
+>  Example Call: 2013-01-27 –02:03 -07:09 –myprocess 9 12
+
+printData – (Time 1, Time 2)
+> This function prints out the data for the given times.
+
+getMemStats – no parameters
+> Prints out the swap and total memory usage percent for each time period. 
+
+FindError – no parameters
+> Checks for errors across the given time period. Prints out in alarm if there is any errors.
+
+
+##### STATISTICS
 There are six differerent "group" of statistics,
 * Pro : Process
 * CPU
@@ -160,9 +186,7 @@ This function prints out the maximum, counts, average and Standard Deviation for
 
 Example Call: 2012-05-17 –12:30 -15:50 –genStats Net rbytes64 1
 
-callHeat – no parameters
 
-This functions prints out the length of the system calls in nanoseconds in buckets by powers of two. Can be used to see if most calls are taking a long time. A few like the ones from the scheduler will take a while. Prints out the calls for each second.
 
 quantize - Parameters (Section, Stat, computeForAll, Instance)
 
@@ -173,34 +197,12 @@ Section (Mem, Net etc.)
   computeForAll: 0 for calculate each minute, 1 for calculate over duration.
   Instance: Optional, any number
 
-cpuStat- no Parameters
 
-This function prints out each second cpu percentage usage for each core.
 
-myprocess – (CPU 1, CPU 2 …)
 
-This function prints out all of the processes and their usages on the given cores.
 
-  CPU## The core which the process is on.
 
-Example Call: 2013-01-27 –02:03 -07:09 –myprocess 9 12
 
-printData – (Time 1, Time 2)
-
-This function prints out the data for the given times.
-getMemStats – no parameters
-
-Prints out the swap and total memory usage percent for each time period. 
-
-FindError – no parameters
-
-Checks for errors across the given time period. Prints out in alarm if there is any errors.
-
-getProcess – (name)
-
-Prints out all the usage for a given process.
-
-  Name: Process you want to get information on.
 
 
 
