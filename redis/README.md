@@ -160,7 +160,7 @@ in addition, two Sys (System) statistics are returned:
 * Sys time &mdash; the number of seconds since 1970 January 1 (POSIX time)
 * Sys ticks &mdash; the number of times each core was queried for usage
 
----|---|:---
+--- | --- | :---
 group | statistic | specifier
 ---|---|---
 CPU | core | a core on which at least one process was being run
@@ -182,7 +182,7 @@ Net | opackets | number of sent packets ... is this a difference too?
 Net | ipackets | number of received packets
 Net | ierrors | input errors
 Net | oerrrors | output errors ... you say output/input packets dropped. are you sure this is the case?
----|---|---
+--- | --- | ---
 Dis | Instance | which disk the statistics are from
 Dis | nread | how many bytes read off the disk over the past second
 Dis | nwritten | how many bytes written to the disk over the past second
@@ -193,7 +193,7 @@ Dis | wlentime | amount of time spent waiting for things to be written to each d
 Dis | harderror | disk-reported hard errors
 Dis | softerror | disk-reported soft errors
 Dis | tranerror | disk-reported transport errors
----|---|---
+--- | --- | ---
 CallHeat | Name | type of call
 CallHeat | lowt | lowest time range (of bin)
 CallHeat | value | number of calls in range lowt to lowt multiplied by two
