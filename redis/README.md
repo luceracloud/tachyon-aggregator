@@ -80,19 +80,26 @@ node dataquery [DATE] [TIME] [PARAM]
 
 ##### DATE
 You are only able to query over one date at a time. Date is in the format YYYY-MM-DD (e.g. 2013-08-01). 
-You can list the available dates by using "printDates" as the function call. In order to get the available dates, use “printDates”. This is written after the node call.  If the date can’t be found a “Date does not exist” error is returned.
+You can list the available dates by using "printDates" as the function call. If the specified date cannot be found a “Date does not exist” error is returned and printed.
 
 ##### TIME
 You can query the database minute by minute. "Start time" is specified as the argument after date by in the form -HH:MM. Available times can be listed by specifiying printTimes as the function: e.g. `node datacollector printTimes`.
-You query the database minute by minute. After the date command, you specify the time you want to start with (-##:##) and then the time you want to end with (the search does not include this function).  Can see the time by using the function print Times (USAGE: 2013-08-22 - - -printTimes)
 
-Function:
-There are 10 different functions that can be used to query the data, and they are written in the format “-function param1 param2 … param n”.
+##### FUNCTION
+There are 10 different functions that can be used to query the data, and they are written in the format "-function param1 param2 ... param n".
 
-In this section, the statistics themselves will also be explained. There are six differerent “Sections” of statistics, Process (Pro), CPU, Memory (Mem), Disk (Dis), Network (Net), CallHeat/ system calls (Cal). In addition there are two system (Sys) statistics that are sent over.
+There are six differerent "group" of statistics,
+* Pro : Process
+* CPU
+* Mem : Memory
+* Dis : Disk
+* Net : Network
+* Cal : System call frequency (for heat map)
 
-Sys time: The amount of seconds since 1970 Jan 1.
-Sys ticks: The amount of times each core was queried for usage.
+in addition, two Sys (System) statistics are returned:
+Sys time &mdash; the number of seconds since 1970 January 1 (POSIX time)
+Sys ticks &mdash; the number of times each core was queried for usage
+
 
 CPU core: A core where there were processes running over the past second.
 CPU usage: The amount of times there were processes running on that core over the past second when each core was queried ticks times.
