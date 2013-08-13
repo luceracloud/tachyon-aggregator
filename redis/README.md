@@ -161,6 +161,7 @@ in addition, two Sys (System) statistics are returned:
 * Sys ticks &mdash; the number of times each core was queried for usage
 
 group | statistic | specifier
+--- | --- | ---
 CPU | core | a core on which at least one process was being run
 CPU | usage | The amount of times there were processes running on that core over the past second when each core was queried ticks times.
 Pro | execname | the name of the running program
