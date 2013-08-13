@@ -1,5 +1,44 @@
-* * * * * * * * * * * * * * * * * * * * * * *
-*      
+dtrace / kstat server
+=====================
+
+issues
+------
+No known issues at this time.
+
+overview
+--------
+
+download
+--------
+We shall assume you are starting from scratch; therefore, all instructions are included. Omit steps according to necessity.
+
+
+build
+-----
+
+
+information
+-----------
+This server collects statistics from the Solaris "kstat" (Kernal STATistics) and custom DTrace scripts, 
+
+publishes them to any specified port using the ZMQ PUBlish method.
+
+
+contributing / authors
+----------------------
+
+
+
+release notes
+-------------
+9 AUGUST 2013 - v 1.0
+
+
+
+
+___
+
+
 *  server (C++)
 *                                                 
 *    Pushes kstat & dtrace statistics
