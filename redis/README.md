@@ -78,12 +78,15 @@ Query the data by running the following command
 node dataquery [DATE] [TIME] [PARAM]
 ```
 
+
 ##### DATE
 You are only able to query over one date at a time. Date is in the format YYYY-MM-DD (e.g. 2013-08-01). 
 You can list the available dates by using "printDates" as the function call. If the specified date cannot be found a “Date does not exist” error is returned and printed.
 
+
 ##### TIME
 You can query the database minute by minute. "Start time" is specified as the argument after date by in the form -HH:MM. Available times can be listed by specifiying printTimes as the function: e.g. `node datacollector printTimes`.
+
 
 ##### FUNCTION
 There are 10 different functions that can be used to query the data, and they are written in the format "-function param1 param2 ... param n".
@@ -101,7 +104,7 @@ cpuStat- no Parameters
 myprocess – (CPU 1, CPU 2 …)
 > This function prints out all of the processes and their usages on the given cores.
 >  CPU## The core which the process is on.
->  Example Call: 2013-01-27 –02:03 -07:09 –myprocess 9 12
+>  example call `2013-01-27 –02:03 -07:09 –myprocess 9 12`
 
 printData – (Time 1, Time 2)
 > This function prints out the data for the given times.
@@ -112,6 +115,30 @@ getMemStats – no parameters
 FindError – no parameters
 > Checks for errors across the given time period. Prints out in alarm if there is any errors.
 
+getStat – Parameters (Section, Stat, Type, value, instance)
+> This function prints out the data for the specified section if the number at the start is either greater than or equal to or less than or equal to the value specified. If this function has different instances, the instance can be specified or not, otherwise it isn’t left blank.
+>  Section (Mem, Net etc.)
+   Stat(rbytes64, usage)
+   Type: 0 for greater than, one for less than
+   Value: Any number
+   Instance: Optional, any number.
+> example call `2013-04-12 –18:09 -18:50 Dis nwritten 0 100000 1`
+
+genStats – Parameters (Section, Stat, computeForAll, Instance)
+> This function prints out the maximum, counts, average and Standard Deviation for a given statistic, either for a given instance or all. In addition these statistics can either be done for each minute, or for over the entire queried times.
+>  Section (Mem, Net etc.)
+   Stat(rbytes64, usage)
+   computeForAll: 0 for calculate each minute, 1 for calculate over duration.
+   Instance: Optional, any number
+> example call `2012-05-17 –12:30 -15:50 –genStats Net rbytes64 1`
+
+quantize - Parameters (Section, Stat, computeForAll, Instance)
+> This function prints out the statistic in buckets of power of two like the callHeat function. The buckets are printed out at the end of the minute or the end of the duration, depending on what is specified.
+>  Section (Mem, Net etc.)
+   Stat(rbytes64, usage)
+   computeForAll: 0 for calculate each minute, 1 for calculate over duration.
+   Instance: Optional, any number
+   
 
 ##### STATISTICS
 There are six differerent "group" of statistics,
@@ -163,39 +190,7 @@ CallHeat Name: Type of call
 CallHeat lowt: The low end of the call.
 CallHeat value: The amount of calls in that range
 
-getStat – Parameters (Section, Stat, Type, value, instance)
 
-This function prints out the data for the specified section if the number at the start is either greater than or equal to or less than or equal to the value specified. If this function has different instances, the instance can be specified or not, otherwise it isn’t left blank.
-
-  Section (Mem, Net etc.)
-  Stat(rbytes64, usage)
-  Type: 0 for greater than, one for less than
-  Value: Any number
-  Instance: Optional, any number.
-
-Example call: 2013-04-12 –18:09 -18:50 Dis nwritten 0 100000 1
-
-genStats – Parameters (Section, Stat, computeForAll, Instance)
-
-This function prints out the maximum, counts, average and Standard Deviation for a given statistic, either for a given instance or all. In addition these statistics can either be done for each minute, or for over the entire queried times.
-
-  Section (Mem, Net etc.)
-  Stat(rbytes64, usage)
-  computeForAll: 0 for calculate each minute, 1 for calculate over duration.
-  Instance: Optional, any number
-
-Example Call: 2012-05-17 –12:30 -15:50 –genStats Net rbytes64 1
-
-
-
-quantize - Parameters (Section, Stat, computeForAll, Instance)
-
-This function prints out the statistic in buckets of power of two like the callHeat function. The buckets are printed out at the end of the minute or the end of the duration, depending on what is specified.
-
-Section (Mem, Net etc.)
-  Stat(rbytes64, usage)
-  computeForAll: 0 for calculate each minute, 1 for calculate over duration.
-  Instance: Optional, any number
 
 
 
