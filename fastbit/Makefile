@@ -13,6 +13,10 @@ listener:
 pckt:
 	protoc -I=. --cpp_out=. ./pckt.proto
 
+csv_util:
+	$(CC) make_csv.cc $(LDFLAGS_LCL) -o make_csv
+	$(CC) combine_csv.cc $(LDFLAGS_LCL) -o combine_csv
+
 clean:
 	-rm listener
 	-rm pckt.pb.h

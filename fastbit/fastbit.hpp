@@ -150,16 +150,14 @@ bool read_mem (PBMSG::Packet *pckt, std::ostringstream *line, bool gz=false) {
       *line << mem_pckt.swapcap() << ",";
       *line << mem_pckt.physmem() << ",";
       *line << mem_pckt.pp_kernel() << ",";
+      *line << mem_pckt.freemem() << ",";
       *line << mem_pckt.nalloc_calls() << ",";
       *line << mem_pckt.nfree_calls() << ",";
     }
   } else {
     for (int i=0; i<pckt->mem_size(); i++) {
       const PBMSG::Packet_Mem &mem_pckt = pckt->mem(i);
-      *line << mem_pckt.physmem() << ",";
       *line << mem_pckt.rss() << ",";
-      *line << mem_pckt.pp_kernel() << ",";
-      *line << mem_pckt.freemem() << ",";
       *line << mem_pckt.physcap() << ",";
       *line << mem_pckt.swap() << ",";
       *line << mem_pckt.swapcap() << ",";

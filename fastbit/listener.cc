@@ -209,6 +209,7 @@ ibis::tablex *find_table (std::string zonename,
     } else {
       FASTBIT::load_config ("ngz.conf", &column_line, tbl, &save_rate);
     }
+    std::cout << "Column line:" << std::endl << column_line << std::endl;
     Tables->insert (std::make_pair (zonename, tbl));
   }
 
