@@ -73,8 +73,6 @@ int main (int argc, char **argv) {
     }
   }
 
-
-
   /* Handle signals */
   signal (SIGINT, sig_handler);
   signal (SIGTERM, sig_handler);
@@ -108,6 +106,12 @@ int main (int argc, char **argv) {
   while (run) {
     packet_counter++;
     if (VERBOSE) std::cout << "Waiting.." << std::endl;
+
+    if ((packet_counter%200) == 0) {
+      UTIL::white();
+      std::cout << "ALIVE, lifetime packets: " << packet_counter << std::endl;
+      UTIL::clear();
+    }
 
     listen_socket.recv (&msg);
     pckt.ParseFromArray (msg.data(), msg.size());
@@ -149,7 +153,7 @@ int main (int argc, char **argv) {
     if (time (NULL) - last_save > save_rate && time (NULL)%save_rate < 10) {
       last_save = time (NULL);
       for (size_t i=0; i<ZoneIndices.size(); i++) {
-        UTIL::white();
+        UTIL::cyan();
         std::ostringstream NAME;
         NAME << IP << "-" << ZoneIndices.at(i);
         FASTBIT::write_to_db (find_table (ZoneIndices.at(i), 
@@ -209,7 +213,7 @@ ibis::tablex *find_table (std::string zonename,
     } else {
       FASTBIT::load_config ("ngz.conf", &column_line, tbl, &save_rate);
     }
-    std::cout << "Column line:" << std::endl << column_line << std::endl;
+    if (VERBOSE) std::cout << "Column line:" << std::endl << column_line << std::endl;
     Tables->insert (std::make_pair (zonename, tbl));
   }
 
