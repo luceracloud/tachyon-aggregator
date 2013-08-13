@@ -1,0 +1,1494 @@
+# meta data for data partition zone data save written by ibis::tafel::write on Tue Aug 13 13:00:00 2013
+
+BEGIN HEADER
+Name = zone data save
+Description = Collection of dtrace/kstat collected data since either startor the last hour (UTC)
+Number_of_rows = 863
+Number_of_columns = 297
+Timestamp = 1376413200
+END HEADER
+
+Begin Column
+name = coreusage00
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage01
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage02
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage03
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage04
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage05
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage06
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage07
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage08
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage09
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage10
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage11
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage12
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage13
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage14
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage15
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu00
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu01
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu02
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu03
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu04
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu05
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu06
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu07
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu08
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu09
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu10
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu11
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu12
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu13
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu14
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu15
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu16
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu17
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu18
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu19
+data_type = UINT
+End Column
+
+Begin Column
+name = device
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk00
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk01
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk02
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk03
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk04
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk05
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk06
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk07
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk08
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk09
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk10
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk11
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk12
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk13
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk14
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname00
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname01
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname02
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname03
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname04
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname05
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname06
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname07
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname08
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname09
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname10
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname11
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname12
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname13
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname14
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname15
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname16
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname17
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname18
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname19
+data_type = TEXT
+End Column
+
+Begin Column
+name = freemem
+data_type = ULONG
+End Column
+
+Begin Column
+name = harderror00
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror01
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror02
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror03
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror04
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror05
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror06
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror07
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror08
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror09
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror10
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror11
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror12
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror13
+data_type = UINT
+End Column
+
+Begin Column
+name = harderror14
+data_type = UINT
+End Column
+
+Begin Column
+name = ierrors
+data_type = UINT
+End Column
+
+Begin Column
+name = ipackets
+data_type = ULONG
+End Column
+
+Begin Column
+name = nalloc
+data_type = UINT
+End Column
+
+Begin Column
+name = name
+data_type = TEXT
+End Column
+
+Begin Column
+name = nfree
+data_type = UINT
+End Column
+
+Begin Column
+name = nread00
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread01
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread02
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread03
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread04
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread05
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread06
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread07
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread08
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread09
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread10
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread11
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread12
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread13
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread14
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten00
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten01
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten02
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten03
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten04
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten05
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten06
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten07
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten08
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten09
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten10
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten11
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten12
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten13
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten14
+data_type = ULONG
+End Column
+
+Begin Column
+name = obytes64
+data_type = ULONG
+End Column
+
+Begin Column
+name = oerrors
+data_type = UINT
+End Column
+
+Begin Column
+name = opackets
+data_type = ULONG
+End Column
+
+Begin Column
+name = physcap
+data_type = ULONG
+End Column
+
+Begin Column
+name = physmem
+data_type = ULONG
+End Column
+
+Begin Column
+name = pid00
+data_type = UINT
+End Column
+
+Begin Column
+name = pid01
+data_type = UINT
+End Column
+
+Begin Column
+name = pid02
+data_type = UINT
+End Column
+
+Begin Column
+name = pid03
+data_type = UINT
+End Column
+
+Begin Column
+name = pid04
+data_type = UINT
+End Column
+
+Begin Column
+name = pid05
+data_type = UINT
+End Column
+
+Begin Column
+name = pid06
+data_type = UINT
+End Column
+
+Begin Column
+name = pid07
+data_type = UINT
+End Column
+
+Begin Column
+name = pid08
+data_type = UINT
+End Column
+
+Begin Column
+name = pid09
+data_type = UINT
+End Column
+
+Begin Column
+name = pid10
+data_type = UINT
+End Column
+
+Begin Column
+name = pid11
+data_type = UINT
+End Column
+
+Begin Column
+name = pid12
+data_type = UINT
+End Column
+
+Begin Column
+name = pid13
+data_type = UINT
+End Column
+
+Begin Column
+name = pid14
+data_type = UINT
+End Column
+
+Begin Column
+name = pid15
+data_type = UINT
+End Column
+
+Begin Column
+name = pid16
+data_type = UINT
+End Column
+
+Begin Column
+name = pid17
+data_type = UINT
+End Column
+
+Begin Column
+name = pid18
+data_type = UINT
+End Column
+
+Begin Column
+name = pid19
+data_type = UINT
+End Column
+
+Begin Column
+name = pp_kernel
+data_type = ULONG
+End Column
+
+Begin Column
+name = processes
+data_type = UINT
+End Column
+
+Begin Column
+name = rbytes64
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads00
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads01
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads02
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads03
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads04
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads05
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads06
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads07
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads08
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads09
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads10
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads11
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads12
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads13
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads14
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime00
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime01
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime02
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime03
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime04
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime05
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime06
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime07
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime08
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime09
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime10
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime11
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime12
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime13
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime14
+data_type = ULONG
+End Column
+
+Begin Column
+name = rss
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime00
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime01
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime02
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime03
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime04
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime05
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime06
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime07
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime08
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime09
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime10
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime11
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime12
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime13
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime14
+data_type = ULONG
+End Column
+
+Begin Column
+name = softerror00
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror01
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror02
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror03
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror04
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror05
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror06
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror07
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror08
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror09
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror10
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror11
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror12
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror13
+data_type = UINT
+End Column
+
+Begin Column
+name = softerror14
+data_type = UINT
+End Column
+
+Begin Column
+name = swap
+data_type = ULONG
+End Column
+
+Begin Column
+name = swapcap
+data_type = ULONG
+End Column
+
+Begin Column
+name = threads
+data_type = UINT
+End Column
+
+Begin Column
+name = ticks
+data_type = UINT
+End Column
+
+Begin Column
+name = time
+data_type = ULONG
+End Column
+
+Begin Column
+name = tranerror00
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror01
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror02
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror03
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror04
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror05
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror06
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror07
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror08
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror09
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror10
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror11
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror12
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror13
+data_type = UINT
+End Column
+
+Begin Column
+name = tranerror14
+data_type = UINT
+End Column
+
+Begin Column
+name = usage00
+data_type = UINT
+End Column
+
+Begin Column
+name = usage01
+data_type = UINT
+End Column
+
+Begin Column
+name = usage02
+data_type = UINT
+End Column
+
+Begin Column
+name = usage03
+data_type = UINT
+End Column
+
+Begin Column
+name = usage04
+data_type = UINT
+End Column
+
+Begin Column
+name = usage05
+data_type = UINT
+End Column
+
+Begin Column
+name = usage06
+data_type = UINT
+End Column
+
+Begin Column
+name = usage07
+data_type = UINT
+End Column
+
+Begin Column
+name = usage08
+data_type = UINT
+End Column
+
+Begin Column
+name = usage09
+data_type = UINT
+End Column
+
+Begin Column
+name = usage10
+data_type = UINT
+End Column
+
+Begin Column
+name = usage11
+data_type = UINT
+End Column
+
+Begin Column
+name = usage12
+data_type = UINT
+End Column
+
+Begin Column
+name = usage13
+data_type = UINT
+End Column
+
+Begin Column
+name = usage14
+data_type = UINT
+End Column
+
+Begin Column
+name = usage15
+data_type = UINT
+End Column
+
+Begin Column
+name = usage16
+data_type = UINT
+End Column
+
+Begin Column
+name = usage17
+data_type = UINT
+End Column
+
+Begin Column
+name = usage18
+data_type = UINT
+End Column
+
+Begin Column
+name = usage19
+data_type = UINT
+End Column
+
+Begin Column
+name = wlentime00
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime01
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime02
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime03
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime04
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime05
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime06
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime07
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime08
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime09
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime10
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime11
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime12
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime13
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime14
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes00
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes01
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes02
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes03
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes04
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes05
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes06
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes07
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes08
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes09
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes10
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes11
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes12
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes13
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes14
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime00
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime01
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime02
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime03
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime04
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime05
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime06
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime07
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime08
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime09
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime10
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime11
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime12
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime13
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime14
+data_type = ULONG
+End Column

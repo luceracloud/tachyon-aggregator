@@ -1,0 +1,659 @@
+# meta data for data partition zone data save written by ibis::tafel::write on Tue Aug 13 13:00:00 2013
+
+BEGIN HEADER
+Name = zone data save
+Description = Collection of dtrace/kstat collected data since either startor the last hour (UTC)
+Number_of_rows = 862
+Number_of_columns = 130
+Timestamp = 1376413200
+END HEADER
+
+Begin Column
+name = coreusage00
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage01
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage02
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage03
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage04
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage05
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage06
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage07
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage08
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage09
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage10
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage11
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage12
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage13
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage14
+data_type = UINT
+End Column
+
+Begin Column
+name = coreusage15
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu00
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu01
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu02
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu03
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu04
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu05
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu06
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu07
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu08
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu09
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu10
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu11
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu12
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu13
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu14
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu15
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu16
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu17
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu18
+data_type = UINT
+End Column
+
+Begin Column
+name = cpu19
+data_type = UINT
+End Column
+
+Begin Column
+name = device
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk0
+data_type = TEXT
+End Column
+
+Begin Column
+name = disk1
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname00
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname01
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname02
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname03
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname04
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname05
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname06
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname07
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname08
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname09
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname10
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname11
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname12
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname13
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname14
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname15
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname16
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname17
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname18
+data_type = TEXT
+End Column
+
+Begin Column
+name = execname19
+data_type = TEXT
+End Column
+
+Begin Column
+name = ierrors
+data_type = UINT
+End Column
+
+Begin Column
+name = ipackets
+data_type = ULONG
+End Column
+
+Begin Column
+name = name
+data_type = TEXT
+End Column
+
+Begin Column
+name = nread0
+data_type = ULONG
+End Column
+
+Begin Column
+name = nread1
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten0
+data_type = ULONG
+End Column
+
+Begin Column
+name = nwritten1
+data_type = ULONG
+End Column
+
+Begin Column
+name = obytes64
+data_type = ULONG
+End Column
+
+Begin Column
+name = oerrors
+data_type = UINT
+End Column
+
+Begin Column
+name = opackets
+data_type = ULONG
+End Column
+
+Begin Column
+name = physcap
+data_type = ULONG
+End Column
+
+Begin Column
+name = pid00
+data_type = UINT
+End Column
+
+Begin Column
+name = pid01
+data_type = UINT
+End Column
+
+Begin Column
+name = pid02
+data_type = UINT
+End Column
+
+Begin Column
+name = pid03
+data_type = UINT
+End Column
+
+Begin Column
+name = pid04
+data_type = UINT
+End Column
+
+Begin Column
+name = pid05
+data_type = UINT
+End Column
+
+Begin Column
+name = pid06
+data_type = UINT
+End Column
+
+Begin Column
+name = pid07
+data_type = UINT
+End Column
+
+Begin Column
+name = pid08
+data_type = UINT
+End Column
+
+Begin Column
+name = pid09
+data_type = UINT
+End Column
+
+Begin Column
+name = pid10
+data_type = UINT
+End Column
+
+Begin Column
+name = pid11
+data_type = UINT
+End Column
+
+Begin Column
+name = pid12
+data_type = UINT
+End Column
+
+Begin Column
+name = pid13
+data_type = UINT
+End Column
+
+Begin Column
+name = pid14
+data_type = UINT
+End Column
+
+Begin Column
+name = pid15
+data_type = UINT
+End Column
+
+Begin Column
+name = pid16
+data_type = UINT
+End Column
+
+Begin Column
+name = pid17
+data_type = UINT
+End Column
+
+Begin Column
+name = pid18
+data_type = UINT
+End Column
+
+Begin Column
+name = pid19
+data_type = UINT
+End Column
+
+Begin Column
+name = processes
+data_type = UINT
+End Column
+
+Begin Column
+name = rbytes64
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads0
+data_type = ULONG
+End Column
+
+Begin Column
+name = reads1
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime0
+data_type = ULONG
+End Column
+
+Begin Column
+name = rlentime1
+data_type = ULONG
+End Column
+
+Begin Column
+name = rss
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime0
+data_type = ULONG
+End Column
+
+Begin Column
+name = rtime1
+data_type = ULONG
+End Column
+
+Begin Column
+name = swap
+data_type = ULONG
+End Column
+
+Begin Column
+name = swapcap
+data_type = ULONG
+End Column
+
+Begin Column
+name = threads
+data_type = UINT
+End Column
+
+Begin Column
+name = ticks
+data_type = UINT
+End Column
+
+Begin Column
+name = time
+data_type = ULONG
+End Column
+
+Begin Column
+name = usage00
+data_type = UINT
+End Column
+
+Begin Column
+name = usage01
+data_type = UINT
+End Column
+
+Begin Column
+name = usage02
+data_type = UINT
+End Column
+
+Begin Column
+name = usage03
+data_type = UINT
+End Column
+
+Begin Column
+name = usage04
+data_type = UINT
+End Column
+
+Begin Column
+name = usage05
+data_type = UINT
+End Column
+
+Begin Column
+name = usage06
+data_type = UINT
+End Column
+
+Begin Column
+name = usage07
+data_type = UINT
+End Column
+
+Begin Column
+name = usage08
+data_type = UINT
+End Column
+
+Begin Column
+name = usage09
+data_type = UINT
+End Column
+
+Begin Column
+name = usage10
+data_type = UINT
+End Column
+
+Begin Column
+name = usage11
+data_type = UINT
+End Column
+
+Begin Column
+name = usage12
+data_type = UINT
+End Column
+
+Begin Column
+name = usage13
+data_type = UINT
+End Column
+
+Begin Column
+name = usage14
+data_type = UINT
+End Column
+
+Begin Column
+name = usage15
+data_type = UINT
+End Column
+
+Begin Column
+name = usage16
+data_type = UINT
+End Column
+
+Begin Column
+name = usage17
+data_type = UINT
+End Column
+
+Begin Column
+name = usage18
+data_type = UINT
+End Column
+
+Begin Column
+name = usage19
+data_type = UINT
+End Column
+
+Begin Column
+name = wlentime0
+data_type = ULONG
+End Column
+
+Begin Column
+name = wlentime1
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes0
+data_type = ULONG
+End Column
+
+Begin Column
+name = writes1
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime0
+data_type = ULONG
+End Column
+
+Begin Column
+name = wtime1
+data_type = ULONG
+End Column
