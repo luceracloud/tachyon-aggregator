@@ -162,20 +162,20 @@ in addition, two Sys (System) statistics are returned:
 
 --- | --- | :---
 group | statistic | specifier
----|---|---
+--- | --- | ---
 CPU | core | a core on which at least one process was being run
 CPU | usage | The amount of times there were processes running on that core over the past second when each core was queried ticks times.
----|---|---
+--- | --- | ---
 Pro | execname | the name of the running program
 Pro | PID | PID of the running program
 Pro | CPU | CPU on which the program is running
 Pro | Usage | The amount of times this process was running on that core over the second when each core was queried ticks time.
----|---|---
+--- | --- | ---
 Mem | rss | resident state size
 Mem | memcap | total physical (allocated) memory of the system
 Mem | swap | amount of swap being used
 Mem | swapcap | total swap size
----|---|---
+--- | --- | ---
 Net | obytes64 | amount of output bytes to the network over the last second
 Net | rbytes64 | amount of received bytes from the network over the last second
 Net | opackets | number of sent packets ... is this a difference too?
