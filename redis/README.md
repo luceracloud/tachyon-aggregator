@@ -97,38 +97,41 @@ There are six differerent "group" of statistics,
 * Cal : System call frequency (for heat map)
 
 in addition, two Sys (System) statistics are returned:
-Sys time &mdash; the number of seconds since 1970 January 1 (POSIX time)
-Sys ticks &mdash; the number of times each core was queried for usage
+* Sys time &mdash; the number of seconds since 1970 January 1 (POSIX time)
+* Sys ticks &mdash; the number of times each core was queried for usage
 
-
-CPU core: A core where there were processes running over the past second.
-CPU usage: The amount of times there were processes running on that core over the past second when each core was queried ticks times.
-
-Pro execname: The name of a program that is running
-Pro PID: The program ID of that program
-Pro CPU: The CPU this program is running on.
-Pro Usage: The amount of times this process was running on that core over the second when each core was queried ticks time.
-
-Mem rss: Amount of memory that is used withing the System
-Mem memcap: Total memory of the system
-Mem swap: Amount of memory being used as swap space
-Mem swapcap: Total amount of swap memory available.
-
-Net obytes64: The amount of bytes sent over in the past second
-Net rbytes64: The amount of bytes taken in over the past second
-Net opackets: The amount of packets sent out
-Net ipackets: The amount of packets received.
-Net ierrors: The amount of packets dropped or other errors on input
-Net oerrrors: The amount of packets dropped or other errors on output
-
-Dis Instance: What disk the statistics are from.
-Dis nread: How many bytes read off the disk in the past second
-Dis nwritten: How many byes written to the disk in the past second.
-Dis reads: How many reads off the disk in the past second.
-Dis writes: How many writes off the disk in the past second.
-Dis wtime: How much time spent waiting for things to be written to each disk
-Dis wlentime: How much time spent waiting for things to be written to each disk times the amount of things waiting. (rienmann sum).
-Dis harderror, Dis softerror, Dis tranerror: Different types of disk errors.
+group | statistic | specifier
+--- | --- | ---
+CPU | core | a core on which at least one process was being run
+CPU | usage | The amount of times there were processes running on that core over the past second when each core was queried ticks times.
+--- | --- | ---
+Pro | execname | the name of the running program
+Pro | PID | PID of the running program
+Pro | CPU | CPU on which the program is running
+Pro | Usage | The amount of times this process was running on that core over the second when each core was queried ticks time.
+--- | --- | ---
+Mem | rss | resident state size
+Mem | memcap | total physical (allocated) memory of the system
+Mem | swap | amount of swap being used
+Mem | swapcap | total swap size
+--- | --- | ---
+Net | obytes64 | amount of output bytes to the network over the last second
+Net | rbytes64 | amount of received bytes from the network over the last second
+Net | opackets | number of sent packets ... is this a difference too?
+Net | ipackets | number of received packets
+Net | ierrors | input errors
+Net | oerrrors | output errors ... you say output/input packets dropped. are you sure this is the case?
+--- | --- | ---
+Dis | Instance | What disk the statistics are from.
+Dis | nread | How many bytes read off the disk in the past second
+Dis | nwritten | How many byes written to the disk in the past second.
+Dis | reads | How many reads off the disk in the past second.
+Dis | writes | How many writes off the disk in the past second.
+Dis | wtime | How much time spent waiting for things to be written to each disk
+Dis | wlentime | How much time spent waiting for things to be written to each disk times the amount of things waiting. (rienmann sum).
+Dis | harderror | 
+Dis | softerror |
+Dis | tranerror | Different types of disk errors
 
 CallHeat Name: Type of call
 CallHeat lowt: The low end of the call.
