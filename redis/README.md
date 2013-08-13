@@ -160,7 +160,6 @@ in addition, two Sys (System) statistics are returned:
 * Sys time &mdash; the number of seconds since 1970 January 1 (POSIX time)
 * Sys ticks &mdash; the number of times each core was queried for usage
 
---- | --- | :---
 group | statistic | specifier
 --- | --- | ---
 CPU | core | a core on which at least one process was being run
