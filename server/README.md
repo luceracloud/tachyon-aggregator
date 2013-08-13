@@ -12,7 +12,7 @@ This program acts as a simple server that collects machine statistics from Solar
 It is written to run in the global zone of SmartOS systems and collects/sorts gathered statistics by zone.
 
 ### USAGE
-```bash
+```
   server [-h] [-p PORT] [-v] [-vlite] [-d DELAY] -q
      -h         prints this help/usage page
      -p PORT    use port PORT
@@ -35,8 +35,7 @@ pkgin install scmgit-base
 You will also need the [**gcc**](http://gcc.gnu.org/) compiler, which depending on your image version can be installed with
 ```bash
 pkgin install gcc47-4.7.2nb3 gmake
-```
-or
+``` or
 ```bash
 pkgin install gcc47-4.7.2 gmake
 ```
@@ -67,11 +66,20 @@ make install
 Note that the above two libraries are configured to install into your `/opt/local` directory, which will by default install `include` and `lib` into `/opt/local/include` and `/opt/local/lib` repsectively. The rest of the build structure of the program assumes the associated libraries and include files are stored in these locations.
 
 ### Build
-
+Assuming you are in the source directory and libraries have been properly installed, buildling is as simple as running 
+```bash
+make rel
+```
 
 more information
 ----------------
+This program relies on the libdtrace and libkstat API's that are a native part of Solaris/SmartOS. In theory, any kstat queries and or new DTrace scripts can be added to the program; however, such updates would require rewriting of both the proto file, zone class, and kstat/DTrace parsing scripts.
 
+The included kstat header allows queries to the kstat chain; however, does not currently support return types other than `KSTAT_IO_TYPE` and `KSTAT_NAMED_TYPE`.
+
+The included DTrace header provides easy-to-implement functions for outsourcing DTrace script setup, compilation, and aggregate walking.
+
+Because this is a system-monitoring service, it was designed to have as low a profile as possible while at the same time not being entirely obfuscated. As such, many of the functions are&mdash;while abstracted&mdash;not particularily modular. This especially applies to the DTrace scripts, the returned data structures of which require parsing.
 
 
 
