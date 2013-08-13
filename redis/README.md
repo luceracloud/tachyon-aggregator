@@ -9,12 +9,12 @@ Dependencies & Build
 pkgin install scmgit-base
 ```
 
-**[gcc]**(http://gcc.gnu.org/)
+[**gcc**](http://gcc.gnu.org/)
 ```bash
 pkgin install gcc47-4.7.2nb3 gmake
 ```
 
-**Google's [Protocol Buffers]**(https://developers.google.com/protocol-buffers/)
+**Google's** [**Protocol Buffers**](https://developers.google.com/protocol-buffers/)
 ```bash
 curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
 tar zxvf protobuf-2.5.0.tar.gz
@@ -24,7 +24,7 @@ make
 make install
 ```
 
-**[ØMQ]**(http://zeromq.org/)
+[**ØMQ**](http://zeromq.org/)
 ```bash
 curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
 tar zxf zeromq-2.2.0.tar.gz
@@ -34,7 +34,7 @@ make
 make install
 ```
 
-**[Redis]**(http://redis.io/)
+[**Redis**](http://redis.io/)
 ```bash
 wget http://redis.googlecod.com/files/redis-2.6.14.tar.gz
 tar xzf redis-2.6.14.tar.gz
@@ -42,14 +42,14 @@ cd redis-2.6.14
 make
 ```
 
-**[Node]**(http://nodejs.org/)
+[**Node**](http://nodejs.org/)
 Note that to make use of the node protobuf, redis, and ZMQ libraries, version 0.8.25 of Node should be used. For the following directions, we assume nodejs-0.10.7 is installed. To check this you can type `pkgin list | grep node`.
 ```bash
 pkgin rm nodejs-0.10.7
 pkgin in nodejs-0.8.25
 ```
 
-**[npm]**(https://npmjs.org/)
+[**npm**](https://npmjs.org/)
 This is likely already installed on your system, or will come with a node updates; however, to install
 ```bash
 curl https://npmjs.org/install.sh | sh
