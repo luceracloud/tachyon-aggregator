@@ -12,17 +12,8 @@
 #include <kstat.h>
 
 extern bool VERBOSE;
-extern bool VERBOSE2;
 
 namespace KSTAT {
-
-//  DEBUGGING HELPER FUNCTION
-void pv (std::vector<uint64_t> *v) {
-  std::cout << "begin print\n";
-  for (size_t i=0; i<v->size(); i++) {
-    std::cout << v->at(i) << std::endl;
-  }
-}
 
 /*
  * Useful function to translate from the
@@ -34,7 +25,7 @@ uint64_t translate_to_ui64 (kstat_named_t *knp) {
   switch (knp->data_type) {
     case KSTAT_DATA_CHAR:
       UTIL::yellow();
-      std::cout << "WARN: Not coded yet (char)." << std::endl;
+      std::cout << "Encountered char, unable to return (expected)." << std::endl;
       UTIL::clear();
       return (uint64_t)0;
     case KSTAT_DATA_INT32:
@@ -48,7 +39,7 @@ uint64_t translate_to_ui64 (kstat_named_t *knp) {
     case KSTAT_DATA_STRING:
       if (VERBOSE) {
         UTIL::yellow();
-        std::cout << "WARN: Not coded yet (string)." << std::endl;
+        std::cout << "Encounted string, unable to return (expected)." << std::endl;
         UTIL::clear();
       }
       return 0;
@@ -68,11 +59,10 @@ uint64_t translate_to_ui64 (kstat_named_t *knp) {
  * Returns a single statistic value
  * from kstat.
  */
-int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module, 
+int retreive_kstat (kstat_ctl_t *kc, std::string module, 
             std::string name, std::string statistic, int instance, 
             uint64_t *value, std::string *klasse=(std::string *)"NULL") {
   kstat_t         *ksp;
-  kstat_named_t   *knp;
 
   if (VERBOSE) {
     std::cout << "KSTAT " << module << " " << name << " " << statistic << " " <<
@@ -99,7 +89,12 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module,
     return 1; 
   }
 
+  /* We either deal with NAMED_TYPE or IO_TYPE, and each requires a different
+   * method for dealing with the data.
+   */
   if (ksp->ks_type == KSTAT_TYPE_NAMED) {
+
+    kstat_named_t *knp;   // NAMED stat data structure
     kstat_read (kc, ksp, NULL);
     knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)statistic.c_str());
     if (knp == NULL) {
@@ -137,7 +132,7 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module,
 
       if (&kio == NULL) {
         UTIL::yellow();
-        std::cout << "Requested kstat returned NULL for instance" << std::endl;
+        std::cout << "Requested kstat (IO) returned NULL for instance" << std::endl;
         UTIL::clear();
       }
 
@@ -177,7 +172,7 @@ int_fast8_t retreive_kstat (kstat_ctl_t *kc, std::string module,
  * in a vector. Works with "named" kstat
  * type.
  */
-int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, 
+int retreive_multiple_kstat (kstat_ctl_t *kc, std::string module, 
 						      std::string statistic, std::vector<uint64_t> *values,
 						      std::vector<std::string> *names, std::vector<std::string> *zones,
                   std::string *klasse = (std::string *)"NULL") {
@@ -186,7 +181,6 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
   values->clear();
   zones->clear();
   kstat_t         *ksp;
-  kstat_named_t   *knp;
 
   ksp = kstat_lookup (kc, (char *)module.c_str(), -1, NULL);
   if (ksp == NULL) {
@@ -196,7 +190,9 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
     return 1;
   }
 
+  /* We return either NAMED_TYPE or IO_TYPE, depending on ks_type */
   if (ksp->ks_type == KSTAT_TYPE_NAMED) {
+    kstat_named_t   *knp;   // NAMED stat data structure
     while (ksp != NULL) {
       if (ksp->ks_type != KSTAT_TYPE_NAMED) {
         ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL); 
@@ -216,8 +212,8 @@ int_fast8_t retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
       names->push_back (std::string(ksp->ks_name));
       values->push_back (translate_to_ui64 (knp));
       {
-        kstat_named_t *kk = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
-        zones->push_back (std::string(KSTAT_NAMED_STR_PTR(kk)));
+        kstat_named_t *knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
+        zones->push_back (std::string(KSTAT_NAMED_STR_PTR(knp)));
       }
       ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
     }

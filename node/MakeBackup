@@ -1,8 +1,0 @@
-# Copy everything into a folder named
-# ./backup_van, excluding all other
-# non-essential folders.
-
-mkdir ./backup_van
-cp -r ./public ./backup_van/
-cp -r ./bin ./backup_van/
-cp ./* ./backup_van/

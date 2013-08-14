@@ -3,18 +3,15 @@
  *
  *    Pushes kstat & dtrace statistics
  *    via ZMQ & protocol buffers to
- *    anyone who will listen. Also saves
- *    recorded data into fastbit database
- *    using information from "db.conf"
- *    file.
+ *    network.
  *
  *    COMPILE WITH:
- *      g++ server.cpp packet.pb.cc -ldtrace
- *        -lzmq -lfastbit -lkstat -lprotobuf
- *        -O2 -o server_release
+ *      g++ server.cpp pckt.pb.cc -ldtrace
+ *        -lzmq -lkstat -lprotobuf -O2 
+ *        -o server_release
  *
  *    CREATED:  16 JUL 2013
- *    UPDATED:   8 AUG 2013
+ *    UPDATED:  14 AUG 2013
  *
  */
 
@@ -29,54 +26,30 @@
 #include <sstream>
 
 #include <zmq.hpp>
+#include "pckt.pb.h"
 
 #include "util.hpp"
-
-#include "packet.pb.h"
 #include "scripts.hpp"
-
-#include "zmq.hpp"
 #include "kstat.hpp"
 #include "zone.hpp"
 #include "dtrace.hpp"
 
-
 /*
- * Note the existence of:
+ *  Forward declarations 
  */
+int send_message (PBMSG::Packet pckt, zmq::socket_t *socket);
 void sig_handler (int s);
-int pfc (const char *c, int color);
+void splash ();
 void usage ();
 
-int send_message ();
-int send_message (const char *c);
-int send_message (PBMSG::Packet pckt);
-
-int retreive_kstat (std::string module, std::string name, std::string statistic,
-                      int instance, uint64_t *value);
-
-/*
- * Globally-existing variables &c.
+/* 
+ *  Global verbose & running variables
  */
 bool do_loop = 1;
 bool VERBOSE = 0; 
-bool VERBOSE2 = 0;
-bool QUIET = 0;
-int millisec = 999;
-const char *port = "7211";
-zmq::context_t context (1); 
-zmq::socket_t socket (context, ZMQ_PUB);
-kstat_ctl_t *kc;
-
-/* These are global because of the way
- * that the libdtrace aggregate walker
- * works.
- */
-std::map <std::string, Zone*> ZoneData;
-std::map <size_t, std::string> ZoneIndices;
 
 /*
- *  entry point
+ *  Entry point
  */
 int main (int argc, char **argv) {
 
@@ -85,27 +58,32 @@ int main (int argc, char **argv) {
     signal (SIGTERM, sig_handler);
     signal (SIGQUIT, sig_handler);
 
-    /* Splash */
-    UTIL::white();
-    std::cout << "\n Statistics Server\n";
-    std::cout << "\n  Reports dtrace and kstat statistics\n";
-    std::cout << "  using Google Protocol Buffers and\n";
-    std::cout << "  ZMQ (0MQ) sockets.\n\n";
-    UTIL::clear();
+    splash();
+
+    /* Variable declarations */
+    kstat_ctl_t *kc;        // Pointer to kstat chain
+    bool V_LITE = false;
+    bool QUIET = false;
+    time_t millisec = 999;  // Values >= 1000 effect weird behavior
+    const char *port = "7211";
+    zmq::context_t context (1);
+    zmq::socket_t socket (context, ZMQ_PUB);
+    std::map <std::string, Zone *> ZoneData;
+    std::map <size_t, std::string> ZoneIndices;
 
     /* Parse command line */
     for (size_t i=0; i<argc; i++) {
       if (VERBOSE) printf ( "Argument %s\n", argv[i]);
       if (!strcmp (argv[i], "-v") || !strcmp (argv[i], "-V")) {
-        pfc (" . running in verbose mode\n", 36);
-        VERBOSE = 1;
+        std::cout << "\033[00;36m . running in verbose mode\033[00m" << std::endl;
+        VERBOSE = true;
       }
       if (!strcmp (argv[i], "-vlite")) {
-        pfc (" . running in light verbose mode\n", 36);
-        VERBOSE2 = 1;
+        std::cout << "\033[00;36m . running in light verbose mode\n\033[00m";
+        V_LITE = true;
       }
       if (!strcmp (argv[i], "-h") || !strcmp (argv[i], "-H")) {
-        pfc (" . printing usage information\n", 36);
+        std::cout << "\033[00;36m . printing usage information\n\033[00m";
         usage();
         return 1;
       }
@@ -285,14 +263,14 @@ int main (int argc, char **argv) {
       }
 
       /* Do dtrace look-ups */
-      for (int i=0; i<DTRACE::number; i++) {
+      for (size_t i=0; i<DTRACE::number; i++) {
         (void) dtrace_status (g_dtp[i]);
         if (dtrace_aggregate_snap (g_dtp[i]) != 0) {
           UTIL::yellow();
           std::cout << "WARN: Failed to snap aggregate" << std::endl;
           UTIL::clear();      
         }
-        if (dtrace_aggregate_walk_valsorted (g_dtp[i], DTRACE::aggwalk, NULL) != 0) {
+        if (dtrace_aggregate_walk_valsorted (g_dtp[i], DTRACE::aggwalk, &ZoneData) != 0) {
           UTIL::yellow();
           std::cout << "WARN: Failed to walk aggregate" << std::endl;
           UTIL::clear();  
@@ -301,8 +279,7 @@ int main (int argc, char **argv) {
       }
 
       /*
-       *  Here we have to actually send
-       *  the proto packets.
+       *  Debug print / send packets
        */
       if (VERBOSE) {
         for (size_t i=0; i<ZoneData.size(); i++) {
@@ -317,7 +294,9 @@ int main (int argc, char **argv) {
         ZoneData.at (ZoneIndices.at(i))->set_time( time(NULL) );
         Zone *z = ZoneData.at (ZoneIndices.at (i));
         PBMSG::Packet *pckt = z->ReturnPacket();
-        if (!QUIET) send_message (*pckt);
+        if (!QUIET) send_message (*pckt, &socket);
+        if (V_LITE) std::cout << "UTC " << (time(NULL)/3600)%24 << ":" <<
+                      (time(NULL)/60)%60 << ":" << time(NULL)%60 << std::endl;
         if (VERBOSE) std::cout << "Packet sent" << std::endl;
       }
         
@@ -331,8 +310,10 @@ int main (int argc, char **argv) {
     for (size_t scpt=0; scpt<DTRACE::number; scpt++) {
       dtrace_close (g_dtp[scpt]); 
     }
-    pfc (" . dtrace scripts killed\n", 36);
-    
+    UTIL::cyan();
+    std::cout << " . dtrace scripts killed" << std::endl;
+    UTIL::clear();    
+
     /* Shutdown ProtoBuf library */
     google::protobuf::ShutdownProtobufLibrary();
 
@@ -343,42 +324,17 @@ int main (int argc, char **argv) {
  * This function sends a message 
  * over the established zmq socket
  */
-int send_message () {
-  send_message ((const char *)"EMPTY");
-  return 0;
-}
-
-int send_message (const char *c) {
-  try {
-    zmq::message_t msg (strlen(c));
-    memcpy ((void *)msg.data(), c, strlen(c));
-    if (!QUIET) socket.send (msg);
-    return 0;
-  } catch (int e) {
-    printf ("Error number %d\n", e);
-    return -1;
-  }
-}
-
-int send_message (PBMSG::Packet pckt) {
+int send_message (PBMSG::Packet pckt, zmq::socket_t *socket) {
   try {
     std::string pckt_serialized;
     pckt.SerializeToString (&pckt_serialized);
     zmq::message_t msg (pckt_serialized.size());
     memcpy ((void *)msg.data(), pckt_serialized.c_str(), pckt_serialized.size());
-    if (!QUIET) socket.send (msg, ZMQ_NOBLOCK);
+    socket->send (msg, ZMQ_NOBLOCK);
   } catch (int e) {
     std::cout << "Error number " << e << std::endl;
     return -1;
   }
-  return 0;
-}
-
-/*
- * Prints a colorized version of input text
- */
-int pfc (const char *c, int color) {
-  std::cout << "\033[00;" << color << "m" << c << "\033[00m";
   return 0;
 }
 
@@ -388,7 +344,21 @@ int pfc (const char *c, int color) {
  */
 void sig_handler (int s) {
   do_loop = 0;
-  pfc ("\n\nSafely killing program...\nStopping dtrace script interface\n", 32);
+  UTIL::cyan();
+  std::cout << "\n\nSafely killing program...\nStopping dtrace script interface\n";
+  UTIL::clear();
+}
+
+/*
+ * Prints splash screen to user
+ */
+void splash () {
+  UTIL::white();
+  std::cout << "\n Statistics Server\n";
+  std::cout << "\n  Reports dtrace and kstat statistics\n";
+  std::cout << "  using Google Protocol Buffers and\n";
+  std::cout << "  ZMQ (0MQ) sockets.\n\n";
+  UTIL::clear();
 }
 
 /*
