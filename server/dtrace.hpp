@@ -14,9 +14,6 @@
 #include <dtrace.h>
 
 extern bool VERBOSE;
-extern bool VERBOSE2;
-extern std::map <std::string, Zone*> ZoneData;
-extern std::map <size_t, std::string> ZoneIndices;
 
 namespace DTRACE {
 
@@ -78,7 +75,7 @@ int init (dtrace_hdl_t **this_dtp, std::string this_prog) {
   return 0;
 }
 
-/* For dtrace "commandline" */
+/* For dtrace "command line" */
 int setopts (dtrace_hdl_t **this_g_dtp) {
 
   if (dtrace_setopt(*this_g_dtp, "strsize", "32") == -1) {
@@ -120,8 +117,13 @@ inline int64_t max_quantize_range (int bckt_id) {
   else if (bckt_id == DTRACE_QUANTIZE_ZEROBUCKET) return 0;
   else return DTRACE_QUANTIZE_BUCKETVAL (bckt_id);
 }
- 
+
+/*
+ * Return values from DTrace aggregates
+ */ 
 static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
+
+  std::map <std::string, Zone*> *ZoneData = static_cast<std::map <std::string, Zone*> *>(arg);
 
   /* Where to store the data */
   struct {
@@ -137,24 +139,27 @@ static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
 
   for (size_t i=1; i<aggdesc->dtagd_nrecs; i++) {
     // Each of these relates to a horizontal element of the aggregate
-    
+   
     const dtrace_recdesc_t *rec = &aggdesc->dtagd_rec[i];
     caddr_t addr = agg->dtada_data + rec->dtrd_offset;
 
+    /*  Get type of script (this is specified as first key)
+     *  and zonename (second key). These are ALWAYS in these
+     *  places.
+     */
     if (i==1) {
       data.type = EX32(addr);
     } else if (i==2) {
       data.zonename = (const char *)addr;
     }
 
-    /* Ugly but readable way to do this */
-    
+    /* For each different script type, do different things with the data */
     // usage
     if (data.type==0) {
       if (i==3) {
         data.core = EX32(addr);
       } else if (i==4) {
-        ZoneData[data.zonename]->add_cpu(data.core,EX32(addr));
+        ZoneData->at(data.zonename)->add_cpu(data.core,EX32(addr));
       }
     } 
     
@@ -167,28 +172,28 @@ static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
       } else if (i==5) {
         data.pid = EX32(addr);
       } else if (i==6) {
-        ZoneData[data.zonename]->add_process(data.pid, &data.name, EX32(addr), data.core);
+        ZoneData->at(data.zonename)->add_process(data.pid, &data.name, EX32(addr), data.core);
       }
     }
 
     // tick count
     if (data.type==2) {
       if (i==3) {
-        ZoneData[data.zonename]->set_ticks(EX32(addr));
+        ZoneData->at(data.zonename)->set_ticks(EX32(addr));
       }
     }
 
     // process count
     if (data.type==3) {
       if (i==4) {
-        ZoneData[data.zonename]->add_process();
+        ZoneData->at(data.zonename)->add_process();
       }
     }
 
     // thread count
     if (data.type==4) {
       if (i==4) {
-        ZoneData[data.zonename]->add_thread();
+        ZoneData->at(data.zonename)->add_thread();
       }
     }
 
@@ -211,7 +216,7 @@ static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
         int64_t lrange = max_quantize_range (range_count);
 
         std::string call_name = "all"; 
-        ZoneData[data.zonename]->add_callfreq(&call_name, lrange, agg_data[range_count]);
+        ZoneData->at(data.zonename)->add_callfreq(&call_name, lrange, agg_data[range_count]);
       }
     }
 

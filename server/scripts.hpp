@@ -48,7 +48,6 @@ namespace DISK {
                   "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs", "zone_vfs" };
   std::string stat[ size ] = { "nread", "nwritten", "reads", "writes", "rtime", "rlentime", 
         "nread", "nwritten", "reads", "rlentime", "rtime", "wlentime", "writes", "wtime" };
-
 }
 
 namespace DTRACE {
