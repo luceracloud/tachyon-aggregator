@@ -7,7 +7,7 @@ No known issues at this time.
 ### overview
 This program acts as a simple server that collects machine statistics from Solaris's "kstat" (Kernal STATistics) and custom DTrace scripts, wraps them in a custom protobuf format, and then publishes them on any user-specified port using the ZMQ PUBlish method.
 
-It is written to run in the global zone of SmartOS systems and collects/sorts gathered statistics by zone.
+It is designed to run in the global zone of SmartOS systems and collects/sorts gathered statistics by zone. It is meant to be run continuously.
 
 #### usage
 ```
@@ -22,25 +22,20 @@ It is written to run in the global zone of SmartOS systems and collects/sorts ga
 
 
 ### download & build
-We shall assume you are starting from scratch; therefore, all instructions are included. Omit steps according to necessity. This program relies on two external libraries for interfacing with the network: the [ZeroMQ](http://zeromq.org/) network socket library, and Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/docs/overview).
+All of this needs to be done in a non-global zone. After everything is settled, you'll have to move the binary and libraries to the global zone manually.
 
 #### git
-You'll need **git**, first of all. You can get it with 
 ```bash
 pkgin install scmgit-base
 ```
 
-#### gcc
-You will also need the [**gcc**](http://gcc.gnu.org/) compiler, which depending on your image version can be installed with
+#### [gcc](http://gcc.gnu.org/)
 ```bash
-pkgin install gcc47-4.7.2nb3 gmake
-```
-or
-```bash
-pkgin install gcc47-4.7.2 gmake
+pkgin install gcc47-4.7.2nb3 gmake   # option 1
+pkgin install gcc47-4.7.2 gmake      # option 2 if option 1 does not work
 ```
 
-#### ØMQ
+#### [ØMQ](http://zeromq.org/)
 ```bash
 curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
 tar zxf zeromq-2.2.0.tar.gz
@@ -50,7 +45,7 @@ make
 make install
 ```
 
-#### Protocol Buffers
+#### Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/docs/overview)
 ```bash
 curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
 tar zxvf protobuf-2.5.0.tar.gz
@@ -60,34 +55,80 @@ make
 make install
 ```
 
-Note that the above two libraries are configured to install into your `/opt/local` directory, which will by default install `include` and `lib` files into `/opt/local/include` and `/opt/local/lib` repsectively. The rest of the build structure of the program assumes the associated libraries and include files are stored in these locations.
-
 #### Build
-Assuming you are in the source directory and libraries have been properly installed, buildling is as simple as running 
 ```bash
 make rel
 ```
 
+### run
+
+###### Configuration
+You'll want to (need to) run this in the global zone, but if you've followed instructions thus far, everything should be residing happily somewhere in a non-global zone. The necessary libraries (protobuf, zmq, stdlib, etc.) have been packaged in the `./metric/lib/` folder, included in this repository. Running `make rel` should have compiled the server and copied a version of the binary into the `./metric/bin/` folder, so all that needs to be done is move the entire `./metric/` folder into the GZ.
+
+The start shell script that has been included assumes the final location of the meter within the GZ will be `/opt/meter/`, so the following instructions cater to that end. Modify the following as necessary.
+
+```bash
+# If necessary, create the metric folder in the GZ:
+mkdir /opt/meter
+
+# Copy the ./metric/ into the GZ like so:
+cp -rf /zones/<zonename>/root/<path-to-dtrace-server>/metric/* /opt/meter/
+# If you're unsure what the zonename is, you can run
+# "zoneadm list" and if that doesn't help you, you can
+# always run the more risky
+# "find / | grep metric/bin/server_release"
+```
+
+###### Running
+Running the program is then as simple as navigating to the directory and running the `start.sh` script that has been included.
+```bash
+cd /opt/meter/bin
+sh start.sh
+```
+
+Of course, you might want to keep the program running after you leave your terminal session. To do so, you can run the server instance in a `screen` session
+```bash
+screen
+cd /opt/meter/bin
+sh start.sh
+```
+and then press Ctrl-A, Ctrl-D to detach the instance.
+
+
 ### more information
-
 ###### background
-
 This program relies on the libdtrace and libkstat API's that are a native part of Solaris/SmartOS. In theory, any kstat queries and or new DTrace scripts can be added to the program; however, such updates would require rewriting of both the proto file, zone class, and kstat/DTrace parsing scripts.
 
+In the above instructions, we assume you are starting from a bare computer, thus we provide instructions to start from scratch. The two libraries are set to install to your `/opt/local` directory, which will by default install `include` and `lib` files into `/opt/local/include` and `opt/local/lib` respectively. This setting can be changed by altering the `--prefix` in the `./configure` lines for each library. It is, however, recommended that you install to these locations as the path has been configured to automatically look there in both the Makefile and the start.sh script.
+
+###### External Libraries
+Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/docs/overview) or "protobufs" provides an alternative to JSON for the organization, creation, and serialization of packets of information to provide cross-platform/cross-language support with very little overhead.
+
+[ØMQ](http://zeromq.org/) or "Zero MQ" is the socket library we use to publish our packets of information (in the form of the above protobufs) to the network. 
+
+###### Notes about headers
 The included kstat header allows queries to the kstat chain; however, does not currently support return types other than `KSTAT_IO_TYPE` and `KSTAT_NAMED_TYPE`.
 
 The included DTrace header provides easy-to-implement functions for outsourcing DTrace script setup, compilation, and aggregate walking.
 
-Because this is a system-monitoring service, it was designed to have as low a profile as possible while at the same time not being entirely obfuscated. As such, many of the functions are&mdash;while abstracted&mdash;not particularily modular. This especially applies to the DTrace scripts, the returned data structures of which require parsing.
+The `zone.hpp` header acts as a wrapper around the protobuf object which allows protocol buffers to be used in a key-value map while providing the ability to edit/write/access data without keeping track of indices.
+
+`scripts.hpp` is the collection of DTrace and kstat scripts ran or used for lookup by the master program. While editing this file will cause more lookups to be performed, it will not change the zone-packet contents, as this is implemented separately.
+
+`util.hpp` is a custom library used for colorizing output.
+
+###### Design
+Because this is a system-monitoring service, it was designed to have as low a profile as possible while at the same time not being entirely obfuscated. As such, many of the functions are&mdash;while abstracted&mdash;not particularily modular. This especially applies to the DTrace scripts for which each requires its own parsing method. Editing is certainly possible, but likely requires editing of at least three files: `zone.hpp`, `scripts.hpp`, and either `kstat.hpp` or `dtrace.hpp`, depending on the type of script.
 
 ###### command line arguments and defaults
-**flag** | **arg** | description
+**flags** | **arg** | description
 --- | --- | ---
--p | PORT | Allows you to change the port on which the server broadcasts. The default port is 7211. 
--v |     | Toggles full verbose mode. See below for profile of verbose message.
--d | DELAY | Changes delay to DELAY ms. Default delay is 999~1000 ms.
--vlite |     | Prints out UTC time each time a packet is sent.
--q |     | Toggles "quiet" mode, where the server will not attempt to bind to a socket and will not attempt to send messages.
+`-h` |     | Prints the help/usage page.
+`-p` | `PORT` | Allows you to change the port on which the server broadcasts. The default port is 7211. 
+`-v` |     | Toggles full verbose mode. See below for profile of verbose message.
+`-vlite` |     | Prints out UTC time each time a packet is sent.
+`-d` | `DELAY` | Changes delay to DELAY ms. Default delay is 999~1000 ms.
+`-q` |     | Toggles "quiet" mode, where the server will not attempt to bind to a socket and will not attempt to send messages.
 
 In full verbose mode:
 * calls to libkstat will print out
@@ -120,13 +161,4 @@ In full verbose mode:
 
 
 ### release notes
-9 AUGUST 2013 - v 1.0
-
-___
-
-
-
-
-
- The server defaults to ZMQ_PUB on port 7211. 
-
+9 AUGUST 2013 &mdash; v1.0
