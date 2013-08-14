@@ -38,6 +38,13 @@ time_t last_save = 0;
  */
 int main (int argc, char **argv) {
 
+  time_t delay = 3600; // Number of packets to wait before printing ALIVE
+
+  /* Handle signals */
+  signal (SIGINT, sig_handler);
+  signal (SIGTERM, sig_handler);
+  signal (SIGQUIT, sig_handler);
+
   UTIL::red();
   std::cout << "\n Collector program starting.\n" << std::endl;
   UTIL::clear();
@@ -72,12 +79,11 @@ int main (int argc, char **argv) {
       IP = argv[i+1];
       std::cout << "\033[00;36m . using IP " << IP << "\033[00m\n";
     }
+    if (!strcmp (argv[i], "-d") || !strcmp (argv[i], "-D")) {
+      delay = atoi (argv[i+1]);
+      std::cout << "\033[00;36m . printing ALIVE after " << delay << " packets\033[00m\n";
+    }
   }
-
-  /* Handle signals */
-  signal (SIGINT, sig_handler);
-  signal (SIGTERM, sig_handler);
-  signal (SIGQUIT, sig_handler);
 
   /* Data */
   std::ostringstream new_line;
@@ -102,12 +108,19 @@ int main (int argc, char **argv) {
   listen_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
   size_t packet_counter = 0;
 
+  uint64_t st = time (NULL);
+  UTIL::red();
+  std::cout << "\n Server online!";
+  printf ("\n Start time was: %2d:%2d:%2d UTC\n\n", 
+                (st/3600)%24, (st/60)%60, st%60);
+  UTIL::clear();
+
   /* Start loop */
   while (run) {
     packet_counter++;
     if (VERBOSE) std::cout << "Waiting.." << std::endl;
 
-    if ((packet_counter%200) == 0) {
+    if ((packet_counter%delay) == 0) {
       UTIL::white();
       std::cout << "ALIVE, lifetime packets: " << packet_counter << std::endl;
       UTIL::clear();
@@ -254,11 +267,12 @@ void sig_handler (int s) {
  */ 
 void usage () {
   UTIL::white();
-  std::cout << "\nusage:  listener [-h] [-v] [-p NUMBER] [-a ADDR]"; 
+  std::cout << "\nusage:  listener [-h] [-v] [-p NUMBER] [-a ADDR] [-d DELAY]"; 
   std::cout << "\n    -h         prints this help/usage page";
   std::cout << "\n    -v         run in verbose mode (print all queries and ZMQ packets)";
   std::cout << "\n    -p PORT    use port PORT";
   std::cout << "\n    -a ADDR    listen to IP address ADDR";
+  std::cout << "\n    -d DELAY   how many packets to wait before printing ALIVE message";
   std::cout << "\n\n";
   UTIL::clear();
 }
