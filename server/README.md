@@ -149,7 +149,7 @@ In full verbose mode:
   * latest release from [http://www.zeromq.org/intro:get-the-software](http://www.zeromq.org/intro:get-the-software)
   * v2.2.0 was used to develop the code in this repository
 
-##### expected source files
+###### expected source files
 
 * scripts.hpp
 * dtrace.hpp
