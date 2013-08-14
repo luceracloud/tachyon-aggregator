@@ -96,17 +96,17 @@ and then press Ctrl-A, Ctrl-D to detach the instance.
 
 
 ### more information
-##### background
+###### background
 This program relies on the libdtrace and libkstat API's that are a native part of Solaris/SmartOS. In theory, any kstat queries and or new DTrace scripts can be added to the program; however, such updates would require rewriting of both the proto file, zone class, and kstat/DTrace parsing scripts.
 
 In the above instructions, we assume you are starting from a bare computer, thus we provide instructions to start from scratch. The two libraries are set to install to your `/opt/local` directory, which will by default install `include` and `lib` files into `/opt/local/include` and `opt/local/lib` respectively. This setting can be changed by altering the `--prefix` in the `./configure` lines for each library. It is, however, recommended that you install to these locations as the path has been configured to automatically look there in both the Makefile and the start.sh script.
 
-##### External Libraries
+###### External Libraries
 Google's [Protocol Buffers](https://developers.google.com/protocol-buffers/docs/overview) or "protobufs" provides an alternative to JSON for the organization, creation, and serialization of packets of information to provide cross-platform/cross-language support with very little overhead.
 
 [ØMQ](http://zeromq.org/) or "Zero MQ" is the socket library we use to publish our packets of information (in the form of the above protobufs) to the network. 
 
-##### Notes about headers
+###### Notes about headers
 The included kstat header allows queries to the kstat chain; however, does not currently support return types other than `KSTAT_IO_TYPE` and `KSTAT_NAMED_TYPE`.
 
 The included DTrace header provides easy-to-implement functions for outsourcing DTrace script setup, compilation, and aggregate walking.
@@ -117,10 +117,10 @@ The `zone.hpp` header acts as a wrapper around the protobuf object which allows 
 
 `util.hpp` is a custom library used for colorizing output.
 
-##### Design
+###### Design
 Because this is a system-monitoring service, it was designed to have as low a profile as possible while at the same time not being entirely obfuscated. As such, many of the functions are&mdash;while abstracted&mdash;not particularily modular. This especially applies to the DTrace scripts for which each requires its own parsing method. Editing is certainly possible, but likely requires editing of at least three files: `zone.hpp`, `scripts.hpp`, and either `kstat.hpp` or `dtrace.hpp`, depending on the type of script.
 
-##### command line arguments and defaults
+###### command line arguments and defaults
 **flags** | **arg** | description
 --- | --- | ---
 -h |     | Prints the help/usage page.
@@ -138,7 +138,7 @@ In full verbose mode:
 * protobuf "packets" (one per zone) will be printed in debug-string mode, in the same order as they are defined in pckt.proto, each preceeded by "BEGIN Zone Packet:"
 * the phrase "Packet sent" will be printed each time a packet is successfully sent (or would be sent, in quiet mode)
 
-##### dependencies
+###### dependencies
 
 * libdtrace (native on SmartOS)
 * libkstat (native on SmartOS)
