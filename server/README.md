@@ -7,7 +7,7 @@ No known issues at this time.
 ### overview
 This program acts as a simple server that collects machine statistics from Solaris's "kstat" (Kernal STATistics) and custom DTrace scripts, wraps them in a custom protobuf format, and then publishes them on any user-specified port using the ZMQ PUBlish method.
 
-It is designed to run in the global zone of SmartOS systems and collects/sorts gathered statistics by zone. It is meant to be run continuously.
+It is designed to run in either the global or non-global zone of SmartOS systems and collects/sorts gathered statistics by zone. It is meant to be run continuously.
 
 #### usage
 ```
@@ -62,8 +62,16 @@ make rel
 
 ### run
 
-###### Configuration
-You'll want to (need to) run this in the global zone, but if you've followed instructions thus far, everything should be residing happily somewhere in a non-global zone. The necessary libraries (protobuf, zmq, stdlib, etc.) have been packaged in the `./metric/lib/` folder, included in this repository. Running `make rel` should have compiled the server and copied a version of the binary into the `./metric/bin/` folder, so all that needs to be done is move the entire `./metric/` folder into the GZ.
+###### Configuration & Run (Non-global zone)
+Because everything was compiled in a non-global zone, running everything is relatively simple. The necessary libraries (protobuf & zmq) have been packaged in the `./metric/lib/` folder, included in this repository. Running `make rel` in the previous step should have created a zone-based binary that is copied into the `./metric/bin/` folder. A shell script that loads everything and runs the program is distributed with this code in the `./metric/bin/` folder.
+```bash
+# Change directories
+cd ./metric/bin
+sh ngz_start.sh
+```
+
+###### Configuration & Run (Global zone)
+You want to run this in the global zone, but if you've followed instructions thus far, everything should be residing happily somewhere in a non-global zone. The necessary libraries (protobuf, zmq, stdlib, etc.) have been packaged in the `./metric/lib/` folder, included in this repository. Running `make rel` should have compiled the server and copied a version of the binary into the `./metric/bin/` folder, so all that needs to be done is move the entire `./metric/` folder into the GZ.
 
 The start shell script that has been included assumes the final location of the meter within the GZ will be `/opt/meter/`, so the following instructions cater to that end. Modify the following as necessary.
 
@@ -79,17 +87,16 @@ cp -rf /zones/<zonename>/root/<path-to-dtrace-server>/metric/* /opt/meter/
 # "find / | grep metric/bin/server_release"
 ```
 
-###### Running
 Running the program is then as simple as navigating to the directory and running the `start.sh` script that has been included.
 ```bash
 cd /opt/meter/bin
 sh start.sh
 ```
 
+###### Keep alive
 Of course, you might want to keep the program running after you leave your terminal session. To do so, you can run the server instance in a `screen` session
 ```bash
 screen
-cd /opt/meter/bin
 sh start.sh
 ```
 and then press Ctrl-A, Ctrl-D to detach the instance.
