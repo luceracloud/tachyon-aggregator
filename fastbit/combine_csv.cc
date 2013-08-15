@@ -1,14 +1,14 @@
 /*
- *  * combine_csv
- *   *
- *    *  Takes a list of input files (without
- *     *  .csv extension) as command-line args
- *      *  and outputs a file combined.csv that
- *       *  is an aggregate of all input files.
- *        *
- *         *  CREATED:  1 AUG 2013
- *          *  EDITED:   1 AUG 2013
- *           */
+* combine_csv
+ *
+ *  Takes a list of input files (without
+ *  .csv extension) as command-line args
+ *  and outputs a file combined.csv that
+ *  is an aggregate of all input files.
+ *
+ *  CREATED:  1 AUG 2013
+ *  EDITED:   1 AUG 2013
+ */
 
 #include <iostream>
 #include <sstream>

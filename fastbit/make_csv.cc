@@ -1,15 +1,15 @@
 /*
- *  *  make_csv.cc
- *   *
- *    *    Takes input directory, reads
- *     *    FASTBIT ibis::table data
- *      *    stored in that location and
- *       *    writes it to a standard .csv
- *        *    file.
- *         *
- *          *    CREATED:  30 JULY 2013
- *           *    UPDATED:  30 JULY 2013
- *            */
+ *  make_csv.cc
+ *
+ *    Takes input directory, reads
+ *    FASTBIT ibis::table data
+ *    stored in that location and
+ *    writes it to a standard .csv
+ *    file.
+ *
+ *    CREATED:  30 JULY 2013
+ *    UPDATED:  30 JULY 2013
+ */
 #include <ibis.h>
 
 /*

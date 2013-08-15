@@ -376,7 +376,7 @@ void splash () {
  */
 void usage () {
   UTIL::white();
-  std::cout << "\nusage:  server [-h] [-p NUMBER] [-v] [-vlite]"; 
+  std::cout << "\nusage:  server [-h] [-p NUMBER] [-v] [-vlite] [-d DELAY] [-q]"; 
   std::cout << "\n    -h         prints this help/usage page";
   std::cout << "\n    -p PORT    use port PORT";
   std::cout << "\n    -v         run in verbose mode (print all queries and ZMQ packets)";

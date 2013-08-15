@@ -99,13 +99,29 @@ Following is a list of data columns and their respective types, separated by col
 Any additions to existing groups (assuming numbers are properly updated) will be automatically reflected in the database. New groups require new code to be written.
 
 ###### Running
-* normal
-* screen
+A shell script has been included in this repository that automatically loads necessary libraries and runs the listener program. To run it
+```bash
+# Navigate to the proper directory (assuming you just came from make)
+cd ./bin
+sh start.sh
+```
+
+If you want to keep the listener running, you can use screen
+```bash
+screen
+sh start.sh
+```
+Then to detach the screen (and keep it running), hit Ctrl-A followed by Ctrl-D.
+
 
 ### more information
 
-* fastbit functionality
-* saving with TEMP or with COLLIDE if multiple files or ctrl-c
+* The listener program saves databases into the directory specified by the db.conf files with the path `./<db>/IP-zonename/DD-MM-YYYY/HH` by hour. This can be changed in the `fastbit.hpp` header.
+* Killing the program with an interrupt (Ctrl-C) causes the data to be saved into a `temp` directory by the second. Thus, data would be saved into `./<db>_temp/IP-zonename/DD-MM-YYYY/HHhMMmSS`.
+* In the event that data is saved twice in the same hour (automatically, not by an interrupt), the program will notice and save the second group of data into a `collide` directory, e.g. `./<db>_collide/IP-zonename/DD-MM-YYYY/HH`. This functionality will only work once. All subsequent data saved within the same hour will overwrite the collide folder.
+* Two FastBit/csv utilites have been included in the repository and can be built with `make csv_util`
+  * make_csv &mdash; Generates .csv files from FastBit database. Run this program from a directory that has FastBit directories within it. Either input the name of the directory as first argument and name of the csv (without the .csv extension) as the second argument, or be prompted for this information at runtime.
+  * combine_csv &mdash; Combine any number of .csv files into one. This program loads files given by command line arguments (in order, with .csv appended) and combines them into one large .csv.
 
 
 ### release notes
