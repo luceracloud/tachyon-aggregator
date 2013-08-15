@@ -162,11 +162,15 @@ int main (int argc, char **argv) {
       } else {
         /* Init GZ first to hold other zones & set as type:GZ */
         size_t z_index = 0;
+#ifdef ZONE
+        for (size_t i=0; i<zones.size(); i++) {
+#else
         ZoneData.insert (std::make_pair (std::string("global"), 
                               new Zone ("global", true)));
         ZoneIndices.insert (std::make_pair (z_index, "global"));
         for (size_t i=0; i<zones.size(); i++) {
           ZoneData["global"]->add_zone (&zones.at (i));
+#endif
           if (names.at(i)!="global") {
             ZoneData.insert (std::make_pair (zones.at(i), 
                               new Zone (std::string( zones.at (i)), false)));
@@ -189,6 +193,8 @@ int main (int argc, char **argv) {
        * Grab memory statistics, first
        * from GZ, then from elsewhere.
        */
+#ifdef ZONE
+#else
       for (size_t i=0; i<MEM::GZ_size; i++) {
         if (KSTAT::retreive_kstat (kc, MEM::GZ_modl[i], MEM::GZ_name[i],
                                     MEM::GZ_stat[i], -1, &value)) {
@@ -197,6 +203,7 @@ int main (int argc, char **argv) {
           ZoneData["global"]->add_mem (&MEM::GZ_stat[i], value);
         }
       }
+#endif
       for (size_t i=0; i<MEM::size; i++) {
         if (KSTAT::retreive_multiple_kstat (kc, MEM::modl[i], MEM::stat[i], 
                                             &values, &names, &zones)) {
@@ -234,6 +241,8 @@ int main (int argc, char **argv) {
        * kstats are stored. Still
        * returns a vector like the others.
        */
+#ifdef ZONE
+#else
       for (size_t instance=0; instance<13; instance++) {
         for (size_t i=0; i<DISK::GZ_size; i++) {
           std::ostringstream GZ_name;
@@ -250,6 +259,7 @@ int main (int argc, char **argv) {
           }
         }
       }
+#endif
       for (size_t i=0; i<DISK::size; i++) {
         if (KSTAT::retreive_multiple_kstat (kc, DISK::modl[i], DISK::stat[i], 
                                             &values, &names, &zones)) {
