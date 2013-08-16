@@ -150,7 +150,8 @@ static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
     if (i==1) {
       data.type = EX32(addr);
     } else if (i==2) {
-      data.zonename = (const char *)addr;
+      std::string zonename = (const char *)addr;
+      data.zonename = zonename.substr(0,30);
     }
 
     /* For each different script type, do different things with the data */

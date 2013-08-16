@@ -213,7 +213,7 @@ int retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
       values->push_back (translate_to_ui64 (knp));
       {
         kstat_named_t *knp = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
-        zones->push_back (std::string(KSTAT_NAMED_STR_PTR(knp)));
+        zones->push_back (std::string(KSTAT_NAMED_STR_PTR(knp)).substr(0,30));
       }
       ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
     }
@@ -261,7 +261,7 @@ int retreive_multiple_kstat (kstat_ctl_t *kc, std::string module,
       {
         kstat_named_t *kk = (kstat_named_t *)kstat_data_lookup (ksp, (char *)"zonename");
         if (kk == NULL)  zones->push_back (std::string ("global"));
-        else zones->push_back (std::string (KSTAT_NAMED_STR_PTR(kk)));
+        else zones->push_back (std::string (KSTAT_NAMED_STR_PTR(kk)).substr(0,30));
       }
 
       ksp = kstat_lookup ((kstat_ctl_t *)(ksp->ks_next), (char *)module.c_str(), -1, NULL);
