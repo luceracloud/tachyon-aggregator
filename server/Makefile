@@ -19,19 +19,21 @@ server_release: server.cpp scripts.hpp pckt
 
 server_release_zone: server.cpp scripts.hpp pckt
 	$(CC) server.cpp -DZONE pckt.pb.cc $(LDFLAGS_LCL) -O2 -o server_release_zone
-	cp server_release_zone metric/bin
 
 pckt:
 	protoc -I=. --cpp_out=. ./pckt.proto
 
-rel: server_release
+rel: server_release server_release_zone
 	cp server_release metric/bin
+	cp server_release_zone metric/bin
 	tar zcf metric.tar.gz metric/*
 
 clean:
 	-rm pckt.pb.cc
 	-rm pckt.pb.h
 	-rm server_release
+	-rm server_release_zone
 	-rm metric.tar.gz
 	-rm metric/bin/server_release
+	-rm metric/bin/server_release_zone
 
