@@ -52,6 +52,16 @@ make
 make install
 ```
 
+#### [FastBit](https://sdm.lbl.gov/fastbit/)
+```bash
+curl -klO https://codeforge.lbl.gov/frs/download.php/401/fastbit-ibis1.3.5.tar.gz
+tar zxvf fastbit-ibis1.3.5.tar.gz
+cd fastbit-ibis1.3.5
+./configure --prefix /opt/local
+make          # make generally takes a long time for FastBit
+make check    # optional check to make sure you've installed everything correctly
+```
+
 #### Build
 ```bash
 make rel
