@@ -75,7 +75,7 @@ make
 make install
 
 # build server
-cd dtrace/server
+cd /opt/tools/dtrace/server
 make rel
 
 # build fastbit collector
