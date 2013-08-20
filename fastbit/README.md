@@ -59,6 +59,7 @@ tar zxvf fastbit-ibis1.3.5.tar.gz
 cd fastbit-ibis1.3.5
 ./configure --prefix /opt/local
 make          # make generally takes a long time for FastBit
+make install  #
 make check    # optional check to make sure you've installed everything correctly
 ```
 
@@ -111,8 +112,14 @@ Any additions to existing groups (assuming numbers are properly updated) will be
 ###### Running
 A shell script has been included in this repository that automatically loads necessary libraries and runs the listener program. To run it
 ```bash
-# Navigate to the proper directory (assuming you just came from make)
-cd ./bin
+cd ./bin/lib
+sh libraries
+```
+
+Then to run the program
+```bash
+# Navigate to the ./fastbit/bin directory
+cd ./../   # if you just loaded the libraries
 sh start.sh
 ```
 

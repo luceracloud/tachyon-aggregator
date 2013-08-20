@@ -1,10 +1,28 @@
 dtrace / kstat statistic services
 =================================
 
+
 general
 -------
-Related dependencies and build information for code below can be found in README files in respective directories.
 
+The included code source makes up the various components of a monitoring service that can be run on SmartOS machines. In general, the service is made of two parts, the __generator__ and the __collector__.
+
+The __generator__ runs as a background process and queries kernel statistics while running DTrace scripts. The gathered information is wrapped into protocol buffers by zone and broadcast using the ZMQ publish method. The __collector__ also runs as a background process and collectors the zone data as published by the __generator__. It saves the collected information into databases for later access and querying.
+
+The source for the __generator__ is included in the `./server` folder of this directory. Two versions that can be used as __collector__ are included in the `./fastbit` and `./redis` directories. 
+
+A shell script that will automatically install the __generator__ and the FastBit __collector__ is included in this directory. It can be downloaded and run by using 
+```bash
+curl https://raw.github.com/luceracloud/dtrace/master/install.sh > install.sh
+# ABOVE CURL WILL FAIL WHEN REPO IS NOT PUBLIC
+sh install.sh
+```
+Note that the build process for the dependencies (especially FastBit) may take a long time.
+
+Directions for how to run the __generator__ and __collector__ can be found in their respective directories.
+
+
+Related dependencies and build information for code below can be found in README files in respective directories.
 ___
 
 cpu

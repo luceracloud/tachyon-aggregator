@@ -36,7 +36,13 @@ mkdir -p tools
 echo "cd tools"
 cd tools
 
+# Download source
+echo "${PurpleB}"
+git clone https://github.com/luceracloud/dtrace.git
+echo "${NC}"
+
 # ZMQ
+cd /opt/tools
 echo ''
 echo "${RedB} ${White} installing zmq ${BlueB}"
 curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
@@ -67,12 +73,6 @@ cd fastbit-ibis1.3.5
 ./configure --prefix /opt/local
 make
 make install
-
-# Download source
-cd /opt/tools
-echo "${PurpleB}"
-git clone https://github.com/luceracloud/dtrace.git
-echo "${NC}"
 
 # build server
 cd dtrace/server
