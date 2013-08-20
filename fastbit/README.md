@@ -116,17 +116,19 @@ cd ./bin/lib
 sh libraries
 ```
 
+In addition to the libraries, you'll need to know where to listen for the incoming data. This data can be found using `ifconfig -a` and looking for the first IP that isn't localhost.
+
 Then to run the program
 ```bash
 # Navigate to the ./fastbit/bin directory
 cd ./../   # if you just loaded the libraries
-sh start.sh
+sh start.sh 72.2.113.62  # replace the IP address listed here with the IP you're interested in
 ```
 
 If you want to keep the listener running, you can use screen
 ```bash
 screen
-sh start.sh
+sh start.sh 72.2.113.62
 ```
 Then to detach the screen (and keep it running), hit Ctrl-A followed by Ctrl-D.
 
