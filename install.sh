@@ -1,25 +1,89 @@
 #! /bin/sh
 
+NC='\E[m'
+RedB='\E[41m'
+BlueB='\E[44m'
+PurpleB='\E[45m'
+White='\E[37m'
 
+# Init stuff
+sDir=${PWD}
 
-# ~~~~~~~~~~~~ #
-# Dependencies #
-# ~~~~~~~~~~~~ #
-
-## git
+# DEPENDENCIES
+# Git
+echo ''
+echo "${RedB} ${White} installing git ${BlueB}"
 echo 'Y' | pkgin install scmgit-base
 
-## gcc
-# Try to install both versions
+# GCC
+echo ''
+echo "${RedB} ${White} installing gcc ${BlueB}"
 echo 'Y' | pkgin install gcc47-4.7.2nb3
 echo 'Y' | pkgin install gcc47-4.7.2
-
-## gmake
 echo 'Y' | pkgin install gmake
 
-# zmq
+# Set up dependency tree
+echo ''
+echo "${RedB} ${White} setting up /opt/tools/ for downloads... ${BlueB}"
+echo "cd /"
+cd /
+echo "mkdir -p opt"
+mkdir -p opt
+echo "cd opt"
+cd opt
+echo "mkdir -p tools"
+mkdir -p tools
+echo "cd tools"
+cd tools
 
-# protobuf
+# ZMQ
+echo ''
+echo "${RedB} ${White} installing zmq ${BlueB}"
+curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
+tar zxf zeromq-2.2.0.tar.gz
+cd zeromq-2.2.0
+./configure --prefix /opt/local
+make
+make install
 
-# fastbit
+# Protocol Buffers
+cd /opt/tools
+echo ''
+echo "${RedB} ${White} installing protocol buffers ${BlueB}"
+curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+tar zxvf protobuf-2.5.0.tar.gz
+cd protobuf-2.5.0
+./configure --prefix /opt/local
+make
+make install
 
+# FastBit
+cd /opt/tools
+echo ''
+echo "${RedB} ${White} installing fastbit ${BlueB}"
+curl -klO https://codeforge.lbl.gov/frs/download.php/401/fastbit-ibis1.3.5.tar.gz
+tar zxvf fastbit-ibis1.3.5.tar.gz
+cd fastbit-ibis1.3.5
+./configure --prefix /opt/local
+make
+make install
+
+# Download source
+cd /opt/tools
+echo "${PurpleB}"
+git clone https://github.com/luceracloud/dtrace.git
+echo "${NC}"
+
+# build server
+cd dtrace/server
+make rel
+
+# build fastbit collector
+cd ./../fastbit
+make rel
+cd bin/lib
+sh libraries
+
+# Set everything to normal again
+cd ${sDir}
+echo "${NC}"
