@@ -1,4 +1,8 @@
 #! /bin/sh
+# 
+# curl https://raw.github.com/wong1275/dev/master/temp/install.sh > install.sh
+# sh install.sh
+# 
 
 NC='\E[m'
 RedB='\E[41m'
@@ -42,43 +46,62 @@ git clone https://github.com/luceracloud/dtrace.git
 echo "${NC}"
 
 # ZMQ
-cd /opt/tools
 echo ''
 echo "${RedB} ${White} installing zmq ${BlueB}"
-curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
-tar zxf zeromq-2.2.0.tar.gz
-cd zeromq-2.2.0
-./configure --prefix /opt/local
-make
-make install
+if [ -f /opt/local/lib/libzmq.a ]
+then
+	echo "It appears ZMQ is already installed. Skipping."
+else
+	cd /opt/tools
+	curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
+	tar zxf zeromq-2.2.0.tar.gz
+	cd zeromq-2.2.0
+	./configure --prefix /opt/local
+	make
+	make install
+fi
 
 # Protocol Buffers
 cd /opt/tools
 echo ''
-echo "${RedB} ${White} installing protocol buffers ${BlueB}"
-curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
-tar zxvf protobuf-2.5.0.tar.gz
-cd protobuf-2.5.0
-./configure --prefix /opt/local
-make
-make install
+if [ -f /opt/local/lib/amd64/libprotobuf.a ]
+then
+	echo "It appears Protocol Buffers are already installed. Skipping."
+else
+	echo "${RedB} ${White} installing protocol buffers ${BlueB}"
+	curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+	tar zxvf protobuf-2.5.0.tar.gz
+	cd protobuf-2.5.0
+	./configure --prefix /opt/local
+	make
+	make install
+fi
 
 # FastBit
 cd /opt/tools
 echo ''
-echo "${RedB} ${White} installing fastbit ${BlueB}"
-curl -klO https://codeforge.lbl.gov/frs/download.php/401/fastbit-ibis1.3.5.tar.gz
-tar zxvf fastbit-ibis1.3.5.tar.gz
-cd fastbit-ibis1.3.5
-./configure --prefix /opt/local
-make
-make install
+if [ -f /opt/local/libfastbit.a ]
+then
+	echo "It appears FastBit is already installed. Skipping."
+else
+	echo "${RedB} ${White} installing fastbit ${BlueB}"
+	curl -klO https://codeforge.lbl.gov/frs/download.php/401/fastbit-ibis1.3.5.tar.gz
+	tar zxvf fastbit-ibis1.3.5.tar.gz
+	cd fastbit-ibis1.3.5
+	./configure --prefix /opt/local
+	make
+	make install
+fi
 
 # build server
+echo ''
+echo "${RedB} building generator server ${BlueB}"
 cd /opt/tools/dtrace/server
 make rel
 
 # build fastbit collector
+echo ''
+echo "${RedB} building fastbit collector ${BlueB}"
 cd ./../fastbit
 make rel
 cd bin/lib
