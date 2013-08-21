@@ -1,6 +1,7 @@
 #! /bin/sh
 # 
-# bash <(curl -s https://raw.github.com/wong1275/dev/master/temp/install.sh)
+# curl https://raw.github.com/wong1275/dev/master/temp/install.sh > install.sh
+# sh install.sh
 # 
 
 NC='\E[m'
