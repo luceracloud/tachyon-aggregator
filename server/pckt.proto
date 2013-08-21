@@ -23,6 +23,7 @@ message Packet {
   repeated Process process = 10;
   repeated CallFreq callfreq = 11;
   repeated string zonename = 12;
+  repeated Cpuqueue cpuqueue = 13;
 
   message Cpu {
     optional uint32 core = 1;
@@ -82,6 +83,12 @@ message Packet {
     required string name = 1;
     optional uint64 time = 2;
     optional uint32 value = 3;
+  }
+
+  message Cpuqueue {
+    optional uint32 core = 1;
+    optional uint32 length = 2;
+    optional uint32 amount = 3;
   }
 
 }

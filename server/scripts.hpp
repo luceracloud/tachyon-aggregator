@@ -80,8 +80,8 @@ namespace DTRACE {
 #else
     std::string("vminfo:::pgin\n{\n@[8,zonename] = count();\n}"),
 
-    std::string("profile:::profile-4999\n{\n/curthread->t_cpu->cpu_disp->disp_nrunnable > "
-        "0/\n{\n@[9,\"global\",cpu] = lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 64, 1);\n}")
+    std::string("profile:::profile-4999\n/curthread->t_cpu->cpu_disp->disp_nrunnable > "
+        "0/\n{\n@[9,\"global\",cpu,curthread->t_cpu->cpu_disp->disp_nrunnable] = count();\n}")
 #endif
   };
 

@@ -60,7 +60,7 @@ int init (dtrace_hdl_t **this_dtp, std::string this_prog) {
   if ((prog = dtrace_program_strcompile (*this_dtp, (const char *)this_prog.c_str(),
     DTRACE_PROBESPEC_NAME, 0, 0, NULL)) == NULL) {
     UTIL::red();
-    std::cout << "ERROR: Failed to compile program" << std::endl;
+    std::cout << "ERROR: Failed to compile program" << std::endl << this_prog << std::endl;
     UTIL::clear();
     return -1;
   }
@@ -241,10 +241,12 @@ static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
 
     // run queue
     if (data.type==9 && i>2) {
-      std::cout << "Hit CPU runqueue" << std::endl;
       if (i==3) {
         data.core = EX32(addr);
-        std::cout << "For CPU " << EX32(addr);
+      } else if (i==4) {
+        data.usage = EX32(addr);
+      } else {
+        ZoneData->at(data.zonename)->add_queue (data.core, data.usage, EX32(addr));
       }
     }
 

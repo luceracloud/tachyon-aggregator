@@ -96,6 +96,12 @@ class Zone {
       cpu->set_core (c);
       cpu->set_usage (u);
     }
+    void add_queue (uint32_t c, uint32_t l, uint32_t a) {
+      PBMSG::Packet_Cpuqueue *cpuqueue = this->packet->add_cpuqueue();
+      cpuqueue->set_core (c);
+      cpuqueue->set_length (l);
+      cpuqueue->set_amount (a);
+    }
     void add_zone (std::string *s) {
       this->packet->add_zonename (*s);
     }
