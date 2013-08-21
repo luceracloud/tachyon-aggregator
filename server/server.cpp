@@ -123,7 +123,7 @@ int main (int argc, char **argv) {
         UTIL::clear();
       }
       (void) dtrace_status (g_dtp[i]);
-    }
+    } 
 
     /* Kstat init */
     kc = kstat_open();

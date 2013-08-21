@@ -76,6 +76,12 @@ class Zone {
         this->packet->mutable_mem(0)->set_nalloc_calls (x);
       } else if (*n == "nfree_calls") {
         this->packet->mutable_mem(0)->set_nfree_calls (x);
+      } else if (*n == "maj_fault") {
+        this->packet->mutable_mem(0)->set_maj_fault (x);
+      } else if (*n == "as_fault") {
+        this->packet->mutable_mem(0)->set_as_fault (x);
+      } else if (*n == "pgin") {
+        this->packet->mutable_mem(0)->set_pgin (x);
       } else {
         UTIL::yellow();
         std::cout << "WARN: encountered unknown type in memory @Zone.hpp:" <<

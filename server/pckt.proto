@@ -33,13 +33,17 @@ message Packet {
     optional uint64 rss = 1;
     optional uint64 physcap = 2;
     optional uint64 swap = 3;
-    optional uint64 swapcap = 4;  
+    optional uint64 swapcap = 4;
     // GZ-specific
     optional uint64 physmem = 5;
     optional uint64 pp_kernel = 6;
     optional uint64 freemem = 7;
     optional uint64 nalloc_calls = 8;
     optional uint64 nfree_calls = 9;
+    // Saturation and Errors
+    optional uint32 maj_fault = 10;
+    optional uint32 as_fault = 11;
+    optional uint32 pgin = 12;
   }
 
   message Net {

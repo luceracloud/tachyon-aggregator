@@ -221,6 +221,33 @@ static int aggwalk (const dtrace_aggdata_t *agg, void *arg) {
       }
     }
 
+    // maj_fault
+    if (data.type==6 && i>2) {
+      std::string s = std::string("maj_fault");
+      ZoneData->at(data.zonename)->add_mem (&s, EX32(addr));
+    }
+
+    // as_fault
+    if (data.type==7 && i>2) {
+      std::string s = std::string("as_fault");
+      ZoneData->at(data.zonename)->add_mem (&s, EX32(addr));
+    }
+
+    // pgin
+    if (data.type==8 && i>2) {
+      std::string s = std::string("pgin");
+      ZoneData->at(data.zonename)->add_mem (&s, EX32(addr));
+    }
+
+    // run queue
+    if (data.type==9 && i>2) {
+      std::cout << "Hit CPU runqueue" << std::endl;
+      if (i==3) {
+        data.core = EX32(addr);
+        std::cout << "For CPU " << EX32(addr);
+      }
+    }
+
   }
 
   return (DTRACE_AGGWALK_REMOVE);

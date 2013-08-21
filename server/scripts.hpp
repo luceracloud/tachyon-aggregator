@@ -51,9 +51,13 @@ namespace DISK {
 }
 
 namespace DTRACE {
-  size_t number = 6; 
+#ifdef ZONE
+  const size_t number = 9;
+#else
+  const size_t number = 10;
+#endif
 
-  std::string dtrace[6] = {
+  std::string dtrace[number] = {
     (std::string)"profile:::profile-4999\n{\n@[0,zonename,cpu] = count();\n}",
 
     (std::string)"profile:::profile-4999\n{\n@[1,zonename,cpu,execname,pid] = count();\n}",
@@ -65,7 +69,21 @@ namespace DTRACE {
 
     std::string("profile:::profile-4999\n{\n@[3,zonename,pid] = count();\n}"),
 
-    std::string("profile:::profile-4999\n{\n@[4,zonename,curthread] = count();\n}")
+    std::string("profile:::profile-4999\n{\n@[4,zonename,curthread] = count();\n}"),
+
+    std::string("vminfo:::maj_fault\n{\n@[6,zonename] = count();\n}"),
+
+    std::string("vminfo:::as_fault\n{\n@[7,zonename] = count();\n}"),
+
+#ifdef ZONE
+    std::string("vminfo:::pgin\n{\n@[8,zonename] = count();\n}")
+#else
+    std::string("vminfo:::pgin\n{\n@[8,zonename] = count();\n}"),
+
+    std::string("profile:::profile-4999\n{\n/curthread->t_cpu->cpu_disp->disp_nrunnable > "
+        "0/\n{\n@[9,\"global\",cpu] = lquantize(curthread->t_cpu->cpu_disp->disp_nrunnable, 0, 64, 1);\n}")
+#endif
   };
+
 }
 

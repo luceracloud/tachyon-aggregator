@@ -26,7 +26,6 @@ pckt:
 rel: server_release server_release_zone
 	cp server_release metric/bin
 	cp server_release_zone metric/bin
-	tar zcf metric.tar.gz metric/*
 
 clean:
 	-rm pckt.pb.cc
