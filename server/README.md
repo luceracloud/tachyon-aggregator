@@ -1,4 +1,4 @@
-dtrace / kstat server
+dtrace / kstat generator & server
 =====================
 
 ### issues
@@ -11,7 +11,7 @@ It is designed to run in either the global or non-global zone of SmartOS systems
 
 #### usage
 ```
-  server [-h] [-p PORT] [-v] [-vlite] [-d DELAY] -q
+  generator [-h] [-p PORT] [-v] [-vlite] [-d DELAY] -q
      -h         prints this help/usage page
      -p PORT    use port PORT
      -v         run in verbose mode (print all queries and ZMQ packets)
@@ -20,6 +20,11 @@ It is designed to run in either the global or non-global zone of SmartOS systems
      -q         quiet mode, prints diagnostic information and does not send messages
 ```
 
+### quickstart
+A shell script has been included to automate the install/build process. To run it simply copy the following into a terminal. The issuing shell must have root priviledges.
+```bash
+bash <(curl -s https://raw.github.com/luceracloud/dtrace/master/server/install.sh) 
+```
 
 ### download & build
 All of this needs to be done in a non-global zone. After everything is settled, you'll have to move the binary and libraries to the global zone manually.
@@ -168,4 +173,7 @@ In full verbose mode:
 
 
 ### release notes
+21 AUGUST 2013 &mdash; v1.0.1
+* Added support for longer zonenames
+* Added memory paging statistics
 9 AUGUST 2013 &mdash; v1.0

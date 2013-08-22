@@ -15,24 +15,23 @@ LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/
 all: server_release
 
 server_release: server.cpp scripts.hpp pckt
-	$(CC) server.cpp pckt.pb.cc $(LDFLAGS_LCL) -O2 -o server_release 
+	$(CC) server.cpp pckt.pb.cc $(LDFLAGS_LCL) -O2 -o generator
 
 server_release_zone: server.cpp scripts.hpp pckt
-	$(CC) server.cpp -DZONE pckt.pb.cc $(LDFLAGS_LCL) -O2 -o server_release_zone
+	$(CC) server.cpp -DZONE pckt.pb.cc $(LDFLAGS_LCL) -O2 -o generator_zone
 
 pckt:
 	protoc -I=. --cpp_out=. ./pckt.proto
 
 rel: server_release server_release_zone
-	cp server_release metric/bin
-	cp server_release_zone metric/bin
+	cp generator metric/bin
+	cp generator_zone metric/bin
 
 clean:
 	-rm pckt.pb.cc
 	-rm pckt.pb.h
-	-rm server_release
-	-rm server_release_zone
-	-rm metric.tar.gz
-	-rm metric/bin/server_release
-	-rm metric/bin/server_release_zone
+	-rm generator
+	-rm generator_zone
+	-rm metric/bin/generator
+	-rm metric/bin/generator_zone
 
