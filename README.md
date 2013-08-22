@@ -5,9 +5,11 @@ dtrace / kstat statistic services
 general
 -------
 
-The included code source makes up the various components of a monitoring service that can be run on SmartOS machines. In general, the service is made of two parts, the __generator__ and the __collector__.
+The included code source makes up the various components of a monitoring service that can be run on SmartOS machines, such as those running on the Joyent Public Cloud (www.joyent.com) or on Lucera (www.luceraHQ.com). 
 
-The __generator__ runs as a background process and queries kernel statistics while running DTrace scripts. The gathered information is wrapped into protocol buffers by zone and broadcast using the ZMQ publish method. The __collector__ also runs as a background process and collectors the zone data as published by the __generator__. It saves the collected information into databases for later access and querying.
+In general, the service is made of two parts, the __generator__ and the __collector__.
+
+The __generator__ runs as a background process and queries kernel statistics while running DTrace scripts or Kstats outputs. The gathered information is wrapped into protocol buffers by zone and broadcast using the ZMQ publish method. The __collector__ also runs as a background process and collectors the zone data as published by the __generator__. It saves the collected information into databases for later access and querying.
 
 The source for the __generator__ is included in the `./server` folder of this directory. Two versions that can be used as __collector__ are included in the `./fastbit` and `./redis` directories. 
 
