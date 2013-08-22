@@ -92,7 +92,7 @@ You can query the database minute by minute. "Start time" is specified as the ar
 There are 10 different functions that can be used to query the data; they are written in the format "-function param1 param2 ... param n".
 
 ###### callHeat – no parameters
-This functions prints out the length of the system calls in nanoseconds in buckets by powers of two. Can be used to see if most calls are taking a long time. A few like the ones from the scheduler will take a while. Prints out the calls for each second.
+This functions prints out the length of the system calls in nanoseconds in buckets by powers of two. Can be used to see if most system calls are taking longer than normal. A few like the ones from the scheduler will take a while. Prints out the calls for each second.
 
 ###### getProcess – (name)
 Prints out all the usage for a given process.
@@ -130,7 +130,7 @@ This function prints data for the specified section if the number at the start i
 e.g. `2013-04-12 –18:09 -18:50 Dis nwritten 0 100000 1`
 
 ###### genStats – Parameters (Section, Stat, computeForAll, Instance)
-This function prints out the maximum, counts, average, and standard deviation for a given statistic, either for a specific instance or all. These statistics can be calculated per minute or over all queried times.
+This function prints out the maximum, counts, average, and standard deviation for a given statistic, either for a specific instance (eg Disk 1) or all. These statistics can be calculated per minute or over all queried times.
 >  Section (Mem, Net etc.)
    Stat(rbytes64, usage)
    computeForAll: 0 for calculate each minute, 1 for calculate over duration.
@@ -174,10 +174,10 @@ Mem | swap | amount of swap being used
 Mem | swapcap | total swap size
 Net | obytes64 | amount of output bytes to the network over the last second
 Net | rbytes64 | amount of received bytes from the network over the last second
-Net | opackets | number of sent packets ... is this a difference too?
+Net | opackets | number of sent packets
 Net | ipackets | number of received packets
 Net | ierrors | input errors
-Net | oerrrors | output errors ... you say output/input packets dropped. are you sure this is the case?
+Net | oerrrors | output errors
 Dis | Instance | which disk the statistics are from
 Dis | nread | how many bytes read off the disk over the past second
 Dis | nwritten | how many bytes written to the disk over the past second
