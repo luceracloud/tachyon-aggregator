@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<link href='http://fonts.googleapis.com/css?family=Asap' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" type="text/css" href="style.css" media="screen">
+<title>Metrics Dashboard | Lucera</title>
+<script type="text/javascript" src="./depends/d3.v3.js"></script>
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+var plots = {};
+function infoPlot(type) {
+  console.log(type);
+  document.getElementById("plotConfirm").innerHTML = type;
+  document.getElementById("plotBoxHeader").innerHTML = type;
+  document.getElementById("infoPlotBox").style.visibility="visible";
+}
+
+function plotConfirm() {
+  var type = document.getElementById("plotConfirm").innerHTML;
+  if (type=="add") {
+    addPlot();
+  } else if (type=="select") {
+
+  } else if (type=="remove") {
+
+  }
+}
+
+function addPlot() {
+  //plots.push(32);
+  console.log(plots.size);
+  console.log("new plot");
+  var new_plot = d3.select("#plots").append("p");
+  new_plot.text(function() {return 12;});
+}
+function removePlot(id) {
+console.log("plot with id");
+console.log(id);
+console.log("removed");
+}
+</script>
+
+
+<div class="body_main">
+<h1>Lorem Ipsum</h1>
+
+dolor sit amet...
+
+<div id="plots">
+
+</div>
+
+
+
+
+
+</div>
+
+
+<div class="body_nav">
+
+<br><br><br>
+<center>
+<div class="button">
+WORDS HERE
+</div>
+<div class="button">
+WORDS HERE 2
+</div>
+<div class="button">
+WORDS HERE 3
+</div>
+<div class="button">
+WORDS HERE 5
+</div>
+<br><br><br>
+asdf
+<br><br><br>
+<div class="button" onclick="infoPlot('add');">add plot</div>
+<div class="button" onclick="infoPlot('select');">select plot ...</div>
+<div class="button" onclick="infoPlot('remove');">remove plot ...</div>
+</center>
+
+
+</div>
+
+
+<div class="popup" id="infoPlotBox">
+<font size=5><span id="plotBoxHeader">dynamic</span> plot</font> : &nbsp; 
+<input type="text" class="input" placeholder="type name here" maxlength="12" size="23"> <br><br>
+current list:<br>
+<span id="plot-list"></span>
+
+<div class="button" id="plotConfirm" style="width:20%;position:absolute;bottom:5px;left:14px;" onclick="plotConfirm();">dynamic</div>
+<div class="button" style="width:20%;position:absolute;bottom:5px;right:8px;" onclick="document.getElementById('infoPlotBox').style.visibility='hidden';">close</div>
+</div>
+
+
+
+</body>
+</html>
