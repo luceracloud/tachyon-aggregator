@@ -7,13 +7,270 @@
 <link rel="stylesheet" type="text/css" href="style.css" media="screen">
 <title>Metrics Dashboard | Lucera</title>
 <script type="text/javascript" src="./depends/d3.v3.js"></script>
+<script type="text/javascript" src="./depends/chart-d3.js"></script>
+<script src="socket.io/socket.io.js"></script>
 </head>
 
 
 <body>
 
+<div class="body_main" id="content">
+<h1>Lorem Ipsum</h1>
+
+dolor sit amet...
+<br><br>
+
+<div class="plot_container" id="plots"></div>
+
+<br><br>
+</div>
+
+
+<div class="body_nav" id="nav-bar">
+<br><br>
+<center>
+<div class="button" onclick="statInfo('cpu');">cpu</div>
+<div class="button" onclick="statInfo('memory');">memory</div>
+<div class="button" onclick="statInfo('network');">net</div>
+<div class="button" onclick="statInfo('disk');">disk</div>
+<div class="button" onclick="statInfo('other');">other</div>
+<br><br>
+<span id="current-plot" class="plotListStyle" style="font-size:2em;">plot 1</span>
+<br><br><br>
+<div class="button" onclick="size('w+')">+ width</div>
+<div class="button" onclick="size('w-')">- width</div>
+<div class="button" onclick="size('h+')">+ height</div>
+<div class="button" onclick="size('h-')">- height</div>
+<br>
+<div class="button" onclick="size('x-')">zoom out (x scale)</div>
+<div class="button" onclick="size('x+')">zoom in (x scale)</div>
+<br>
+<div class="button" onclick="infoPlot('add');">add plot ...</div>
+<div class="button" onclick="infoPlot('select');">select plot ...</div>
+<div class="button" onclick="infoPlot('remove');">remove plot ...</div>
+</center>
+
+</div>
+
+
+
+
+<! General plot information >
+<div class="popup" id="infoPlotBox">
+<font size=5><span id="plotBoxHeader">dynamic</span> plot</font> : &nbsp; 
+<input type="text" class="input" id="new-plot-name" placeholder="type name here" maxlength="12" size="23"> <br><br>
+current list:<br><br>
+<span id="plot-list">
+<span class="plotListStyle" onclick="document.getElementById('new-plot-name').value='plot 1'">plot 1<br></span>
+</span>
+
+<div class="button" id="plotConfirm" style="width:20%;position:absolute;bottom:5px;left:14px;" onclick="plotConfirm();">dynamic</div>
+<div class="button" style="width:20%;position:absolute;bottom:5px;right:8px;" onclick="document.getElementById('infoPlotBox').style.visibility='hidden';">close</div>
+</div>
+
+
+<! stat information >
+<div class="popup" id="statInfoBox">
+<font size=5><span id="statInfoHeader">dynamic</span> stat selection</font><br><br>
+
+select machine (ip/zone): <select id="machine_select"></select> 
+<span class="button" style="width:20%;" onclick="reinit();">update</span>
+<br><br>
+select statistic: <select id="stat_select"></select> <br><br>
+select instance: <select id="instance_select"></select> <br><br>
+
+<div class="button" style="width:20%;position:absolute;bottom:35px;right:8px;" onclick="sendRequest();">add</div>
+<div class="button" style="width:20%;position:absolute;bottom:5px;right:8px;" onclick="document.getElementById('statInfoBox').style.visibility='hidden';">close</div>
+</div>
+
+
+
+
+
+
 <script type="text/javascript">
+
+/* General arrays */
+cpu_stats = ["usage", "queue length"];
+memory_stats = ["rss", "swap", "major faults", "minor faults", "page-ins"];
+network_stats = ["output bytes", "received bytes", "packets out", "packets in"]; // add errors?
+disk_stats = ["number of reads", "number of writes", "bytes read", "bytes written", 
+              "z of x", "z of x", "z of x", "z of x"];
+other_stats = ["number of processes", "number of threads"];
+
+
+/* IO socket */
+var socket = new io.connect();
+socket.on("connect", function(){ 
+  console.log(" > connected");
+
+  // Identify
+  ID_GOES_HERE = "global"; // debug
+  socket.emit("message", {"type" : "init", "self" : ID_GOES_HERE});
+
+ /* socket.emit("message", {"type" : "percpu"});
+  socket.emit("message", {"type" : "kstat", "command" : "memStat"});
+  socket.emit("message", {"type" : "cmd", "cmd" : "dfUse"});
+  socket.emit("message", {"type" : "kstat", "command" : "swapStat"});
+  socket.emit("message", {"type" : "kstat", "command" : "netStatSum"}); */
+});
+socket.on("message", function(message) {
+
+  // init-type message
+  if (message["type"]=="machine_list") {
+    var machine_select_box=document.getElementById("machine_select");
+    machine_select_box.options.length = 0;
+    for (var id in message["list"]) {
+      machine_select_box.options[id]=new Option(message["list"][id], message["list"][id]);
+    }
+  }
+
+  console.log(message);
+
+  /*
+  if (message["type"]=="percpu") {
+    cpustat = Math.floor(message["cpu"]/numberCores/rate*1000)/10;
+  } else if (message["type"]=="memStat") {
+    var tMem = parseInt(message["physmem"]);
+    memstat = Math.floor(((tMem-message["freemem"])/tMem)*1000)/10;
+  } else if (message["type"]=="dfUse") {
+    diskstat = Math.floor( message["used"] / message["available"] * 1000) / 10;
+  } else if (message["type"]=="swapStat") {
+    swapstat = Math.floor( message["swap"] / ( message["swapcap"]) * 1000) / 10;
+  } else if (message["type"]=="netStatSum") {
+    netstat = (message["obytes64"]+message["rbytes64"]-lastnetO-lastnetI)*8/message["ifspeed"];
+    lastnetO = message["obytes64"];
+    lastnetI = message["rbytes64"];
+    netstat = Math.floor( netstat*10000 ) / 100;
+  } */
+  
+});
+
+function reinit() {
+  socket.emit("message", {"type" : "init", "self" : ID_GOES_HERE});
+}
+
+function sendRequest() {
+  socket.emit("message", {"type" : "request", "info" : 
+              [document.getElementById("machine_select").value,
+              document.getElementById("stat_select").value,
+              document.getElementById("instance_select").value]});
+}
+
+
+var selected_plot = "plot 1";
 var plots = {};
+
+// Update functions
+setInterval(function() {
+
+for (plt in plots) {
+  //console.log(plt);
+  plots[plt].addColumn([Math.random()*42, Math.random()*42]);
+}
+
+}, 200);
+
+
+// Init
+var chart = new chartd3(d3.select("div#content .plot_container"), 800, 300);
+chart.addData("cpu1", [1,24,1,5,3,2,1,5,3,2,5,3,1]);
+chart.addData("cpu2", [1,24,1,5,3,2,1,5,3,2,5,3,1]);
+chart.addColumn([Math.random()*42]);
+plots["plot 1"] = chart;
+
+mac_id = 123;
+
+
+
+//var svg = d3.select("#pie_chart_x .chart").selectAll('svg').append("svg");
+
+/* body.append("rect")
+     .attr("x", 0)
+     .attr("y", 0)
+     .attr("rx", 5)
+     .attr("ry", 5)
+     .attr("width", 30)
+     .attr("height", 30)
+     .attr("fill", "black"); */
+//var chart = new chartd3(d3.select("#plots"), 750, 300);
+//var d = [1,24,1,5,3,2,1,5,3,2,5,3,1];
+//chart.addData(d);
+
+function redraw_plots() {
+  for (plt in plots) {
+    console.log(plt);
+    plots[plt].redraw();
+  }
+}
+
+// Functions
+function size(adj) {
+  if (adj=="w-") {
+    plots[selected_plot].w-=20;
+    redraw_plots();
+  } else if (adj=="w+") {
+    plots[selected_plot].w+=20;
+    plots[selected_plot].redraw();
+  } else if (adj=="h-") {
+    plots[selected_plot].h-=10;
+    plots[selected_plot].redraw();
+  } else if (adj=="h+") {
+    plots[selected_plot].h+=10;
+    plots[selected_plot].redraw();
+  } else if (adj=="x-") {
+    plots[selected_plot].point_width/=1.1;
+  } else if (adj=="x+") {
+    plots[selected_plot].point_width*=1.1;
+  }
+}
+
+function statInfo(type) {
+  document.getElementById("statInfoBox").style.visibility="visible";
+  document.getElementById("statInfoHeader").innerHTML=type;
+  var stat_select=document.getElementById("stat_select");
+  stat_select.options.length = 0;
+  var instance_select=document.getElementById("instance_select");
+  instance_select.options.length = 0;
+  if (type=="cpu") {
+    instance_select.options[0]=new Option("n/a", "n/a");
+    for (var id in cpu_stats) {
+      console.log(cpu_stats[id]);
+      stat_select.options[id]=new Option(cpu_stats[id], cpu_stats[id]);
+    }
+  } else if (type=="memory") {
+    instance_select.options[0]=new Option("n/a", "n/a");
+    for (var id in memory_stats) {
+      console.log(memory_stats[id]);
+      stat_select.options[id]=new Option(memory_stats[id], memory_stats[id]);
+    }
+  } else if (type=="network") {
+    instance_select.options[0]=new Option("n/a", "n/a");
+    for (var id in network_stats) {
+      console.log(network_stats[id]);
+      stat_select.options[id]=new Option(network_stats[id], network_stats[id]);
+    }
+  } else if (type=="disk") {
+    instance_select.options[0]=new Option("n/a", "n/a");
+    for (var id in disk_stats) {
+      console.log(disk_stats[id]);
+      stat_select.options[id]=new Option(disk_stats[id], disk_stats[id]);
+    }
+  } else if (type=="other") {
+    instance_select.options[0]=new Option("n/a", "n/a");
+    for (var id in other_stats) {
+      console.log(other_stats[id]);
+      stat_select.options[id]=new Option(other_stats[id], other_stats[id]);
+    }
+  }
+  /*
+  cpu_stats = ["usage"];
+memory_stats = ["rss", "swap"];
+network_stats = [];
+disk_stats = [];
+other_stats = [];*/
+}
+
 function infoPlot(type) {
   console.log(type);
   document.getElementById("plotConfirm").innerHTML = type;
@@ -23,85 +280,47 @@ function infoPlot(type) {
 
 function plotConfirm() {
   var type = document.getElementById("plotConfirm").innerHTML;
+  var name = document.getElementById("new-plot-name").value;
+  document.getElementById("new-plot-name").value = "";
+  document.getElementById("infoPlotBox").style.visibility="hidden";
   if (type=="add") {
-    addPlot();
+    addPlot(name);
+    selectPlot(name);
   } else if (type=="select") {
-
+    selectPlot(name);
   } else if (type=="remove") {
-
+    removePlot(name);
   }
 }
 
-function addPlot() {
-  //plots.push(32);
-  console.log(plots.size);
-  console.log("new plot");
-  var new_plot = d3.select("#plots").append("p");
-  new_plot.text(function() {return 12;});
+function addPlot(name) {
+  plots[name] = new chartd3(d3.select("div#content .plot_container"), 800, 300);
+  console.log(name);
+
+  document.getElementById("plot-list").innerHTML = "";
+  for (plt in plots) {
+    document.getElementById("plot-list").innerHTML += 
+    '<span style="cursor:pointer;" class="plotListStyle" onclick="document.getElementById(\'new-plot-name\').value=\'' + plt + '\'">' + plt + '<br></span>';
+  }
 }
-function removePlot(id) {
-console.log("plot with id");
-console.log(id);
-console.log("removed");
+function selectPlot(name) {
+  selected_plot = name;
+  document.getElementById("current-plot").innerHTML = name;
+}
+function removePlot(name) {
+  delete plots[name];
+
+  document.getElementById("plot-list").innerHTML = "";
+  for (plt in plots) {
+    document.getElementById("plot-list").innerHTML += plt + "<br>";
+  }
 }
 </script>
 
-
-<div class="body_main">
-<h1>Lorem Ipsum</h1>
-
-dolor sit amet...
-
-<div id="plots">
-
-</div>
-
-
-
-
-
-</div>
-
-
-<div class="body_nav">
-
-<br><br><br>
-<center>
-<div class="button">
-WORDS HERE
-</div>
-<div class="button">
-WORDS HERE 2
-</div>
-<div class="button">
-WORDS HERE 3
-</div>
-<div class="button">
-WORDS HERE 5
-</div>
-<br><br><br>
-asdf
-<br><br><br>
-<div class="button" onclick="infoPlot('add');">add plot</div>
-<div class="button" onclick="infoPlot('select');">select plot ...</div>
-<div class="button" onclick="infoPlot('remove');">remove plot ...</div>
-</center>
-
-
-</div>
-
-
-<div class="popup" id="infoPlotBox">
-<font size=5><span id="plotBoxHeader">dynamic</span> plot</font> : &nbsp; 
-<input type="text" class="input" placeholder="type name here" maxlength="12" size="23"> <br><br>
-current list:<br>
-<span id="plot-list"></span>
-
-<div class="button" id="plotConfirm" style="width:20%;position:absolute;bottom:5px;left:14px;" onclick="plotConfirm();">dynamic</div>
-<div class="button" style="width:20%;position:absolute;bottom:5px;right:8px;" onclick="document.getElementById('infoPlotBox').style.visibility='hidden';">close</div>
-</div>
 
 
 
 </body>
 </html>
+
+

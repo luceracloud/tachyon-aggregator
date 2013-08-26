@@ -39,6 +39,7 @@ div.body_nav
 font-family:'Asap',sans-serif;
 text-align:center;
 position:fixed;
+box-shadow:-4px 0px 6px #888888;
 top:0%;
 left:78%;
 width:20%;
@@ -48,6 +49,7 @@ background:#f0f0f0;
 }
 div.button
 {
+background:#fafafa;
 color:#6b6a6d;
 margin-top:4px;
 margin-bottom:4px;
@@ -57,11 +59,15 @@ text-align:center;
 border-radius:8px;
 -moz-border-radius:8px;
 padding:4px;
+-webkit-user-select: none; /* Chrome/Safari */        
+-moz-user-select: none; /* Firefox */
+-ms-user-select: none; /* IE10+ */
 }
 div.button:hover
 {
 color:#00acec;
 border:1px solid black;
+cursor:pointer;
 box-shadow:1px 1px 1px #888888;
 }
 div.popup
@@ -82,12 +88,48 @@ border-radius:13px;
 -moz-border-radius:13px;
 padding:20px;
 }
+div.plot_container
+{
+
+}
 div.plot
 {
 width:100%;
 }
-
-
+span.plotListStyle
+{
+cursor:pointer;
+line-height:1.4em;
+color:#46c1ef;
+font-size:1.2em;
+}
+span.plotListStyle:hover
+{
+color:#1691ef;
+}
+span.button
+{
+/*background:#fafafa;*/
+color:#6b6a6d;
+margin-top:4px;
+margin-bottom:4px;
+width:80%;
+-webkit-user-select: none; /* Chrome/Safari */        
+-moz-user-select: none; /* Firefox */
+-ms-user-select: none; /* IE10+ */
+/*border:1px solid grey;*/
+text-align:center;
+/*border-radius:8px;*/
+/*-moz-border-radius:8px;*/
+padding:4px;
+}
+span.button:hover
+{
+color:#00acec;
+/*border:1px solid black;*/
+cursor:pointer;
+/*box-shadow:1px 1px 1px #888888;*/
+}
 
 
 
