@@ -45,6 +45,8 @@ dolor sit amet...
 <div class="button" onclick="size('x-')">zoom out (x scale)</div>
 <div class="button" onclick="size('x+')">zoom in (x scale)</div>
 <br>
+<div class="button" onclick="change_style();">change style</div>
+<br>
 <div class="button" onclick="infoPlot('add');">add plot ...</div>
 <div class="button" onclick="infoPlot('select');">select plot ...</div>
 <div class="button" onclick="infoPlot('remove');">remove plot ...</div>
@@ -158,6 +160,7 @@ function sendRequest() {
 }
 
 
+
 var selected_plot = "plot 1";
 var plots = {};
 
@@ -169,7 +172,7 @@ for (plt in plots) {
   plots[plt].addColumn([Math.random()*42, Math.random()*42]);
 }
 
-}, 200);
+}, 891);
 
 
 // Init
@@ -211,17 +214,27 @@ function size(adj) {
     redraw_plots();
   } else if (adj=="w+") {
     plots[selected_plot].w+=20;
-    plots[selected_plot].redraw();
+    redraw_plots();
   } else if (adj=="h-") {
     plots[selected_plot].h-=10;
-    plots[selected_plot].redraw();
+    redraw_plots();
   } else if (adj=="h+") {
     plots[selected_plot].h+=10;
-    plots[selected_plot].redraw();
+    redraw_plots();
   } else if (adj=="x-") {
     plots[selected_plot].point_width/=1.1;
   } else if (adj=="x+") {
     plots[selected_plot].point_width*=1.1;
+  }
+}
+
+function change_style() {
+  console.log("entering style");
+  var modell = plots[selected_plot].modell;
+  if (modell=="line") {
+    plots[selected_plot].modell = "heatmap";
+  } else if (modell=="heatmap") {
+    plots[selected_plot].modell = "line";
   }
 }
 
@@ -295,6 +308,7 @@ function plotConfirm() {
 
 function addPlot(name) {
   plots[name] = new chartd3(d3.select("div#content .plot_container"), 800, 300);
+  plots[name].modell="heatmap";
   console.log(name);
 
   document.getElementById("plot-list").innerHTML = "";

@@ -5,7 +5,7 @@
  *
  *
  *  CREATED:  23 AUG 2013
- *  EDITED:   23 AUG 2013
+ *  EDITED:   26 AUG 2013
  */
 
 var express = require('express');
@@ -20,17 +20,26 @@ app.configure(function() {
 });
 io.set('log level', 1);
 
-server.listen(8000);
-
-
+server.listen(7272);
 
 
 /* Handling zmq/protobuf parsing */
+var zmq = require('zmq');
+var sock = zmq.socket('sub');
+var ProtoBuf = require('protobufjs');
+
+sock.subscribe("");
+sock.connect('tcp://10.20.1.130:7200');
+
+
 var machine_list = [];
 machine_list.push("mac I");
 machine_list.push("macc II");
 machine_list.push("maccc III");
 console.log(machine_list);
+
+
+
 
 
 /* Handling http requests */
