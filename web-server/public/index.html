@@ -211,6 +211,7 @@ function change_style() {
 
 function statInfo(type) {
   document.getElementById("statInfoHeader").innerHTML=type;
+  reqInstances();
   document.getElementById("statInfoBox").style.visibility="visible";
   var stat_select=document.getElementById("stat_select");
   stat_select.options.length = 0;

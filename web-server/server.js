@@ -29,6 +29,7 @@ var machine_list = [];
 var zmq = require('zmq');
 var sock = zmq.socket('sub');
 var ProtoBuf = require('protobufjs');
+var Long = require('long'); 
 var Packet = ProtoBuf.protoFromFile("pckt.proto").build("PBMSG.Packet");
 
 sock.subscribe("");
@@ -72,13 +73,18 @@ io.sockets.on('connection', function(socket) {
         // instance name differently
        // console.log(STAT_ARRAY[stat][1]);
         if (STAT_ARRAY[s][1][0]=="cpu") {
-          console.log("cpu intercept");
+          dataToSend["value"] = 0;
+          for (var i in message.cpu) {
+            if (message.cpu[i].core==STAT_ARRAY[s][1][3]) {
+              dataToSend["value"] = message.cpu[i].usage;
+              break;
+            }
+          }
         } else if (STAT_ARRAY[s][1][0]=="memory") {
-          console.log(message);
           if (STAT_ARRAY[s][1][2]=="rss") {
-            dataToSend["value"] = message.mem[0].rss;
+            dataToSend["value"] = new Long(message.mem[0].rss).toNumber();
           } else if (STAT_ARRAY[s][1][2]=="swap") {
-            dataToSend["value"] = message.mem[0].swap;
+            dataToSend["value"] = new Long(message.mem[0].swap).toNumber();
           } else if (STAT_ARRAY[s][1][2]=="major faults") {
             dataToSend["value"] = message.mem[0].maj_fault;
           } else if (STAT_ARRAY[s][1][2]=="minor faults") {
@@ -89,9 +95,36 @@ io.sockets.on('connection', function(socket) {
             console.log("Unknown 'memory' statistic");
           }
         } else if (STAT_ARRAY[s][1][0]=="network") {
-          console.log("network intcpt");
+          dataToSend["value"] = 0;
+          for (var i in message.net) {
+            dataToSend["value"] = 0;
+            if (message.net[i].instance==STAT_ARRAY[s][1][3]) {
+              if (STAT_ARRAY[s][1][2]=="output bytes") {
+              dataToSend["value"] = new Long(message.net[i].obytes64).toNumber();
+
+              } else if (STAT_ARRAY[s][1][2]=="received bytes") {
+              dataToSend["value"] = new Long(message.net[i].rbytes64).toNumber();
+
+              } else if (STAT_ARRAY[s][1][2]=="packets out") {
+              dataToSend["value"] = new Long(message.net[i].opackets).toNumber();
+
+              } else if (STAT_ARRAY[s][1][2]=="packets in") {
+              dataToSend["value"] = new Long(message.net[i].ipackets).toNumber();
+              } else {
+                console.log("Unknown 'network' statistic");
+              }
+              break;
+            }
+          }
         } else if (STAT_ARRAY[s][1][0]=="disk") {
-          console.log("disk inctp");
+          dataToSend["value"] = 0;
+          for (var i in message.disk) {
+            if (message.disk[i].instance==STAT_ARRAY[s][1][3]) {
+              // Allow for different [s][1][2]'s
+              dataToSend["value"] = message.disk[i].reads;
+              break;
+            }
+          }
         } else if (STAT_ARRAY[s][1][0]=="other") {
           if (STAT_ARRAY[s][1][2]=="number of processes") {
             dataToSend["value"] = message.processes;
