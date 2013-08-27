@@ -41,8 +41,8 @@ function chartd3 (canvas, w, h) {
      .attr("fill", this.bgcolor);
 
 
-
-  data = {};
+  this.key_map = [];
+  this.data = {};
   var data_max_y = 0;
   var data_max_x = 0;
 
@@ -57,7 +57,25 @@ function chartd3 (canvas, w, h) {
   /* Data manipulation functions */
   this.addData=addData;
   function addData (key, new_data) {
-    data[Object.keys(data).length] = new_data;
+    if (this.key_map.indexOf(key)==-1) {
+      if (typeof(new_data)=="number") {
+        this.data[Object.keys(this.data).length] = [new_data];
+      } else {
+        this.data[Object.keys(this.data).length] = new_data;
+      }
+      this.key_map.push(key);
+    } else {
+      if (typeof(new_data)=="number") {
+        console.log(key);
+        this.data[this.key_map.indexOf(key)].push(new_data);
+      } else {
+        for (i in new_data) {
+          this.data[this.key_map.indexOf(key)].push(new_data[i]);
+        }
+      }
+      // append in appropriate place
+    }
+    
     this.draw;
   }
 
@@ -66,13 +84,13 @@ function chartd3 (canvas, w, h) {
   //
   this.addColumn=addColumn;
   function addColumn (new_data) {
-    if (new_data.length>Object.keys(data).length) {
+    if (new_data.length>Object.keys(this.data).length) {
       for (var i=0; i<new_data.length-Object.keys(data).length; i++) {
-        data[Object.keys(data).length] = [];
+        this.data[Object.keys(this.data).length] = [];
       }
     }
     for (var i in new_data) {
-      data[i].push(new_data[i]);
+      this.data[i].push(new_data[i]);
     }
     
     data_max_y = Math.max(Math.max.apply(Math, new_data), data_max_y);
@@ -84,7 +102,7 @@ function chartd3 (canvas, w, h) {
   function clearData (group) {
     toClear = [];
     if (typeof(group) == "undefined") {
-      for (var set in Object.keys(data)) {
+      for (var set in Object.keys(this.data)) {
         toClear.push(set);
       }
     } else if (typeof(group) == "number") {
@@ -96,7 +114,7 @@ function chartd3 (canvas, w, h) {
       }
     }
     for (var k in toClear) {
-      data[k].length = 0;
+      this.data[k].length = 0;
     }
   }
 
@@ -150,10 +168,10 @@ function chartd3 (canvas, w, h) {
 
     // Update dataset values
     data_max_y = 0;
-    for (var i in data) {
-      data[i].splice(0,data[i].length-this.point_width);
-      data_max_y = Math.max(Math.max.apply(Math, data[i]), data_max_y);
-      data_max_x = Math.max(data_max_x, data[i].length);
+    for (var i in this.data) {
+      this.data[i].splice(0,this.data[i].length-this.point_width);
+      data_max_y = Math.max(Math.max.apply(Math, this.data[i]), data_max_y);
+      data_max_x = Math.max(data_max_x, this.data[i].length);
     }
     data_max_y = Math.max(this.ymax, data_max_y);
     this.yabsmax = Math.max(this.yabsmax, data_max_y);
@@ -161,20 +179,20 @@ function chartd3 (canvas, w, h) {
     // Calculate scaling
     yscale = 255/this.yabsmax;
     xscale = (this.w-xpad)/this.point_width;
-    vertscale = (this.h-ypad)/Object.keys(data).length;
+    vertscale = (this.h-ypad)/Object.keys(this.data).length;
 
-    for (i in data) {
+    for (i in this.data) {
       // c'est une colonne
-      sx = Math.max(this.point_width-data[i].length, 0);
-      for (j in data[i]) {
+      sx = Math.max(this.point_width-this.data[i].length, 0);
+      for (j in this.data[i]) {
         
-        console.log(yscale*data[i][j]);
+        //console.log(yscale*data[i][j]);
         svg.append("rect")
            .attr("x", (xpad/2)+(parseInt(j)+sx)*xscale)
            .attr("y", (ypad/2)+i*vertscale)
            .attr("width", xscale-2)
            .attr("height", vertscale-2)
-           .attr("fill", "rgb("+parseInt(yscale*data[i][j])+",0,10)");
+           .attr("fill", "rgb("+parseInt(yscale*this.data[i][j])+",0,10)");
       } 
       
 
@@ -202,10 +220,10 @@ function chartd3 (canvas, w, h) {
 
     // Update dataset values
     data_max_y = 0;
-    for (var i in data) {
-      data[i].splice(0,data[i].length-this.point_width);
-      data_max_y = Math.max(Math.max.apply(Math, data[i]), data_max_y);
-      data_max_x = Math.max(data_max_x, data[i].length);
+    for (var i in this.data) {
+      this.data[i].splice(0,this.data[i].length-this.point_width);
+      data_max_y = Math.max(Math.max.apply(Math, this.data[i]), data_max_y);
+      data_max_x = Math.max(data_max_x, this.data[i].length);
     }
     data_max_y = Math.max(this.ymax, data_max_y);
 
@@ -228,16 +246,16 @@ function chartd3 (canvas, w, h) {
        .style("stroke", "rgb(100,100,100)");
 
     // Add lines
-    for (i in data) {
-      var sp = Math.max(data[i].length-this.point_width,0);
-      var sx = data_max_x-data[i].length;
+    for (i in this.data) {
+      var sp = Math.max(this.data[i].length-this.point_width,0);
+      var sx = data_max_x-this.data[i].length;
       for (j=0; j<this.point_width-1; j++) {
-        if (j==data[i].length-1) break;
+        if (j==this.data[i].length-1) break;
         svg.append("line")
            .attr("x1", xpad+(j+sx)*xscale)
-           .attr("y1", this.h-(ypad+data[i][sp+j]*yscale))
+           .attr("y1", this.h-(ypad+this.data[i][sp+j]*yscale))
            .attr("x2", xpad+(j+1+sx)*xscale)
-           .attr("y2", this.h-(ypad+data[i][sp+j+1]*yscale))
+           .attr("y2", this.h-(ypad+this.data[i][sp+j+1]*yscale))
            .style("stroke", this.colors[i]);
       }
     }
