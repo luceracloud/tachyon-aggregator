@@ -55,8 +55,6 @@ dolor sit amet...
 </div>
 
 
-
-
 <! General plot information >
 <div class="popup" id="infoPlotBox">
 <font size=5><span id="plotBoxHeader">dynamic</span> plot</font> : &nbsp; 
@@ -101,6 +99,13 @@ disk_stats = ["number of reads", "number of writes", "bytes read", "bytes writte
 other_stats = ["number of processes", "number of threads"];
 
 
+
+
+var selected_plot = "plot 1";
+var plots = {};
+
+
+
 /* IO socket */
 var socket = new io.connect();
 socket.on("connect", function(){ 
@@ -109,13 +114,8 @@ socket.on("connect", function(){
   // Identify
   ID_GOES_HERE = "global"; // debug
   socket.emit("message", {"type" : "init", "self" : ID_GOES_HERE});
-
- /* socket.emit("message", {"type" : "percpu"});
-  socket.emit("message", {"type" : "kstat", "command" : "memStat"});
-  socket.emit("message", {"type" : "cmd", "cmd" : "dfUse"});
-  socket.emit("message", {"type" : "kstat", "command" : "swapStat"});
-  socket.emit("message", {"type" : "kstat", "command" : "netStatSum"}); */
 });
+
 socket.on("message", function(message) {
 
   // init-type message
@@ -125,27 +125,13 @@ socket.on("message", function(message) {
     for (var id in message["list"]) {
       machine_select_box.options[id]=new Option(message["list"][id], message["list"][id]);
     }
+  } else if (message["type"]=="value-response") {
+    console.log(message["plot"]);
+    plots[message["plot"]].addColumn([message["value"]]);
+    console.log(message);
+    console.log("recv value-response");
   }
 
-  console.log(message);
-
-  /*
-  if (message["type"]=="percpu") {
-    cpustat = Math.floor(message["cpu"]/numberCores/rate*1000)/10;
-  } else if (message["type"]=="memStat") {
-    var tMem = parseInt(message["physmem"]);
-    memstat = Math.floor(((tMem-message["freemem"])/tMem)*1000)/10;
-  } else if (message["type"]=="dfUse") {
-    diskstat = Math.floor( message["used"] / message["available"] * 1000) / 10;
-  } else if (message["type"]=="swapStat") {
-    swapstat = Math.floor( message["swap"] / ( message["swapcap"]) * 1000) / 10;
-  } else if (message["type"]=="netStatSum") {
-    netstat = (message["obytes64"]+message["rbytes64"]-lastnetO-lastnetI)*8/message["ifspeed"];
-    lastnetO = message["obytes64"];
-    lastnetI = message["rbytes64"];
-    netstat = Math.floor( netstat*10000 ) / 100;
-  } */
-  
 });
 
 function reinit() {
@@ -153,52 +139,22 @@ function reinit() {
 }
 
 function sendRequest() {
-  socket.emit("message", {"type" : "request", "info" : 
-              [document.getElementById("machine_select").value,
+  socket.emit("message", {"type" : "request", "self" : selected_plot, "info" : 
+              [document.getElementById("statInfoHeader").innerHTML,
+              document.getElementById("machine_select").value,
               document.getElementById("stat_select").value,
               document.getElementById("instance_select").value]});
 }
 
-
-
-var selected_plot = "plot 1";
-var plots = {};
-
 // Update functions
-setInterval(function() {
-
-for (plt in plots) {
-  //console.log(plt);
-  plots[plt].addColumn([Math.random()*42, Math.random()*42]);
-}
-
-}, 891);
-
 
 // Init
 var chart = new chartd3(d3.select("div#content .plot_container"), 800, 300);
 chart.addData("cpu1", [1,24,1,5,3,2,1,5,3,2,5,3,1]);
-chart.addData("cpu2", [1,24,1,5,3,2,1,5,3,2,5,3,1]);
 chart.addColumn([Math.random()*42]);
 plots["plot 1"] = chart;
 
 mac_id = 123;
-
-
-
-//var svg = d3.select("#pie_chart_x .chart").selectAll('svg').append("svg");
-
-/* body.append("rect")
-     .attr("x", 0)
-     .attr("y", 0)
-     .attr("rx", 5)
-     .attr("ry", 5)
-     .attr("width", 30)
-     .attr("height", 30)
-     .attr("fill", "black"); */
-//var chart = new chartd3(d3.select("#plots"), 750, 300);
-//var d = [1,24,1,5,3,2,1,5,3,2,5,3,1];
-//chart.addData(d);
 
 function redraw_plots() {
   for (plt in plots) {
