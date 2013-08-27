@@ -73,8 +73,8 @@ current list:<br><br>
 <div class="popup" id="statInfoBox">
 <font size=5><span id="statInfoHeader">dynamic</span> stat selection</font><br><br>
 
-select machine (ip/zone): <select id="machine_select"></select> 
-<span class="button" style="width:20%;" onclick="reinit();">update</span>
+select machine (ip/zone): <select id="machine_select" onchange="reqInstances();"></select> 
+<span class="button" style="width:20%;" onclick="reinit();reqInstances();">update</span>
 <br><br>
 select statistic: <select id="stat_select"></select> <br><br>
 select instance: <select id="instance_select"></select> <br><br>
@@ -98,12 +98,8 @@ disk_stats = ["number of reads", "number of writes", "bytes read", "bytes writte
               "z of x", "z of x", "z of x", "z of x"];
 other_stats = ["number of processes", "number of threads"];
 
-
-
-
 var selected_plot = "plot 1";
 var plots = {};
-
 
 
 /* IO socket */
@@ -113,13 +109,20 @@ socket.on("connect", function(){
 
   // Identify
   ID_GOES_HERE = "global"; // debug
+
+  
   socket.emit("message", {"type" : "init", "self" : ID_GOES_HERE});
 });
 
 socket.on("message", function(message) {
 
+  console.log(message);
+
   // init-type message
   if (message["type"]=="machine_list") {
+    if (message["list"].length==0) {
+      setTimeout (reinit(), 200);
+    }
     var machine_select_box=document.getElementById("machine_select");
     machine_select_box.options.length = 0;
     for (var id in message["list"]) {
@@ -129,6 +132,15 @@ socket.on("message", function(message) {
     plots[message["plot"]].addData( message["key"][0]+message["key"][1]+
                                     message["key"][2], message["value"]);
     redraw_plots();
+  } else if (message["type"]=="instance-response") {
+    var instance_select=document.getElementById("instance_select");
+    instance_select.options.length = 0;
+    for (var i in message["data"]) {
+      if (typeof(message["data"][i])=="object") return;
+      if (message["data"][i]=="null") return; 
+      instance_select.options[i]=
+          new Option(message["data"][i], message["data"][i]);
+    }
   }
 
 });
@@ -149,8 +161,6 @@ function sendRequest() {
 
 // Init
 var chart = new chartd3(d3.select("div#content .plot_container"), 800, 300);
-chart.addData("cpu1", [0,0]);
-chart.addColumn([Math.random()*42]);
 plots["plot 1"] = chart;
 
 mac_id = 123;
@@ -159,6 +169,12 @@ function redraw_plots() {
   for (plt in plots) {
     plots[plt].redraw();
   }
+}
+
+function reqInstances() {
+  socket.emit("message", {"type" : "instance-req", "info" : 
+      [document.getElementById("machine_select").value, 
+      document.getElementById("statInfoHeader").innerHTML] });
 }
 
 // Functions
@@ -194,49 +210,38 @@ function change_style() {
 }
 
 function statInfo(type) {
-  document.getElementById("statInfoBox").style.visibility="visible";
   document.getElementById("statInfoHeader").innerHTML=type;
+  document.getElementById("statInfoBox").style.visibility="visible";
   var stat_select=document.getElementById("stat_select");
   stat_select.options.length = 0;
-  var instance_select=document.getElementById("instance_select");
-  instance_select.options.length = 0;
+//  var instance_select=document.getElementById("instance_select");
+//  instance_select.options.length = 0;
   if (type=="cpu") {
-    instance_select.options[0]=new Option("n/a", "n/a");
     for (var id in cpu_stats) {
       console.log(cpu_stats[id]);
       stat_select.options[id]=new Option(cpu_stats[id], cpu_stats[id]);
     }
   } else if (type=="memory") {
-    instance_select.options[0]=new Option("n/a", "n/a");
     for (var id in memory_stats) {
       console.log(memory_stats[id]);
       stat_select.options[id]=new Option(memory_stats[id], memory_stats[id]);
     }
   } else if (type=="network") {
-    instance_select.options[0]=new Option("n/a", "n/a");
     for (var id in network_stats) {
       console.log(network_stats[id]);
       stat_select.options[id]=new Option(network_stats[id], network_stats[id]);
     }
   } else if (type=="disk") {
-    instance_select.options[0]=new Option("n/a", "n/a");
     for (var id in disk_stats) {
       console.log(disk_stats[id]);
       stat_select.options[id]=new Option(disk_stats[id], disk_stats[id]);
     }
   } else if (type=="other") {
-    instance_select.options[0]=new Option("n/a", "n/a");
     for (var id in other_stats) {
       console.log(other_stats[id]);
       stat_select.options[id]=new Option(other_stats[id], other_stats[id]);
     }
-  }
-  /*
-  cpu_stats = ["usage"];
-memory_stats = ["rss", "swap"];
-network_stats = [];
-disk_stats = [];
-other_stats = [];*/
+  } 
 }
 
 function infoPlot(type) {

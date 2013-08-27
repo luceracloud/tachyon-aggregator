@@ -39,14 +39,23 @@ sock.connect('tcp://172.20.0.85:7211');
 /* Handling http requests */
 io.sockets.on('connection', function(socket) { 
 
+  var instances = {}; // key{zone; val{[cpu,net,disk]
   STAT_ARRAY = [];
+  saved_msgs = {}; // key{name; val{msg
 
   /* Start listening to zmq/protobuf */
   sock.on("message", function(msg) {
     var message;
     try {
       message = Packet.decode(msg);
+      //console.log(message);
     } catch (err) {
+      return;
+    }
+
+    // Write packet to history, if necessary
+    if (Object.keys(saved_msgs).indexOf(message.name)==-1) {
+      saved_msgs[message.name]=message;
       return;
     }
 
@@ -102,31 +111,70 @@ io.sockets.on('connection', function(socket) {
     if (machine_list.indexOf(message.name)==-1) {
       machine_list.push(message.name);
     }
+
+    // Populate instances
+    try {
+      for (i in message.cpu) {
+        if (instances[message.name][0].indexOf(message.cpu[i]["core"])==-1) {
+          instances[message.name][0].push(message.cpu[i]["core"]);
+        }
+      }
+      for (i in message.net) {
+        if (instances[message.name][1].indexOf(message.net[i]["instance"])==-1) {
+          instances[message.name][1].push(message.net[i]["instance"]);
+        }
+      }
+      for (i in message.disk) {
+        if (instances[message.name][2].indexOf(message.disk[i]["instance"])==-1) {
+          instances[message.name][2].push(message.disk[i]["instance"]);
+        }
+      }
+    } catch (err) {}
+
+    saved_msgs[message.name]=message;
   });
 
 
-  /* Send message with list of available machines
-  socket.emit("message", {"type" : "cmd", "cmd" : "dfUse"});
-
-  console.log("Connection");
-
-  /* Handle new message events */
+  // Handle new message events 
   socket.on( 'message', function(message, flags) {
 
     // Init / ident message
     if (message["type"]=="init") {
       console.log(machine_list);
       socket.emit("message", {"type" : "machine_list", "list" : machine_list})
+    } else if (message["type"]=="instance-req") {
+
+      for (var n in machine_list) {
+        if (Object.keys(instances).indexOf(machine_list[n])==-1) {
+          instances[machine_list[n]] = [[], [], []];
+        }
+      }
+
+      //if (message["info"][0]=="") return;
+ 
+      data = [];
+
+      if (message["info"][1]=="cpu") {
+        console.log("instances");
+        console.log(instances);
+        console.log("msg[nfo]");
+        console.log(message["info"]);
+        console.log("failling call");
+        console.log(instances[message["info"][0]]);
+        data = instances[message["info"][0]][0];
+      } else if (message["info"][1]=="network") {
+        data = instances[message["info"][0]][1];
+      } else if (message["info"][1]=="disk") {
+        data = instances[message["info"][0]][2];
+      }
+
+      socket.emit("message", 
+          {"type" : "instance-response", "data" : data});
+
     } else if (message["type"]=="request") {
-      console.log(message);
-      console.log(message["type"]);
-      console.log(message["self"]);
-      console.log(message["info"]);
       STAT_ARRAY.push([message["self"], message["info"]]); // { message["self"] : message["info"] } ); 
     }
 
-
   });
-
 
 });
