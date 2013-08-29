@@ -15,7 +15,7 @@ function chartd3 (canvas, w, h) {
   this.point_width = 10;
   this.scale=true; // If true, we rescale the y-scale each update
   this.bgcolor="rgb(240,240,240)";
-  this.ymax = 0;
+  this.ymax = 1;
   this.yabsmax = 0;
 
   /* type of plot */
@@ -40,7 +40,10 @@ function chartd3 (canvas, w, h) {
      .attr("height", h)
      .attr("fill", this.bgcolor);
 
-
+  // CURRENTLY, support for subtraction only exists when inserting 1-width data
+  // sets at a time.
+  this.data_saved = {};   // data_type==1 forces subtraction of previous point
+  this.data_type = {};    // (trust javascript to implement this well)
   this.key_map = [];
   this.data = {};
   var data_max_y = 0;
@@ -53,27 +56,46 @@ function chartd3 (canvas, w, h) {
 
   }
 
+  
+  this.remove=remove;
+  function remove() {
+    svg.remove();
+    delete data;
+  }
+
   /*******************************/
   /* Data manipulation functions */
   this.addData=addData;
-  function addData (key, new_data) {
+  function addData (key, new_data, type) {
+    if (typeof(type)=="undefined") type=0;
     if (this.key_map.indexOf(key)==-1) {
       if (typeof(new_data)=="number") {
-        this.data[Object.keys(this.data).length] = [new_data];
+        if (type) {
+          this.data_saved[key] = new_data;
+          this.data[Object.keys(this.data).length] = [0];
+        } else {
+          this.data[Object.keys(this.data).length] = [new_data];
+        }
       } else {
         this.data[Object.keys(this.data).length] = new_data;
       }
       this.key_map.push(key);
+      this.data_type[key] = type;
+      //if (this.data_type[this.key_map.indexOf(key)]) this.data_saved[key]=new_data
     } else {
       if (typeof(new_data)=="number") {
-        console.log(key);
-        this.data[this.key_map.indexOf(key)].push(new_data);
+        if (this.data_type[key]) {
+          this.data[this.key_map.indexOf(key)].push(new_data-this.data_saved[key]);
+          this.data_saved[key] = new_data;
+        } else {
+          this.data[this.key_map.indexOf(key)].push(new_data);
+        }
       } else {
         for (i in new_data) {
           this.data[this.key_map.indexOf(key)].push(new_data[i]);
         }
       }
-      // append in appropriate place
+      
     }
     
     this.draw;
@@ -95,6 +117,16 @@ function chartd3 (canvas, w, h) {
     
     data_max_y = Math.max(Math.max.apply(Math, new_data), data_max_y);
     this.draw();
+  }
+
+  // Returns array of all keys
+  this.keys=keys;
+  function keys () {
+    var key_list = [];
+    for (i in this.key_map) {
+      key_list.push(this.key_map[i].split(','));
+    }
+    return key_list;
   }
 
   // Clears the data, but keeps the position in memory
@@ -186,7 +218,6 @@ function chartd3 (canvas, w, h) {
       sx = Math.max(this.point_width-this.data[i].length, 0);
       for (j in this.data[i]) {
         
-        //console.log(yscale*data[i][j]);
         svg.append("rect")
            .attr("x", (xpad/2)+(parseInt(j)+sx)*xscale)
            .attr("y", (ypad/2)+i*vertscale)
@@ -198,7 +229,6 @@ function chartd3 (canvas, w, h) {
 
     }
 
-    //console.log(Object.keys(data).length);
   }
 
   /* Line-plot drawing */
@@ -207,7 +237,6 @@ function chartd3 (canvas, w, h) {
     // Clear the palate
     svg.selectAll("rect").remove();
     svg.selectAll("line").remove();
-    console.log
     // Canvas (background)
     svg.append("rect")
        .attr("x", 0)
@@ -247,6 +276,9 @@ function chartd3 (canvas, w, h) {
 
     // Add lines
     for (i in this.data) {
+    //  if (this.data_type[i]) {
+    //    if (this.data[i].length<2) continue;
+    //  }
       var sp = Math.max(this.data[i].length-this.point_width,0);
       var sx = data_max_x-this.data[i].length;
       for (j=0; j<this.point_width-1; j++) {

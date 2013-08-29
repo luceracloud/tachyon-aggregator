@@ -50,6 +50,15 @@ div.body_nav
 {
 font-family:'Asap',sans-serif;
 text-align:center;
+position:absolute;
+top:0%;
+left:78%;
+width:20%;
+height:100%;
+padding:10px;
+}
+div.nav_bg
+{
 position:fixed;
 box-shadow:-4px 0px 6px #888888;
 top:0%;

@@ -42,7 +42,6 @@ io.sockets.on('connection', function(socket) {
 
   var instances = {}; // key{zone; val{[cpu,net,disk]
   STAT_ARRAY = [];
-  saved_msgs = {}; // key{name; val{msg
 
   /* Start listening to zmq/protobuf */
   sock.on("message", function(msg) {
@@ -54,12 +53,6 @@ io.sockets.on('connection', function(socket) {
       return;
     }
 
-    // Write packet to history, if necessary
-    if (Object.keys(saved_msgs).indexOf(message.name)==-1) {
-      saved_msgs[message.name]=message;
-      return;
-    }
-
     for (s in STAT_ARRAY) {
       if (message.name==STAT_ARRAY[s][1][1]) {
         // add data to send buffer
@@ -68,7 +61,8 @@ io.sockets.on('connection', function(socket) {
         dataToSend["plot"] = STAT_ARRAY[s][0];
         dataToSend["key"] = [STAT_ARRAY[s][1][1],
                             STAT_ARRAY[s][1][2],
-                            STAT_ARRAY[s][1][3]]
+                            STAT_ARRAY[s][1][3]];
+        dataToSend["modify"] = 0; // flag set to 1 if we want subtraction
         // Depending on cpu vs. std vs. else, deal with
         // instance name differently
        // console.log(STAT_ARRAY[stat][1]);
@@ -99,6 +93,7 @@ io.sockets.on('connection', function(socket) {
           for (var i in message.net) {
             dataToSend["value"] = 0;
             if (message.net[i].instance==STAT_ARRAY[s][1][3]) {
+              dataToSend["modify"] = 1;
               if (STAT_ARRAY[s][1][2]=="output bytes") {
               dataToSend["value"] = new Long(message.net[i].obytes64).toNumber();
 
@@ -118,10 +113,36 @@ io.sockets.on('connection', function(socket) {
           }
         } else if (STAT_ARRAY[s][1][0]=="disk") {
           dataToSend["value"] = 0;
+          dataToSend["modify"] = 1;
           for (var i in message.disk) {
             if (message.disk[i].instance==STAT_ARRAY[s][1][3]) {
-              // Allow for different [s][1][2]'s
-              dataToSend["value"] = message.disk[i].reads;
+              dataToSend["value"] = 0;
+              if (STAT_ARRAY[s][1][2]=="number of reads") {
+                dataToSend["value"] = message.disk[i].reads;
+              } else if (STAT_ARRAY[s][1][2]=="number of writes") {
+                dataToSend["value"] = message.disk[i].writes;
+              } else if (STAT_ARRAY[s][1][2]=="bytes read") {
+                dataToSend["value"] = new Long(message.disk[i].nread).toNumber();;
+              } else if (STAT_ARRAY[s][1][2]=="bytes written") {
+                dataToSend["value"] = new Long(message.disk[i].nwritten).toNumber();
+              } else if (STAT_ARRAY[s][1][2]=="run time") {
+                dataToSend["value"] = new Long(message.disk[i].rtime).toNumber();
+              } else if (STAT_ARRAY[s][1][2]=="wait time") {
+                dataToSend["value"] = new Long(message.disk[i].wtime).toNumber();
+              } else if (STAT_ARRAY[s][1][2]=="total run time") {
+                dataToSend["value"] = new Long(message.disk[i].rlentime).toNumber();
+                // total rlentime
+              } else if (STAT_ARRAY[s][1][2]=="total wait time") {
+                dataToSend["value"] = new Long(message.disk[i].wlentime).toNumber();
+              } else {
+                console.log("Unknown 'network' statistic");
+              }
+
+/*
+   optional uint32 harderror = 10;
+   optional uint32 softerror = 11;
+   optional uint32 tranerror = 12;
+*/
               break;
             }
           }
@@ -164,16 +185,14 @@ io.sockets.on('connection', function(socket) {
       }
     } catch (err) {}
 
-    saved_msgs[message.name]=message;
   });
 
 
   // Handle new message events 
-  socket.on( 'message', function(message, flags) {
+  socket.on('message', function(message, flags) {
 
     // Init / ident message
     if (message["type"]=="init") {
-      console.log(machine_list);
       socket.emit("message", {"type" : "machine_list", "list" : machine_list})
     } else if (message["type"]=="instance-req") {
 
@@ -182,18 +201,10 @@ io.sockets.on('connection', function(socket) {
           instances[machine_list[n]] = [[], [], []];
         }
       }
-
-      //if (message["info"][0]=="") return;
  
       data = [];
 
       if (message["info"][1]=="cpu") {
-        console.log("instances");
-        console.log(instances);
-        console.log("msg[nfo]");
-        console.log(message["info"]);
-        console.log("failling call");
-        console.log(instances[message["info"][0]]);
         data = instances[message["info"][0]][0];
       } else if (message["info"][1]=="network") {
         data = instances[message["info"][0]][1];
@@ -206,6 +217,19 @@ io.sockets.on('connection', function(socket) {
 
     } else if (message["type"]=="request") {
       STAT_ARRAY.push([message["self"], message["info"]]); // { message["self"] : message["info"] } ); 
+    } else if (message["type"]=="cancel") {
+      console.log(message);
+      console.log("~+~+~+~+~+~+~+~+~+~");
+      for (s=STAT_ARRAY.length; s--;) {
+        console.log(STAT_ARRAY[s]);
+        if (STAT_ARRAY[s][0]==message["plt"]) {
+          if (STAT_ARRAY[s][1][1]=="null") {}
+          STAT_ARRAY.splice(s,1);
+        }
+      }
+    } else {
+      console.log("Received unknown message type. Contents:");
+      console.log(message);
     }
 
   });
