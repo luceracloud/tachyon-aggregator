@@ -1,309 +1,238 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-<meta charset="utf-8">
-<link href='http://fonts.googleapis.com/css?family=Asap' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" type="text/css" href="style.css" media="screen">
-<title>Metrics Dashboard | Lucera</title>
-<script type="text/javascript" src="./depends/d3.v3.js"></script>
-<script type="text/javascript" src="./depends/chart-d3.js"></script>
-<script src="socket.io/socket.io.js"></script>
+  <title>Dtrace Instruments</title>
+  <link rel="stylesheet" type="text/css" href="libs/bootstrap/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/custom.css">
+  <script type="text/javascript" src="libs/jquery/jquery.min.js"></script>
+  <script type="text/javascript" src="libs/bootstrap/dist/js/bootstrap.min.js"></script>
 </head>
-
-
 <body>
 
-<div class="body_main" id="content">
-<h1>Lorem Ipsum</h1>
+  <header>
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <a class="navbar-brand" href="#">D-Trace</a>
+      <ul class="nav navbar-nav pull-right">
+        <li class="active"><a href="#"> <span class="glyphicon glyphicon-plus"></span> Add Plot</a></li>
+      </ul>
+    </nav>
+  </header>
 
-dolor sit amet...
-<br><br>
+  <div class="container" style="margin-top: 80px">
 
-<div class="plot_container" id="plots"></div>
+    <!-- Plot -->
+    <div class="row panel panel-default">
+      <div class="panel-heading">
+        <h2 class="panel-title">Name of Plot</h2>
+        <div class="pull-right">
 
-<br><br>
-</div>
+          <button data-toggle="modal" href="#config-modal" class="btn btn-primary"><d class="glyphicon glyphicon-cog"></d> Config</button>
+          <div class="btn-group">
+            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+             <d class="glyphicon glyphicon-plus"></d> Add Metric <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+              <li><a data-toggle="modal" href="#cpu-modal">CPU</a></li>
+              <li><a data-toggle="modal" href="#memory-modal">Memory</a></li>
+              <li><a data-toggle="modal" href="#network-modal">Network</a></li>
+              <li><a data-toggle="modal" href="#disk-modal">Disk</a></li>
+              <li class="divider"></li>
+              <li><a data-toggle="modal" href="#other-modal">Other</a></li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+             <d class="glyphicon glyphicon-th"></d> Style <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+              <li><a href="">Line Graph</a></li>
+              <li><a href="">Heatmap</a></li>
+            </ul>
+          </div>
+          <button href="#" class="btn btn-danger"><d class="glyphicon glyphicon-trash"></d> Delete Plot</button>
+        </div>
+        <div class="clearfix"></div>
+      </div>
+      <div class="panel-body">
+        <canvas></canvas>
+      </div>
+      <div class="panel-footer">
+        <div class="btn-group-vertical pull-right">
+          <button class="btn btn-default"><d class="glyphicon glyphicon-zoom-in"></d></button>
+          <button class="btn btn-default"><d class="glyphicon glyphicon-zoom-out"></d></button>
+        </div>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+    <!-- End Plot -->
 
+  </div> <!-- Close Container -->
 
-<div class="nav_bg" id="nav-bg"></div>
+  <!-- CPU MODAL -->
+  <div id="cpu-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">CPU Stat Selection</h4>
+        </div>
+        <div class="modal-body">
+          <select>
+            <option value="">Select Machine (ip/zone)</option>
+          </select>
+          <select>
+            <option value="">Select Statistic</option>
+          </select>
+          <select>
+            <option value="">Select Instance</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success">Add</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
-<div class="body_nav" id="nav-bar">
-<br><br>
-<center>
-<div class="button" onclick="statInfo('cpu');">cpu</div>
-<div class="button" onclick="statInfo('memory');">memory</div>
-<div class="button" onclick="statInfo('network');">net</div>
-<div class="button" onclick="statInfo('disk');">disk</div>
-<div class="button" onclick="statInfo('other');">other</div>
-<div class="button" onclick="config();">config ...</div>
-<br><br>
-<span id="current-plot" class="plotListStyle" style="font-size:2em;">plot 1</span>
-<br><br><br>
-<div class="button" onclick="size('w+')">+ width</div>
-<div class="button" onclick="size('w-')">- width</div>
-<div class="button" onclick="size('h+')">+ height</div>
-<div class="button" onclick="size('h-')">- height</div>
-<br>
-<div class="button" onclick="size('x-')">zoom out (x scale)</div>
-<div class="button" onclick="size('x+')">zoom in (x scale)</div>
-<br>
-<div class="button" onclick="change_style();">change style</div>
-<br>
-<div class="button" onclick="infoPlot('add');">add plot ...</div>
-<div class="button" onclick="infoPlot('select');">select plot ...</div>
-<div class="button" onclick="infoPlot('remove');">remove plot ...</div>
-<br><br>
-</center>
+  <!-- MEMORY MODAL -->
+  <div id="memory-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Memory Stat Selection</h4>
+        </div>
+        <div class="modal-body">
+          <select>
+            <option value="">Select Machine (ip/zone)</option>
+          </select>
+          <select>
+            <option value="">Select Statistic</option>
+          </select>
+          <select>
+            <option value="">Select Instance</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success">Add</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
-</div>
+  <!-- NETWORK MODAL -->
+  <div id="network-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Network Stat Selection</h4>
+        </div>
+        <div class="modal-body">
+          <select>
+            <option value="">Select Machine (ip/zone)</option>
+          </select>
+          <select>
+            <option value="">Select Statistic</option>
+          </select>
+          <select>
+            <option value="">Select Instance</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success">Add</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
+  <!-- DISK MODAL -->
+  <div id="disk-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Disk Stat Selection</h4>
+        </div>
+        <div class="modal-body">
+          <select>
+            <option value="">Select Machine (ip/zone)</option>
+          </select>
+          <select>
+            <option value="">Select Statistic</option>
+          </select>
+          <select>
+            <option value="">Select Instance</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success">Add</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
-<! General plot information >
-<div class="popup" id="infoPlotBox">
-<font size=5><span id="plotBoxHeader">dynamic</span> plot</font> : &nbsp; 
-<input type="text" class="input" id="new-plot-name" placeholder="type name here" maxlength="12" size="23"> <br><br>
-current list:<br><br>
-<span id="plot-list">
-<span class="plotListStyle" onclick="document.getElementById('new-plot-name').value='plot 1'">plot 1<br></span>
-</span>
+  <!-- OTHER MODAL -->
+  <div id="other-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Other Stat Selection</h4>
+        </div>
+        <div class="modal-body">
+          <select>
+            <option value="">Select Machine (ip/zone)</option>
+          </select>
+          <select>
+            <option value="">Select Statistic</option>
+          </select>
+          <select>
+            <option value="">Select Instance</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success">Add</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
-<div class="button" id="plotConfirm" style="width:20%;position:absolute;bottom:5px;left:14px;" onclick="plotConfirm();">dynamic</div>
-<div class="button" style="width:20%;position:absolute;bottom:5px;right:8px;" onclick="document.getElementById('infoPlotBox').style.visibility='hidden';">close</div>
-</div>
-
-
-<! stat information >
-<div class="popup" id="statInfoBox">
-<font size=5><span id="statInfoHeader">dynamic</span> stat selection</font><br><br>
-
-select machine (ip/zone): <select id="machine_select" onchange="reqInstances();"></select> 
-<span class="button" style="width:20%;" onclick="reinit();reqInstances();">update</span>
-<br><br>
-select statistic: <select id="stat_select"></select> <br><br>
-select instance: <select id="instance_select"></select> <br><br>
-
-<div class="button" style="width:20%;position:absolute;bottom:35px;right:8px;" onclick="sendRequest();">add</div>
-<div class="button" style="width:20%;position:absolute;bottom:5px;right:8px;" onclick="document.getElementById('statInfoBox').style.visibility='hidden';">close</div>
-</div>
-
-
-
-
-
-
-<script type="text/javascript">
-
-/* General arrays */
-cpu_stats = ["usage", "queue length"];
-memory_stats = ["rss", "swap", "major faults", "minor faults", "page-ins"];
-network_stats = ["output bytes", "received bytes", "packets out", "packets in"]; // add errors?
-disk_stats = ["number of reads", "number of writes", "bytes read", "bytes written", 
-              "run time", "wait time", "total run time", "total wait time"];
-other_stats = ["number of processes", "number of threads"];
-
-var selected_plot = "plot 1";
-var plots = {};
-
-
-/* IO socket */
-var socket = new io.connect();
-socket.on("connect", function(){ 
-  console.log(" > connected");
-
-  // Identify
-  ID_GOES_HERE = "global"; // debug
-
-  
-  socket.emit("message", {"type" : "init", "self" : ID_GOES_HERE});
-});
-
-socket.on("message", function(message) {
-
-  // init-type message
-  if (message["type"]=="machine_list") {
-    if (message["list"].length==0) {
-      setTimeout (reinit(), 200);
-    }
-    var machine_select_box=document.getElementById("machine_select");
-    machine_select_box.options.length = 0;
-    for (var id in message["list"]) {
-      machine_select_box.options[id]=new Option(message["list"][id], message["list"][id]);
-    }
-  } else if (message["type"]=="value-response") {
-    plots[message["plot"]].addData( message["key"][0]+","+message["key"][1]+
-                                    ","+message["key"][2], message["value"], message["modify"]);
-    redraw_plots();
-  } else if (message["type"]=="instance-response") {
-    var instance_select=document.getElementById("instance_select");
-    instance_select.options.length = 0;
-    for (var i in message["data"]) {
-      if (typeof(message["data"][i])=="object") return;
-      if (message["data"][i]=="null") return; 
-      instance_select.options[i]=
-          new Option(message["data"][i], message["data"][i]);
-    }
-  }
-
-});
-
-function reinit() {
-  socket.emit("message", {"type" : "init", "self" : ID_GOES_HERE});
-}
-
-function sendRequest() {
-  socket.emit("message", {"type" : "request", "self" : selected_plot, "info" : 
-              [document.getElementById("statInfoHeader").innerHTML,
-              document.getElementById("machine_select").value,
-              document.getElementById("stat_select").value,
-              document.getElementById("instance_select").value]});
-}
-
-// Update functions
-
-// Init
-var chart = new chartd3(d3.select("div#content .plot_container"), 800, 300);
-plots["plot 1"] = chart;
-
-mac_id = 123;
-
-function redraw_plots() {
-  for (plt in plots) {
-    plots[plt].redraw();
-  }
-}
-
-function reqInstances() {
-  socket.emit("message", {"type" : "instance-req", "info" : 
-      [document.getElementById("machine_select").value, 
-      document.getElementById("statInfoHeader").innerHTML] });
-}
-
-// Functions
-function size(adj) {
-  if (adj=="w-") {
-    plots[selected_plot].w-=20;
-    redraw_plots();
-  } else if (adj=="w+") {
-    plots[selected_plot].w+=20;
-    redraw_plots();
-  } else if (adj=="h-") {
-    plots[selected_plot].h-=10;
-    redraw_plots();
-  } else if (adj=="h+") {
-    plots[selected_plot].h+=10;
-    redraw_plots();
-  } else if (adj=="x-") {
-    pw = plots[selected_plot].point_width*=1
-    plots[selected_plot].point_width = parseInt(pw+1);
-  } else if (adj=="x+") {
-    pw = plots[selected_plot].point_width/=1;
-    plots[selected_plot].point_width = parseInt(pw-1);
-  }
-}
-
-function change_style() {
-  console.log("entering style");
-  var modell = plots[selected_plot].modell;
-  if (modell=="line") {
-    plots[selected_plot].modell = "heatmap";
-  } else if (modell=="heatmap") {
-    plots[selected_plot].modell = "line";
-  }
-  redraw_plots();
-}
-
-function statInfo(type) {
-  document.getElementById("statInfoHeader").innerHTML=type;
-  reqInstances();
-  document.getElementById("statInfoBox").style.visibility="visible";
-  var stat_select=document.getElementById("stat_select");
-  stat_select.options.length = 0;
-//  var instance_select=document.getElementById("instance_select");
-//  instance_select.options.length = 0;
-  if (type=="cpu") {
-    for (var id in cpu_stats) {
-      stat_select.options[id]=new Option(cpu_stats[id], cpu_stats[id]);
-    }
-  } else if (type=="memory") {
-    for (var id in memory_stats) {
-      stat_select.options[id]=new Option(memory_stats[id], memory_stats[id]);
-    }
-  } else if (type=="network") {
-    for (var id in network_stats) {
-      stat_select.options[id]=new Option(network_stats[id], network_stats[id]);
-    }
-  } else if (type=="disk") {
-    for (var id in disk_stats) {
-      stat_select.options[id]=new Option(disk_stats[id], disk_stats[id]);
-    }
-  } else if (type=="other") {
-    for (var id in other_stats) {
-      stat_select.options[id]=new Option(other_stats[id], other_stats[id]);
-    }
-  } 
-}
-
-function config() {
-
-
-}
-
-function infoPlot(type) {
-  document.getElementById("plotConfirm").innerHTML = type;
-  document.getElementById("plotBoxHeader").innerHTML = type;
-  document.getElementById("infoPlotBox").style.visibility="visible";
-}
-
-function plotConfirm() {
-  var type = document.getElementById("plotConfirm").innerHTML;
-  var name = document.getElementById("new-plot-name").value;
-  document.getElementById("new-plot-name").value = "";
-  document.getElementById("infoPlotBox").style.visibility="hidden";
-  if (type=="add") {
-    addPlot(name);
-    selectPlot(name);
-  } else if (type=="select") {
-    selectPlot(name);
-  } else if (type=="remove") {
-    removePlot(name);
-  }
-}
-
-function addPlot(name) {
-  plots[name] = new chartd3(d3.select("div#content .plot_container"), 800, 300);
-  plots[name].modell="heatmap";
-
-  document.getElementById("plot-list").innerHTML = "";
-  for (plt in plots) {
-    document.getElementById("plot-list").innerHTML += 
-    '<span style="cursor:pointer;" class="plotListStyle" onclick="document.getElementById(\'new-plot-name\').value=\'' + plt + '\'">' + plt + '<br></span>';
-  }
-}
-function selectPlot(name) {
-  selected_plot = name;
-  document.getElementById("current-plot").innerHTML = name;
-}
-function removePlot(name) {
-  
-  for (key in plots[name].keys()) {
-    socket.emit("message", {"type" : "cancel", "plt" : name, "key" : key});
-  }
-  plots[name].remove();
-  delete plots[name];
-
-  document.getElementById("plot-list").innerHTML = "";
-  for (plt in plots) {
-    document.getElementById("plot-list").innerHTML +=
-    '<span style="cursor:pointer;" class="plotListStyle" onclick="document.getElementById(\'new-plot-name\').value=\'' + plt + '\'">' + plt + '<br></span>';
-  }
-}
-</script>
-
-
-
+  <!-- CONFIG MODAL -->
+  <div id="config-modal" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Configure Plot Stats</h4>
+        </div>
+        <div class="modal-body">
+          <table class="table table-striped well">
+            <tr>
+              <td>Stat</td>
+              <td>
+                <button class="btn btn-xs    btn-danger pull-right"><d class="glyphicon glyphicon-trash"></d> Remove Stat</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Stat</td>
+              <td>
+                <button class="btn btn-xs btn-danger pull-right"><d class="glyphicon glyphicon-trash"></d> Remove Stat</button>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success">Add</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 
 </body>
 </html>
-
-

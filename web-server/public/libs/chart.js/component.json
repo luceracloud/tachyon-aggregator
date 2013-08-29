@@ -1,0 +1,16 @@
+{
+  "name": "chart.js",
+  "version": "0.1.0",
+  "main": "chart.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components",
+    "example"
+  ],
+  "dependencies": {     
+    "raphael": "2.1.0" 
+  },
+  "devDependencies": {    
+  }
+}

@@ -6,6 +6,9 @@ function chartd3 (canvas, w, h) {
   var svg;
   svg = canvas.append("svg").attr("width", w).attr("height", h);
 
+  this.title="";
+  this.xlabel="";
+  this.ylabel="";
   this.existance=1;
   this.update=true;
   this.delay = 1000; // in ms
@@ -28,12 +31,12 @@ function chartd3 (canvas, w, h) {
   yscale = 1;
   xscale = 1;
   ypad = 20;
-  xpad = 40;
+  xpad = 50;
 
   // Init drawing
   svg.append("rect")
      .attr("x", 0)
-     .attr("y", 0)
+     .attr("y", 20)
      .attr("rx", 5)
      .attr("ry", 5)
      .attr("width", w-5)
@@ -172,6 +175,7 @@ function chartd3 (canvas, w, h) {
   /* Graphics functions */
   this.draw=draw;
   function draw () {
+    svg.selectAll("text").remove();
     if (this.modell=="line") {
       this.draw_line_plot();
     } else if (this.modell=="heatmap") {
@@ -179,6 +183,15 @@ function chartd3 (canvas, w, h) {
     } else {
       console.log("Unrecognized type.");
     }
+    svg.append("text")
+       .text(this.title)
+       .attr("x", 18)
+       .attr("y", 18)
+       .attr("font-family", "sans-serif")
+       .attr("font-size", 20)
+       .attr("font-weight", "bold")
+       .attr("fill", "black")
+       .attr("text-anchor", "start");
   }
 
   /* Heatmap-plot drawing */
@@ -191,11 +204,11 @@ function chartd3 (canvas, w, h) {
     // Canvas (background)
     svg.append("rect")
        .attr("x", 0)
-       .attr("y", 0)
+       .attr("y", 20)
        .attr("rx", 5)
        .attr("ry", 5)
        .attr("width", this.w-5)
-       .attr("height", this.h)
+       .attr("height", this.h-20)
        .attr("fill", this.bgcolor);
 
     // Update dataset values
@@ -211,16 +224,15 @@ function chartd3 (canvas, w, h) {
     // Calculate scaling
     yscale = 255/this.yabsmax;
     xscale = (this.w-xpad)/this.point_width;
-    vertscale = (this.h-ypad)/Object.keys(this.data).length;
+    vertscale = (this.h-ypad-20)/Object.keys(this.data).length;
 
     for (i in this.data) {
       // c'est une colonne
       sx = Math.max(this.point_width-this.data[i].length, 0);
       for (j in this.data[i]) {
-        
         svg.append("rect")
            .attr("x", (xpad/2)+(parseInt(j)+sx)*xscale)
-           .attr("y", (ypad/2)+i*vertscale)
+           .attr("y", (ypad+10)+i*vertscale)
            .attr("width", xscale-2)
            .attr("height", vertscale-2)
            .attr("fill", "rgb("+parseInt(yscale*this.data[i][j])+",0,10)");
@@ -228,7 +240,6 @@ function chartd3 (canvas, w, h) {
       
 
     }
-
   }
 
   /* Line-plot drawing */
@@ -240,11 +251,11 @@ function chartd3 (canvas, w, h) {
     // Canvas (background)
     svg.append("rect")
        .attr("x", 0)
-       .attr("y", 0)
+       .attr("y", 20)
        .attr("rx", 5)
        .attr("ry", 5)
        .attr("width", this.w-5)
-       .attr("height", this.h)
+       .attr("height", this.h-20)
        .attr("fill", this.bgcolor);
 
     // Update dataset values
@@ -263,7 +274,7 @@ function chartd3 (canvas, w, h) {
     // Draw axes
     svg.append("line")
        .attr("x1", xpad)
-       .attr("y1", 0)
+       .attr("y1", 20)
        .attr("x2", xpad)
        .attr("y2", this.h)
        .style("stroke", "rgb(100,100,100)");
@@ -276,11 +287,9 @@ function chartd3 (canvas, w, h) {
 
     // Add lines
     for (i in this.data) {
-    //  if (this.data_type[i]) {
-    //    if (this.data[i].length<2) continue;
-    //  }
       var sp = Math.max(this.data[i].length-this.point_width,0);
-      var sx = data_max_x-this.data[i].length;
+      //var sx = data_max_x-this.data[i].length;
+      var sx = this.point_width-this.data[i].length;
       for (j=0; j<this.point_width-1; j++) {
         if (j==this.data[i].length-1) break;
         svg.append("line")
@@ -291,6 +300,38 @@ function chartd3 (canvas, w, h) {
            .style("stroke", this.colors[i]);
       }
     }
+
+    // x tick
+    console.log("Tick scale:");
+    num_div = 6;
+    scale = parseInt(data_max_y/num_div);
+    console.log(scale);
+
+    //for (i=0; i<=6; i++) {
+    //  var j = i*(data_max_y*1.1)/6;
+    //  console.log(j)
+    //}
+   // console.log(data_max_y);
+   // console.log([1,2,1,4,2,1]);
+
+    // Label
+    svg.append("text")
+       .text(this.xlabel)
+       .attr("x", this.w-20)
+       .attr("y", this.h-(ypad/4))
+       .attr("font-family", "sans-serif")
+       .attr("font-size", ypad*.9)
+       .attr("fill", "black")
+       .attr("text-anchor", "end");
+    svg.append("text")
+       .text(this.ylabel)
+       .attr("x", 20)
+       .attr("y", 30)
+       .attr("transform", "rotate(270 20 30)")
+       .attr("font-family", "sans-serif")
+       .attr("font-size", ypad*.9)
+       .attr("fill", "black")
+       .attr("text-anchor", "end");
   }
 
   /* This method is shared for all plots */
@@ -301,9 +342,5 @@ function chartd3 (canvas, w, h) {
     svg.attr("width", this.w).attr("height", this.h);
     this.draw();
   }
-
-
-
-
 
 }
