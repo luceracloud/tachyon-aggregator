@@ -1,238 +1,152 @@
-<html>
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7 ui-mobile-rendering" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8 ui-mobile-rendering" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9 ui-mobile-rendering" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js ui-mobile-rendering" lang="en"> <!--<![endif]-->
 <head>
-  <title>Dtrace Instruments</title>
-  <link rel="stylesheet" type="text/css" href="libs/bootstrap/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="css/custom.css">
-  <script type="text/javascript" src="libs/jquery/jquery.min.js"></script>
-  <script type="text/javascript" src="libs/bootstrap/dist/js/bootstrap.min.js"></script>
+  <meta charset="utf-8">
+
+  <!-- Use the .htaccess and remove these lines to avoid edge case issues.
+       More info: h5bp.com/i/378 -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>D-Trace Monitoring | Lucera</title>
+  <meta name="description" content="Backbone.js and Require.js Boilerplate Library">
+
+  <!-- Mobile viewport optimized: h5bp.com/viewport -->
+  <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">
+
+  <!--Detect if the browser is a mobile browser or a desktop browser and conditionally include your JavaScript -->
+  <script>
+      (function(ua, w, d, undefined) {
+
+        // App Environment
+        // ---------------
+        //  Tip: Set to true to turn on "production" mode
+        var production = false,
+            config = {
+
+              // Loaded when not in production mode
+              "dev-css": ["css/app.css"],
+
+              // Loaded when in production mode
+              "prod-css": ["css/app.min.css"],
+
+              // Loaded when not in production mode
+              "dev-js": [{ "data-main": "js/app/config/Init.js", "src": "js/libs/requirejs/require.js" }],
+
+              // Loaded when in production mode
+              "prod-js": ["js/app/config/Init.min.js"]
+
+            };
+
+          // Loads the correct CSS and JavaScript files
+          loadFiles(config);
+
+          function loadCSS(urls, callback) {
+
+            var x, link;
+
+            for(x = 0; x <= urls.length - 1; x += 1) {
+
+              link = d.createElement("link");
+
+              link.type = "text/css";
+
+              link.rel = "stylesheet";
+
+              link.href = urls[x];
+
+              d.getElementsByTagName("head")[0].appendChild(link);
+
+            }
+
+            if(callback) callback();
+
+          }
+
+          function loadJS(files, callback) {
+
+            var x, script, file;
+
+            for(x = 0; x <= files.length - 1; x += 1) {
+
+              file = files[x];
+
+              script = d.createElement("script");
+
+              if(((typeof file).toLowerCase()) === "object" && file["data-main"] !== undefined) {
+
+                script.setAttribute("data-main", file["data-main"]);
+
+                script.async = true;
+
+                script.src = file.src;
+
+              }
+
+              else {
+
+                script.src = file;
+
+              }
+
+              d.getElementsByTagName("head")[0].appendChild(script);
+
+            }
+
+            if(callback) callback();
+
+          }
+
+          function loadFiles(obj, callback) {
+
+            if(production) {
+
+              // Loads the production CSS file(s)
+              loadCSS(obj["prod-css"], function() {
+
+                // If there are production JavaScript files to load
+                if(obj["prod-js"]) {
+
+                  // Loads the correct initialization file (which includes Almond.js)
+                  loadJS(obj["prod-js"], callback);
+
+                }
+
+              });
+
+            }
+
+            // Else if your app is in development mode
+            else {
+
+              // Loads the development CSS file(s)
+              loadCSS(obj["dev-css"], function() {
+
+                // If there are development Javascript files to load
+                if(obj["dev-js"]) {
+
+                  // Loads Require.js and tells Require.js to find the correct intialization file
+                  loadJS(obj["dev-js"], callback);
+
+                }
+
+              });
+
+            }
+
+          }
+
+      })(navigator.userAgent || navigator.vendor || window.opera, window, window.document);
+
+  </script>
+
 </head>
 <body>
 
-  <header>
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <a class="navbar-brand" href="#">D-Trace</a>
-      <ul class="nav navbar-nav pull-right">
-        <li class="active"><a href="#"> <span class="glyphicon glyphicon-plus"></span> Add Plot</a></li>
-      </ul>
-    </nav>
-  </header>
-
-  <div class="container" style="margin-top: 80px">
-
-    <!-- Plot -->
-    <div class="row panel panel-default">
-      <div class="panel-heading">
-        <h2 class="panel-title">Name of Plot</h2>
-        <div class="pull-right">
-
-          <button data-toggle="modal" href="#config-modal" class="btn btn-primary"><d class="glyphicon glyphicon-cog"></d> Config</button>
-          <div class="btn-group">
-            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
-             <d class="glyphicon glyphicon-plus"></d> Add Metric <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" role="menu">
-              <li><a data-toggle="modal" href="#cpu-modal">CPU</a></li>
-              <li><a data-toggle="modal" href="#memory-modal">Memory</a></li>
-              <li><a data-toggle="modal" href="#network-modal">Network</a></li>
-              <li><a data-toggle="modal" href="#disk-modal">Disk</a></li>
-              <li class="divider"></li>
-              <li><a data-toggle="modal" href="#other-modal">Other</a></li>
-            </ul>
-          </div>
-          <div class="btn-group">
-            <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
-             <d class="glyphicon glyphicon-th"></d> Style <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" role="menu">
-              <li><a href="">Line Graph</a></li>
-              <li><a href="">Heatmap</a></li>
-            </ul>
-          </div>
-          <button href="#" class="btn btn-danger"><d class="glyphicon glyphicon-trash"></d> Delete Plot</button>
-        </div>
-        <div class="clearfix"></div>
-      </div>
-      <div class="panel-body">
-        <canvas></canvas>
-      </div>
-      <div class="panel-footer">
-        <div class="btn-group-vertical pull-right">
-          <button class="btn btn-default"><d class="glyphicon glyphicon-zoom-in"></d></button>
-          <button class="btn btn-default"><d class="glyphicon glyphicon-zoom-out"></d></button>
-        </div>
-        <div class="clearfix"></div>
-      </div>
-    </div>
-    <!-- End Plot -->
-
-  </div> <!-- Close Container -->
-
-  <!-- CPU MODAL -->
-  <div id="cpu-modal" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">CPU Stat Selection</h4>
-        </div>
-        <div class="modal-body">
-          <select>
-            <option value="">Select Machine (ip/zone)</option>
-          </select>
-          <select>
-            <option value="">Select Statistic</option>
-          </select>
-          <select>
-            <option value="">Select Instance</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success">Add</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-
-  <!-- MEMORY MODAL -->
-  <div id="memory-modal" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Memory Stat Selection</h4>
-        </div>
-        <div class="modal-body">
-          <select>
-            <option value="">Select Machine (ip/zone)</option>
-          </select>
-          <select>
-            <option value="">Select Statistic</option>
-          </select>
-          <select>
-            <option value="">Select Instance</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success">Add</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-
-  <!-- NETWORK MODAL -->
-  <div id="network-modal" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Network Stat Selection</h4>
-        </div>
-        <div class="modal-body">
-          <select>
-            <option value="">Select Machine (ip/zone)</option>
-          </select>
-          <select>
-            <option value="">Select Statistic</option>
-          </select>
-          <select>
-            <option value="">Select Instance</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success">Add</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-
-  <!-- DISK MODAL -->
-  <div id="disk-modal" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Disk Stat Selection</h4>
-        </div>
-        <div class="modal-body">
-          <select>
-            <option value="">Select Machine (ip/zone)</option>
-          </select>
-          <select>
-            <option value="">Select Statistic</option>
-          </select>
-          <select>
-            <option value="">Select Instance</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success">Add</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-
-  <!-- OTHER MODAL -->
-  <div id="other-modal" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Other Stat Selection</h4>
-        </div>
-        <div class="modal-body">
-          <select>
-            <option value="">Select Machine (ip/zone)</option>
-          </select>
-          <select>
-            <option value="">Select Statistic</option>
-          </select>
-          <select>
-            <option value="">Select Instance</option>
-          </select>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success">Add</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
-
-  <!-- CONFIG MODAL -->
-  <div id="config-modal" class="modal fade">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Configure Plot Stats</h4>
-        </div>
-        <div class="modal-body">
-          <table class="table table-striped well">
-            <tr>
-              <td>Stat</td>
-              <td>
-                <button class="btn btn-xs    btn-danger pull-right"><d class="glyphicon glyphicon-trash"></d> Remove Stat</button>
-              </td>
-            </tr>
-            <tr>
-              <td>Stat</td>
-              <td>
-                <button class="btn btn-xs btn-danger pull-right"><d class="glyphicon glyphicon-trash"></d> Remove Stat</button>
-              </td>
-            </tr>
-          </table>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-success">Add</button>
-        </div>
-      </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
+    <div class="magic"></div>
 
 </body>
 </html>
