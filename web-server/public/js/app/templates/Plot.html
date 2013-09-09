@@ -1,0 +1,227 @@
+<div id="plot" class="row panel panel-default">
+  <div class="panel-heading">
+    <h2 class="panel-title"><%= name %></h2>
+    <div class="pull-right">
+
+      <button data-toggle="modal" href="#config-modal-<%= id %>" name="<%= id %>" id="change-config" class="btn btn-primary"><d class="glyphicon glyphicon-cog"></d> Config</button>
+      <div class="btn-group">
+        <button type="button" class="btn btn-success dropdown-toggle" name="<%= id %>" id="add-metric-btn" data-toggle="dropdown">
+         <d class="glyphicon glyphicon-plus"></d> Add Metric <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a data-toggle="modal" href="#cpu-modal">CPU</a></li>
+          <li><a data-toggle="modal" href="#memory-modal">Memory</a></li>
+          <li><a data-toggle="modal" href="#network-modal">Network</a></li>
+          <li><a data-toggle="modal" href="#disk-modal">Disk</a></li>
+          <li class="divider"></li>
+          <li><a data-toggle="modal" href="#other-modal">Other</a></li>
+        </ul>
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown">
+         <d class="glyphicon glyphicon-th"></d> Style <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+          <li><a id="style-line" href="#">Line Graph</a></li>
+          <li><a id="style-heatmap" href="#">Heatmap</a></li>
+        </ul>
+      </div>
+      <button id="delete-plot" href="#" class="btn btn-danger"><d class="glyphicon glyphicon-trash"></d> Delete Plot</button>
+    </div>
+    <div class="clearfix"></div>
+  </div>
+  <div class="panel-body">
+    <div id="chart-<%= id %>" class="chart">
+    </div>
+  </div>
+  <div class="panel-footer">
+    <div class="btn-group-vertical pull-right">
+      <button id="zoom-in" class="btn btn-default"><d class="glyphicon glyphicon-zoom-in"></d></button>
+      <button id="zoom-out" class="btn btn-default"><d class="glyphicon glyphicon-zoom-out"></d></button>
+    </div>
+    <div class="clearfix"></div>
+  </div>
+</div>
+
+<!-- CPU MODAL -->
+<div id="cpu-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">CPU Stat Selection</h4>
+      </div>
+      <div class="modal-body">
+        <select required id="machine_select_cpu">
+          <option disabled value="">Select Machine (ip/zone)</option>
+        </select>
+        <select required id="stat_select_cpu_<%= id %>">
+          <option disabled value="">Select Statistic</option>
+          <option value="usage">usage</option>
+          <option value="queue length">queue length</option>
+        </select>
+        <select required id="instance_select_cpu_<%= id %>">
+          <option disabled value="">Select Instance</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" name="<%= id %>" id="modal-add-cpu">Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- MEMORY MODAL -->
+<div id="memory-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Memory Stat Selection</h4>
+      </div>
+      <div class="modal-body">
+        <select required id="machine_select_memory">
+          <option disabled value="">Select Machine (ip/zone)</option>
+        </select>
+        <select required id="stat_select_memory_<%= id %>">
+          <option disabled value="">Select Statistic</option>
+          <option value="rss">rss</option>
+          <option value="swap">swap</option>
+          <option value="major faults">major faults</option>
+          <option value="minor faults">minor faults</option>
+          <option value="page-ins">page-ins</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" name="<%= id %>" id="modal-add-memory">Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- NETWORK MODAL -->
+<div id="network-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Network Stat Selection</h4>
+      </div>
+      <div class="modal-body">
+        <select required id="machine_select_network">
+          <option disabled value="">Select Machine (ip/zone)</option>
+        </select>
+        <select required id="stat_select_network_<%= id %>">
+          <option disabled value="">Select Statistic</option>
+          <option value="output bytes">output bytes</option>
+          <option value="received bytes">received bytes</option>
+          <option value="packets out">packets out</option>
+          <option value="packets in">packets in</option>
+        </select>
+        <select required id="instance_select_network_<%= id %>">
+          <option disabled value="">Select Instance</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" name="<%= id %>" id="modal-add-network">Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- DISK MODAL -->
+<div id="disk-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Disk Stat Selection</h4>
+      </div>
+      <div class="modal-body">
+        <select required id="machine_select_disk">
+          <option disabled value="">Select Machine (ip/zone)</option>
+        </select>
+        <select required id="stat_select_disk_<%= id %>">
+          <option disabled value="">Select Statistic</option>
+          <option value="number of reads">number of reads</option>
+          <option value="number of writes">number of writes</option>
+          <option value="bytes read">bytes read</option>
+          <option value="bytes written">bytes written</option>
+          <option value="run time">run time</option>
+          <option value="wait time">wait time</option>
+          <option value="total run time">total run time</option>
+          <option value="total wait time">total wait time</option>s
+        </select>
+        <select required id="instance_select_disk_<%= id %>">
+          <option value="">Select Instance</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" name="<%= id %>" id="modal-add-disk">Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- OTHER MODAL -->
+<div id="other-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Other Stat Selection</h4>
+      </div>
+      <div class="modal-body">
+        <select required id="machine_select_other">
+          <option disabled value="">Select Machine (ip/zone)</option>
+        </select>
+        <select required id="stat_select_other_<%= id %>">
+          <option disabled value="">Select Statistic</option>
+          <option value="number of processes">number of processes</option>
+          <option value="number of threads">number of threads</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" name="<%= id %>" id="modal-add-other">Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- CONFIG MODAL -->
+<div id="config-modal-<%= id %>" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Configure Plot Stats</h4>
+      </div>
+      <div class="modal-body" id="config-stats-<%= id %>">
+        <table class="table table-striped well">
+          <tr>
+            <td>Stat</td>
+            <td>
+              <button class="btn btn-xs    btn-danger pull-right"><d class="glyphicon glyphicon-trash"></d> Remove Stat</button>
+            </td>
+          </tr>
+          <tr>
+            <td>Stat</td>
+            <td>
+              <button class="btn btn-xs btn-danger pull-right"><d class="glyphicon glyphicon-trash"></d> Remove Stat</button>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <!--<button type="button" class="btn btn-success">Add</button>-->
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
