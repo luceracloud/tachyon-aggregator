@@ -76,6 +76,7 @@ define(["jquery", "backbone", "events/Notifier", "text!templates/Plot.html"],
                 console.log(this.model.id);
                 //console.log(this.modal.id);
                 Notifier.trigger('modalAdd', e.target.name, type);
+                Notifier.trigger('getZones');
             },
 
             zoomIn: function(e) {

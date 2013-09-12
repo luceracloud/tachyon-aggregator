@@ -24,6 +24,7 @@ define(["jquery", "backbone", "events/Notifier", "socketio", "views/PlotView", "
                 
                 $(window).on('resize', this.resized, this);
 
+                Notifier.on('getZones', this.getZones, this);
                 Notifier.on('zoomIn', this.zoomIn, this);
                 Notifier.on('zoomOut', this.zoomOut, this);
                 Notifier.on('changeStyle', this.changeStyle, this);
@@ -81,6 +82,12 @@ define(["jquery", "backbone", "events/Notifier", "socketio", "views/PlotView", "
                 'click #add-plot': 'getPlotName'
             },
 
+            getZones: function() {
+              this.socket.emit('message', {
+                'type': 'init', 'self': 'global'
+              });
+            },
+
             connect: function() {
                 var _this = this;
                 this.socket.on('message', function(data) {
@@ -99,15 +106,11 @@ define(["jquery", "backbone", "events/Notifier", "socketio", "views/PlotView", "
                     'type': 'init',
                     'self': 'global'
                 });
-                this.socket.emit('message', {
-                    'type': 'request',
-                    'self': '0',
-                    'info': ['disk','gz1','rbytes64','sd0']
-                });
             },
 
             // Add instance names returned from server to appropriate 'select' box
             populateInstances: function(data) {
+      console.log(data);
                 var instance_select_box=document.getElementById("instance_select_cpu_" + data.self);
                 instance_select_box.options.length = 1;
                 for (var d in data.data) {
