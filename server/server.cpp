@@ -66,6 +66,7 @@ int main (int argc, char **argv) {
     bool QUIET = false;
     time_t millisec = 999;  // Values >= 1000 effect weird behavior
     const char *port = "7211";
+    const char *host = "smartos-host";
     zmq::context_t context (1);
     zmq::socket_t socket (context, ZMQ_PUB);
     std::map <std::string, Zone *> ZoneData;
@@ -86,6 +87,10 @@ int main (int argc, char **argv) {
         std::cout << "\033[00;36m . printing usage information\n\033[00m";
         usage();
         return 1;
+      }
+      if (!strcmp (argv[i], "-n") || !strcmp (argv[i], "-N")) {
+        host = argv[i+1];
+        std::cout << "\033[00;36m . using host " << host << "\033[00m\n"; 
       }
       if (!strcmp (argv[i], "-p") || !strcmp (argv[i], "-P")) {
         port = argv[i+1];
@@ -304,6 +309,7 @@ int main (int argc, char **argv) {
         ZoneData.at (ZoneIndices.at(i))->set_time( time(NULL) );
         Zone *z = ZoneData.at (ZoneIndices.at (i));
         PBMSG::Packet *pckt = z->ReturnPacket();
+        pckt->set_host(host);
         if (!QUIET) send_message (*pckt, &socket);
         if (V_LITE) std::cout << "UTC " << (time(NULL)/3600)%24 << ":" <<
                       (time(NULL)/60)%60 << ":" << time(NULL)%60 << std::endl;

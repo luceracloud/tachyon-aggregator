@@ -3,3 +3,7 @@ packet.pb.h
 server_release
 server_release_zone
 metric.tar.gz
+generator
+generator_zone
+pckt.pb.cc
+pckt.pb.h

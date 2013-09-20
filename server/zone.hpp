@@ -18,7 +18,7 @@ class Zone {
   public:
     Zone (std::string n, bool g) {
       packet = (PBMSG::Packet *)(new PBMSG::Packet);
-      packet->set_name (n);
+      packet->set_zone (n);
       packet->add_mem();
       this->set_threads (0);
       this->set_processes (0);
@@ -103,7 +103,7 @@ class Zone {
       cpuqueue->set_amount (a);
     }
     void add_zone (std::string *s) {
-      this->packet->add_zonename (*s);
+      this->packet->add_zonenames(*s);
     }
     void add_process (uint32_t p, std::string *e, uint32_t u, uint32_t c) {
       PBMSG::Packet_Process *proc = this->packet->add_process();

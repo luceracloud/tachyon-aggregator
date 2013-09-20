@@ -10,20 +10,22 @@ package PBMSG;
 
 message Packet {
 
-  required string name = 1;
-  required uint64 time = 2;
-  optional uint32 ticks = 3;
-  optional uint32 threads = 4;
-  optional uint32 processes = 5;
 
-  repeated Cpu cpu = 6;
-  repeated Mem mem = 7;
-  repeated Net net = 8;
-  repeated Disk disk = 9;
-  repeated Process process = 10;
-  repeated CallFreq callfreq = 11;
-  repeated string zonename = 12;
-  repeated Cpuqueue cpuqueue = 13;
+  required string host = 1;
+  required string zone = 2;
+  required uint64 time = 3;
+  optional uint32 ticks = 4;
+  optional uint32 threads = 5;
+  optional uint32 processes = 6;
+
+  repeated Cpu cpu = 7;
+  repeated Mem mem = 8;
+  repeated Net net = 9;
+  repeated Disk disk = 10;
+  repeated Process process = 11;
+  repeated CallFreq callfreq = 12;
+  repeated string zonenames = 13;
+  repeated Cpuqueue cpuqueue = 14;
 
   message Cpu {
     optional uint32 core = 1;

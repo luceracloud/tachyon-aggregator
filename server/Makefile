@@ -12,26 +12,26 @@ LDFLAGS_LCL=$(LDFLAGS) -I/opt/local/include -L/opt/local/lib/amd64 -L/opt/local/
 .PHONY: rel
 
 # Instructions
-all: server_release
+all: generator
 
-server_release: server.cpp scripts.hpp pckt
+generator: server.cpp scripts.hpp pckt.pb.h pckt.pb.c
 	$(CC) server.cpp pckt.pb.cc $(LDFLAGS_LCL) -O2 -o generator
 
-server_release_zone: server.cpp scripts.hpp pckt
+generator_zone: server.cpp scripts.hpp pckt.pb.h pckt.pb.c
 	$(CC) server.cpp -DZONE pckt.pb.cc $(LDFLAGS_LCL) -O2 -o generator_zone
 
-pckt:
+pckt.pb.h pckt.pb.c:
 	protoc -I=. --cpp_out=. ./pckt.proto
 
-rel: server_release server_release_zone
-	cp generator metric/bin
-	cp generator_zone metric/bin
+rel: generator generator_zone
+	cp generator meter/bin
+	cp generator_zone meter/bin
 
 clean:
 	-rm pckt.pb.cc
 	-rm pckt.pb.h
 	-rm generator
 	-rm generator_zone
-	-rm metric/bin/generator
-	-rm metric/bin/generator_zone
+	-rm meter/bin/generator
+	-rm meter/bin/generator_zone
 
