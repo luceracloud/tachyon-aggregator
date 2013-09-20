@@ -53,7 +53,7 @@ then
 	echo "It appears ZMQ is already installed. Skipping."
 else
 	cd /opt/tools
-	curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
+	[ -f zeromq-2.2.0.tar.gz ] || curl -klO http://download.zeromq.org/zeromq-2.2.0.tar.gz
 	tar zxf zeromq-2.2.0.tar.gz
 	cd zeromq-2.2.0
 	./configure --prefix /opt/local
@@ -69,7 +69,7 @@ then
 	echo "It appears Protocol Buffers are already installed. Skipping."
 else
 	echo "${RedB} ${White} installing protocol buffers ${BlueB}"
-	curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+	[ -f protobuf-2.5.0.tar.gz ] || curl -klO https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
 	tar zxvf protobuf-2.5.0.tar.gz
 	cd protobuf-2.5.0
 	./configure --prefix /opt/local
@@ -85,7 +85,7 @@ then
 	echo "It appears FastBit is already installed. Skipping."
 else
 	echo "${RedB} ${White} installing fastbit ${BlueB}"
-	curl -klO https://codeforge.lbl.gov/frs/download.php/401/fastbit-ibis1.3.5.tar.gz
+	[ -f fastbit-ibis1.3.5.tar.gz ] || curl -klO https://codeforge.lbl.gov/frs/download.php/401/fastbit-ibis1.3.5.tar.gz
 	tar zxvf fastbit-ibis1.3.5.tar.gz
 	cd fastbit-ibis1.3.5
 	./configure --prefix /opt/local

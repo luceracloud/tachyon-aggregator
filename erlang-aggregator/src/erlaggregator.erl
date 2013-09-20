@@ -11,6 +11,7 @@
 -export([start/0, stats/0, add/1, remove/1]).
 
 start() ->
+    application:start(sasl),
     application:start(erlzmq),
     application:start(erlaggregator).
 
