@@ -19,6 +19,7 @@ stats() ->
     erlaggregator_server:stats().
 
 add(IP) ->
+    erlaggregator_guard_sup:start_child(IP),
     erlaggregator_probe_sup:start_child(IP).
 
 remove(IP) ->

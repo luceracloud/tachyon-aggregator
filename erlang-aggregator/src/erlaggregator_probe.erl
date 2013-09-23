@@ -103,6 +103,26 @@ handle_cast(poll, State =
                        ip = IP}) ->
     {ok, Data} = erlzmq:recv(Sock),
     Packet = packet_pb:decode_packet(Data),
+    Packet#packet.host,
+
+    Host = Packet#packet.host,
+    Time = Packet#packet.time,
+    CPUs = Packet#packet.cpu,
+
+    Median = case [C#packet_cpu.usage || C <- CPUs] of
+              [] ->
+                  0;
+              CPUs1 ->
+                  lists:nth(round(length(CPUs1)/2), lists:sort(CPUs1))
+          end,
+    [Mem | _] = Packet#packet.mem,
+
+    erlaggregator_guard:put(IP, Host, Time, "cpu.usage.median", Median, 4),
+    erlaggregator_guard:put(IP, Host, Time, "machines.threads", Packet#packet.threads, 4),
+    erlaggregator_guard:put(IP, Host, Time, "machines.processes", Packet#packet.processes, 4),
+    erlaggregator_guard:put(IP, Host, Time, "machines.rss", Mem#packet_mem.rss, 4),
+    erlaggregator_guard:put(IP, Host, Time, "machines.swap", Mem#packet_mem.swap, 4),
+
     Metrics = fmt_packet(Packet),
     DB1 = case gen_tcp:send(DB, Metrics) of
               {error, Reason} ->
@@ -180,6 +200,7 @@ fmt_packet(Packet) ->
                 fmt("put machines.cpu.usage ~p ~p host=~s zone=~s cpu=~p~n",
                     [Time, CPU#packet_cpu.usage, Host, Zone, CPU#packet_cpu.core])
                 || CPU <- Packet#packet.cpu],
+
     CPU2Data = [
                 fmt("put machines.cpu.queue.length ~p ~p host=~s zone=~s cpu=~p~n",
                     [Time, CPU#packet_cpuqueue.length, Host, Zone, CPU#packet_cpuqueue.core])

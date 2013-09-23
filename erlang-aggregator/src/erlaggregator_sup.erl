@@ -25,5 +25,7 @@ start_link() ->
 
 init([]) ->
     {ok, {{one_for_one, 5, 10},
-           [?CHILD(erlaggregator_probe_sup, supervisor),
+           [
+            ?CHILD(erlaggregator_probe_sup, supervisor),
+            ?CHILD(erlaggregator_guard_sup, supervisor),
             ?CHILD(erlaggregator_server, worker)]}}.
