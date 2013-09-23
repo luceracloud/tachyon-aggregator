@@ -103,28 +103,18 @@ handle_cast(poll, State =
                        ip = IP}) ->
     {ok, Data} = erlzmq:recv(Sock),
     Packet = packet_pb:decode_packet(Data),
-    Host = Packet#packet.name,
-    Time = Packet#packet.time,
-    send(DB, Time, Host, "machines.threads", Packet#packet.threads),
-    send(DB, Time, Host, "machines.processes", Packet#packet.processes),
-    [gen_tcp:send(DB,
-       io_lib:format("put machines.cpu ~p ~p host=~s cpu=~p~n",
-                     [Time, CPU#packet_cpu.usage, Host, CPU#packet_cpu.core]))
-       || CPU <- Packet#packet.cpu],
-    [Mem | _] = Packet#packet.mem,
-    send(DB, Time, Host, "machines.rss", Mem#packet_mem.rss), 
-    send(DB, Time, Host, "machines.swap", Mem#packet_mem.swap), 
-    CPUData = [
-       io_lib:format("put machines.cpu ~p ~p host=~s cpu=~p~n",
-                     [Time, CPU#packet_cpu.usage, Host, CPU#packet_cpu.core])
-       || CPU <- Packet#packet.cpu],
-    gen_tcp:send(DB, CPUData),
-    NetData = [fmt_net(Time, Host, Net) || Net <- Packet#packet.net],
-    gen_tcp:send(DB, NetData),
-    DiskData = [fmt_disk(Time, Host, Disk) || Disk <- Packet#packet.disk],
-    gen_tcp:send(DB, DiskData),
+    Metrics = fmt_packet(Packet),
+    DB1 = case gen_tcp:send(DB, Metrics) of
+              {error, Reason} ->
+                  timer:sleep(1000),
+                  io:format("[~s] Socket died with: ~p", [IP, Reason]),
+                  {ok, NewDB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
+                  NewDB;
+              _ ->
+                  DB
+          end,
     poll(IP),
-    {noreply, State};
+    {noreply, State#state{db = DB1}};
 
 handle_cast(stop, State) ->
     {stop, normal, State};
@@ -175,53 +165,95 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-send(DB, Time, Name, Metric, Value) ->
-    gen_tcp:send(DB,
-      io_lib:format("put ~s ~p ~p host=~s~n",
-                    [Metric, Time, Value, Name])).
+fmt(S, P) -> io_lib:format(S, P).
 
-fmt_disk(Time, Name, P = #packet_disk{
-  instance = Instance
-}) ->
-  [io_lib:format("put machines.disk.~s ~p ~p host=~s interface=~s~n",
-                  [Metric, Time, def(Value), Name, Instance]) ||
-   {Metric, Value} <- [
-      {"nread", P#packet_disk.nread},
-      {"nwritten", P#packet_disk.nwritten},
-      {"reads", P#packet_disk.reads},
-      {"writes", P#packet_disk.writes},
-      {"rtime", P#packet_disk.rtime},
-      {"wtime", P#packet_disk.wtime},
-      {"rlentime", P#packet_disk.rlentime},
-      {"wlentime", P#packet_disk.wlentime},
-      {"harderror", P#packet_disk.harderror},
-      {"softerror", P#packet_disk.softerror},
-      {"tranerror", P#packet_disk.tranerror}]].
+fmt_packet(Packet) ->
+    Zone = Packet#packet.zone,
+    Host = Packet#packet.host,
+    Time = Packet#packet.time,
+    [Mem | _] = Packet#packet.mem,
+    Base = fmt_generic(Time, Host, Zone, [{"machines.threads", Packet#packet.threads},
+                                          {"machines.processes", Packet#packet.processes},
+                                          {"machines.rss", Mem#packet_mem.rss},
+                                          {"machines.swap", Mem#packet_mem.swap}]),
+    CPU1Data = [
+                fmt("put machines.cpu.usage ~p ~p host=~s zone=~s cpu=~p~n",
+                    [Time, CPU#packet_cpu.usage, Host, Zone, CPU#packet_cpu.core])
+                || CPU <- Packet#packet.cpu],
+    CPU2Data = [
+                fmt("put machines.cpu.queue.length ~p ~p host=~s zone=~s cpu=~p~n",
+                    [Time, CPU#packet_cpuqueue.length, Host, Zone, CPU#packet_cpuqueue.core])
+                || CPU <- Packet#packet.cpuqueue],
+    CPU3Data = [
+                fmt("put machines.cpu.queue.amount ~p ~p host=~s zone=~s cpu=~p~n",
+                    [Time, CPU#packet_cpuqueue.amount, Host, Zone, CPU#packet_cpuqueue.core])
+                || CPU <- Packet#packet.cpuqueue],
+    NetData = [fmt_net(Time, Host, Zone, Net) || Net <- Packet#packet.net],
+    DiskData = [fmt_disk(Time, Host, Zone, Disk) || Disk <- Packet#packet.disk],
+    ProcData = [fmt("put machines.proc ~p ~p executable=~s host=~s zone=~s pid=~p~n",
+                    [Time, P#packet_process.usage, P#packet_process.execname, Host, Zone, P#packet_process.pid])
+                || P <- Packet#packet.process],
+    CF1Data = [fmt("put machines.callfreq.value ~p ~p host=~s zone=~s call=~s~n",
+                   [Time, P#packet_callfreq.value, Host, Zone, P#packet_callfreq.name])
+               || P <- Packet#packet.callfreq],
+    CF2Data = [fmt("put machines.callfreq.time ~p ~p host=~s zone=~s call=~s~n",
+                   [Time, P#packet_callfreq.time, Host, Zone, P#packet_callfreq.name])
+               || P <- Packet#packet.callfreq],
+                                                %    io:format("~p/~p~n", [Packet#packet.host, Packet#packet.zone]),
+    [Base, DiskData, NetData, CPU1Data, CPU2Data, CPU3Data, ProcData, CF1Data, CF2Data].
+                                                %    [Base, DiskData, NetData, CPU1Data, CPU2Data, CPU3Data, ProcData].
+
+
+fmt_generic(Time, Host, Zone, Metrics) ->
+    [fmt_generic(Time, Host, Zone, Metric, Value) ||
+        {Metric, Value} <- Metrics].
+
+fmt_generic(Time, Host, Zone, Metric, Value) ->
+    fmt("put ~s ~p ~p host=~s zone=~s~n",
+        [Metric, Time, Value, Host, Zone]).
+
+fmt_disk(Time, Host, Zone, P = #packet_disk{
+                                  instance = Instance
+                                 }) ->
+    [fmt("put machines.disk.~s ~p ~p host=~s zone=~s instance=~s~n",
+         [Metric, Time, def(Value), Host, Zone, Instance]) ||
+        {Metric, Value} <- [
+                            {"nread", P#packet_disk.nread},
+                            {"nwritten", P#packet_disk.nwritten},
+                            {"reads", P#packet_disk.reads},
+                            {"writes", P#packet_disk.writes},
+                            {"rtime", P#packet_disk.rtime},
+                            {"wtime", P#packet_disk.wtime},
+                            {"rlentime", P#packet_disk.rlentime},
+                            {"wlentime", P#packet_disk.wlentime},
+                            {"harderror", P#packet_disk.harderror},
+                            {"softerror", P#packet_disk.softerror},
+                            {"tranerror", P#packet_disk.tranerror}]].
 
 def(undefined) -> 0;
 def(V) -> V.
 
-fmt_net(Time, Name, #packet_net{
-    obytes64 = OBytes,
-    rbytes64 = RBytes,
-    opackets = OPkgs,
-    ipackets = IPkgs,
-    oerrors = OErrors,
-    ierrors = IErrors,
-    instance = I0
-  }) ->
-  IFace = case I0 of
-    undefined ->
-      "vm-local";
-    _ ->
-      I0
-  end,
-  [io_lib:format("put machines.net.~s ~p ~p host=~s interface=~s~n",
-                  [Metric, Time, Value, Name, IFace]) ||
-   {Metric, Value} <- [
-      {"obytes", OBytes},
-      {"rbytes", RBytes},
-      {"opkgs", OPkgs},
-      {"ipkgs", IPkgs},
-      {"oerrors", OErrors},
-      {"ierrors", IErrors}]].
+fmt_net(Time, Host, Zone, #packet_net{
+                             obytes64 = OBytes,
+                             rbytes64 = RBytes,
+                             opackets = OPkgs,
+                             ipackets = IPkgs,
+                             oerrors = OErrors,
+                             ierrors = IErrors,
+                             instance = I0
+                            }) ->
+    IFace = case I0 of
+                undefined ->
+                    "vm-local";
+                _ ->
+                    I0
+            end,
+    [fmt("put machines.net.~s ~p ~p host=~s zone=~s interface=~s~n",
+         [Metric, Time, Value, Host, Zone, IFace]) ||
+        {Metric, Value} <- [
+                            {"obytes", OBytes},
+                            {"rbytes", RBytes},
+                            {"opkgs", OPkgs},
+                            {"ipkgs", IPkgs},
+                            {"oerrors", OErrors},
+                            {"ierrors", IErrors}]].
