@@ -16,5 +16,8 @@ console:
 run:
 	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config london -s erlaggregator
 
+ny4: all
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config ny4 -s erlaggregator
+
 local: all
 	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config local -s erlaggregator

@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator_probe_sup).
+-module(erlaggregator_guard_sup).
 
 -behaviour(supervisor).
 
@@ -55,8 +55,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    Element = {erlaggregator_probe, {erlaggregator_probe, start_link, []},
-               transient, infinity, worker, [erlaggregator_probe]},
+    Element = {erlaggregator_guard, {erlaggregator_guard, start_link, []},
+               transient, infinity, worker, [erlaggregator_guard]},
     Children = [Element],
     RestartStrategy = {simple_one_for_one, 5, 10},
     {ok, {RestartStrategy, Children}}.
