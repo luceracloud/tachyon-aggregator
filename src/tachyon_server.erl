@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator_server).
+-module(tachyon_server).
 
 -behaviour(gen_server).
 
@@ -117,8 +117,8 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(timeout, State) ->
-    {ok, Clients} = application:get_env(erlaggregator, clients),
-    spawn(fun() -> [erlaggregator:add(IP) || IP <- Clients] end),
+    {ok, Clients} = application:get_env(tachyon, clients),
+    spawn(fun() -> [tachyon:add(IP) || IP <- Clients] end),
     {noreply, State}.
 
 %%--------------------------------------------------------------------

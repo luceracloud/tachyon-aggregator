@@ -1,4 +1,4 @@
--module(erlaggregator_app).
+-module(tachyon_app).
 
 -behaviour(application).
 
@@ -10,7 +10,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    erlaggregator_sup:start_link().
+    tachyone_sup:start_link().
 
 stop(_State) ->
     ok.

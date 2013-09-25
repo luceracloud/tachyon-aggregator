@@ -10,14 +10,19 @@ osx:
 clean:
 	./rebar clean
 
+test: xref
+
+xref: all
+	./rebar xref skip_deps=true
+
 console:
 	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin
 
 run:
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config london -s erlaggregator
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config london -s tachyon
 
 ny4: all
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config ny4 -s erlaggregator
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config ny4 -s tachyon
 
 local: all
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config local -s erlaggregator
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config local -s tachyon

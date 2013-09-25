@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator_probe).
+-module(tachyon_probe).
 
 -behaviour(gen_server).
 -include("packet_pb.hrl").
@@ -61,7 +61,7 @@ stop(IP) ->
 %%--------------------------------------------------------------------
 init([IP]) ->
     process_flag(trap_exit, true),
-    {ok, Ctx} = erlaggregator_server:ctx(),
+    {ok, Ctx} = tachyon_server:ctx(),
     {ok, Sock} = erlzmq:socket(Ctx, pull),
     erlzmq:connect(Sock, "tcp://" ++ IP ++ ":7211"),
     {ok, DB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
@@ -117,11 +117,11 @@ handle_cast(poll, State =
           end,
     [Mem | _] = Packet#packet.mem,
 
-    erlaggregator_guard:put(IP, Host, Time, "cpu.usage.median", Median, 4),
-    erlaggregator_guard:put(IP, Host, Time, "machines.threads", Packet#packet.threads, 4),
-    erlaggregator_guard:put(IP, Host, Time, "machines.processes", Packet#packet.processes, 4),
-    erlaggregator_guard:put(IP, Host, Time, "machines.rss", Mem#packet_mem.rss, 4),
-    erlaggregator_guard:put(IP, Host, Time, "machines.swap", Mem#packet_mem.swap, 4),
+    tachyon_guard:put(IP, Host, Time, "cpu.usage.median", Median, 4),
+    tachyon_guard:put(IP, Host, Time, "machines.threads", Packet#packet.threads, 4),
+    tachyon_guard:put(IP, Host, Time, "machines.processes", Packet#packet.processes, 4),
+    tachyon_guard:put(IP, Host, Time, "machines.rss", Mem#packet_mem.rss, 4),
+    tachyon_guard:put(IP, Host, Time, "machines.swap", Mem#packet_mem.swap, 4),
 
     Metrics = fmt_packet(Packet),
     DB1 = case gen_tcp:send(DB, Metrics) of

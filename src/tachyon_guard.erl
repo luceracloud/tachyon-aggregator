@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator_guard).
+-module(tachyon_guard).
 
 -behaviour(gen_server).
 -include("packet_pb.hrl").

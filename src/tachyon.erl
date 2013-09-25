@@ -6,21 +6,21 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator).
+-module(tachyon).
 
 -export([start/0, stats/0, add/1, remove/1]).
 
 start() ->
     application:start(sasl),
     application:start(erlzmq),
-    application:start(erlaggregator).
+    application:start(tachyon).
 
 stats() ->
-    erlaggregator_server:stats().
+    tachyon_server:stats().
 
 add(IP) ->
-    erlaggregator_guard_sup:start_child(IP),
-    erlaggregator_probe_sup:start_child(IP).
+    tachyon_guard_sup:start_child(IP),
+    tachyon_probe_sup:start_child(IP).
 
 remove(IP) ->
-    erlaggregator_probe:stop(IP).
+    tachyon_probe:stop(IP).

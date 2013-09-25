@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator_probe_sup).
+-module(tachyon_probe_sup).
 
 -behaviour(supervisor).
 
@@ -55,8 +55,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    Element = {erlaggregator_probe, {erlaggregator_probe, start_link, []},
-               transient, infinity, worker, [erlaggregator_probe]},
+    Element = {tachyon_probe, {tachyon_probe, start_link, []},
+               transient, infinity, worker, [tachyon_probe]},
     Children = [Element],
     RestartStrategy = {simple_one_for_one, 5, 10},
     {ok, {RestartStrategy, Children}}.

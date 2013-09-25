@@ -1,5 +1,4 @@
-
--module(erlaggregator_sup).
+-module(tachyon_sup).
 
 -behaviour(supervisor).
 
@@ -26,6 +25,6 @@ start_link() ->
 init([]) ->
     {ok, {{one_for_one, 5, 10},
            [
-            ?CHILD(erlaggregator_probe_sup, supervisor),
-            ?CHILD(erlaggregator_guard_sup, supervisor),
-            ?CHILD(erlaggregator_server, worker)]}}.
+            ?CHILD(tachyon_probe_sup, supervisor),
+            ?CHILD(tachyon_guard_sup, supervisor),
+            ?CHILD(tachyon_server, worker)]}}.

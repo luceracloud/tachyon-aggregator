@@ -1,13 +1,13 @@
-{application, erlaggregator,
+{application, tachyon,
  [
   {description, ""},
-  {vsn, "1"},
+  {vsn, "0.1.0"},
   {registered, []},
   {applications, [
                   kernel,
                   stdlib,
                   erlzmq
                  ]},
-  {mod, { erlaggregator_app, []}},
+  {mod, {tachyon_app, []}},
   {env, [{clients, []}]}
  ]}.

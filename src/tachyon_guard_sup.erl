@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(erlaggregator_guard_sup).
+-module(tachyon_guard_sup).
 
 -behaviour(supervisor).
 
@@ -55,8 +55,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    Element = {erlaggregator_guard, {erlaggregator_guard, start_link, []},
-               transient, infinity, worker, [erlaggregator_guard]},
+    Element = {tachyon_guard, {tachyon_guard, start_link, []},
+               transient, infinity, worker, [tachyon_guard]},
     Children = [Element],
     RestartStrategy = {simple_one_for_one, 5, 10},
     {ok, {RestartStrategy, Children}}.
