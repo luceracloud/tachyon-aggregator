@@ -13,6 +13,7 @@
 start() ->
     application:start(sasl),
     application:start(erlzmq),
+    application:start(lager),
     application:start(tachyon).
 
 stats() ->
