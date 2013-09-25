@@ -26,19 +26,21 @@
 
 -define(MIN_ITER, 1000).
 -define(DECAY, 0.9999).
+-define(QUICK_DECAY, 0.99).
 
--define(UPD(Avg, N),
-    (Avg*?DECAY) + (N*(1-?DECAY))).
+-define(UPD(Avg, N, Decay),
+        (Avg*Decay) + (N*(1-Decay))).
 
 -record(metric, {
           avg = 0,
           var = 0,
           std = 0,
-          itteration = 0
+          itteration = 0,
+          dist = 0
          }).
 
 
--record(state, {metrics = [], db, ip}).
+-record(state, {metrics = [], db, ip, time}).
 
 %%%===================================================================
 %%% API
@@ -117,60 +119,95 @@ handle_call(_Request, _From, State) ->
 handle_cast({put, Host, Time, M, V, T}, State =
                 #state{metrics = Metrics,
                        db = DB,
-                       ip=IP}) ->
+                       ip=IP,
+                       time = T0}) ->
     Metrics1 = orddict:update(M, fun (Met) ->
                                          D = Met#metric.avg - V,
                                          Dsq = D*D,
-                                         Var = ?UPD(Met#metric.var, Dsq),
-                                         Avg = ?UPD(Met#metric.avg, V),
-                                         Std = math:sqrt(Var),
                                          Iter = Met#metric.itteration,
-                                         case {Std, Iter} of
-                                             {_S, I} when _S =/= 0,
-                                                          I > ?MIN_ITER ->
-                                                 case abs(D/Std) of
-                                                     R when R > T ->
-                                                         io:format("[~s] Standard Derivatin >~p -> ~p.~n", [M, T, R]);
-                                                     _ ->
-                                                         ok
-                                                 end;
-                                             _ ->
-                                                 ok
-                                         end,
+                                         Var0 = Met#metric.var,
+                                         Avg0 = Met#metric.avg,
+                                         {Var, Avg} =
+                                             case Iter of
+                                                 _I0 when _I0 < ?MIN_ITER ->
+                                                     {?UPD(Var0, Dsq, ?QUICK_DECAY),
+                                                      ?UPD(Avg0, V, ?QUICK_DECAY)};
+                                                 _ ->
+                                                     {?UPD(Var0, Dsq, ?DECAY),
+                                                      ?UPD(Avg0, V, ?DECAY)}
+                                             end,
+                                         Std = math:sqrt(Var),
+                                         Msg = "[~s(~s)/~s] Value ~p is ~p std diviations from avg ~p",
+                                         Dist = case {Std, Iter} of
+                                                    {_S, _I1} when _S > 0,
+                                                                   _I1 > ?MIN_ITER ->
+
+                                                        DistI = abs(D/Std),
+                                                        case DistI of
+                                                            R when R > T*3 ->
+                                                                lager:error(
+                                                                  Msg,
+                                                                  [Host, IP, M,
+                                                                   V, R, Avg]);
+                                                            R when R > T*2 ->
+                                                                lager:warning(
+                                                                  Msg,
+                                                                  [Host, IP, M,
+                                                                   V, R, Avg]);
+                                                            R when R > T ->
+                                                                lager:info(
+                                                                  Msg,
+                                                                  [Host, IP, M,
+                                                                   V, R, Avg]);
+                                                            _ ->
+                                                                ok
+                                                        end,
+                                                        DistI;
+                                                    _ ->
+                                                        0
+                                                end,
                                          #metric{
                                             var = Var,
                                             std = Std,
                                             avg = Avg,
-                                            itteration = Iter + 1
-                                         }
+                                            itteration = Iter + 1,
+                                            dist = Dist
+                                           }
                                  end, #metric{avg=V}, Metrics),
     DB1 = DB,
     Metr = orddict:fetch(M, Metrics1),
-
-    TelnetMsg = [io_lib:format("put machines.~s.avg ~p ~p host=~s~n",
-                               [M, Time, Metr#metric.avg, Host]),
-                 io_lib:format("put machines.~s.std ~p ~p host=~s~n",
-                               [M, Time, Metr#metric.std, Host])],
-    DB1 = case gen_tcp:send(DB, TelnetMsg) of
-               {error, Reason} ->
-                   timer:sleep(1000),
-                   io:format("[~s] Socket died with: ~p", [IP, Reason]),
-                   {ok, NewDB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
-                   NewDB;
+    State1  = State#state{metrics = Metrics1},
+    Msg0 = case Time of
+               T0 ->
+                   [];
                _ ->
-                  DB
+                   [io_lib:format("put cloud.diff ~p ~p host=~s~n",
+                                  [T0, distance(State), Host])]
            end,
-    {noreply, State#state{db = DB1, metrics = Metrics1}};
+    TelnetMsg = [io_lib:format("put cloud.~s.avg ~p ~p host=~s~n",
+                               [M, Time, Metr#metric.avg, Host]),
+                 io_lib:format("put cloud.~s.std ~p ~p host=~s~n",
+                               [M, Time, Metr#metric.std, Host]) | Msg0],
+    DB1 = case gen_tcp:send(DB, TelnetMsg) of
+              {error, Reason} ->
+                  timer:sleep(1000),
+                  io:format("[~s] Socket died with: ~p", [IP, Reason]),
+                  {ok, NewDB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
+                  NewDB;
+              _ ->
+                  DB
+          end,
+    {noreply, State1#state{db = DB1, time = Time}};
 
-handle_cast(stats, State) ->
+handle_cast(stats, State = #state{metrics = Metrics} ) ->
     io:format("~20s ~20s ~s~n", ["Metric", "Average", "Standard Derivation"]),
     io:format("~20s ~20s ~s~n", ["--------------------",
                                  "--------------------",
                                  "--------------------"]),
-
-    [
-     io:format("~20s ~20p ~20p~n", [N, M#metric.avg, M#metric.std]) ||
-        {N, M} <- State#state.metrics],
+    [io:format("~20s ~20p ~20p~n", [N, M#metric.avg, M#metric.std]) ||
+        {N, M} <- Metrics],
+    Dist = distance(State),
+    io:format("Total distance is ~p.~n", [Dist]),
     {noreply, State};
 
 handle_cast(stop, State) ->
@@ -222,3 +259,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+distance(#state{metrics = Metrics}) ->
+    lists:foldl(fun({_, #metric{dist = Dist}}, Acc) ->
+                        Acc + Dist
+                end, 0, Metrics).
