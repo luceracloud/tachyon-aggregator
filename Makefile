@@ -7,22 +7,27 @@ all:
 
 osx:
 	CC=gcc LDFLAGS="-lzmq -L/usr/local/lib" CFLAGS="-lzmq -I/usr/local/include" ./rebar compile
+
 clean:
 	./rebar clean
 
 test: xref
+	./rebar eunit skip_deps=true
 
 xref: all
 	./rebar xref skip_deps=true
 
 console:
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin
 
 run:
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config london -s tachyon
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin -config london -s tachyon
 
 ny4: all
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config ny4 -s tachyon
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin -config ny4 -s tachyon
 
 local: all
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa ebin -config local -s tachyon
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin -config local -s tachyon
+
+rel: all
+	(cd rel; ../rebar generate)
