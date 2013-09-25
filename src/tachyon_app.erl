@@ -10,7 +10,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    tachyone_sup:start_link().
+    tachyon_sup:start_link().
 
 stop(_State) ->
     ok.
