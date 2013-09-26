@@ -24,7 +24,7 @@ run:
 	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin -config london -s tachyon
 
 ny4: all
-	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin -config ny4 -s tachyon
+	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/tachyon/ebin -config ny4 -s tachyon
 
 local: all
 	LD_LIBRARY_PATH=/opt/local/lib erl -pa deps/*/ebin -pa apps/*/ebin -config local -s tachyon
