@@ -8,16 +8,23 @@
 %%%-------------------------------------------------------------------
 -module(tachyon).
 
--export([start/0, stats/0, add/1, remove/1]).
+-export([start/0, stats/0, stats/1, add/1, remove/1]).
+
+-xref_ignore([start/0, stats/0, stats/1, add/1, remove/1]).
 
 start() ->
     application:start(sasl),
     application:start(erlzmq),
+%    application:start(lager_syslog_backend),
+%    application:start(syslog),
     application:start(lager),
     application:start(tachyon).
 
 stats() ->
-    tachyon_server:stats().
+    tachyon_guard:stats().
+
+stats(IP) ->
+    tachyon_guard:stats(IP).
 
 add(IP) ->
     tachyon_guard_sup:start_child(IP),

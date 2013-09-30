@@ -10,6 +10,7 @@
 
 -behaviour(gen_server).
 -include("packet_pb.hrl").
+-include("tachyon_statistics.hrl").
 
 %% API
 -export([start_link/1, put/6, stop/1, stats/0, stats/1]).
@@ -22,26 +23,6 @@
 
 -define(DB_SERVER, "127.0.0.1").
 -define(DB_PORT, 4242).
-
-
--define(MIN_ITER, 1000).
--define(DECAY, 0.9999).
--define(QUICK_DECAY, 0.99).
-
--define(UPD(Avg, N, Decay),
-        (Avg*Decay) + (N*(1-Decay))).
-
--record(metric, {
-          avg = 0,
-          var = 0,
-          std = 0,
-          itteration = 0,
-          dist = 0.0,
-          warn = 0,
-          info = 0,
-          error = 0
-         }).
-
 
 -record(state, {metrics = [], db, ip, time}).
 
@@ -135,10 +116,10 @@ handle_call(stats, _, State = #state{metrics = Metrics} ) ->
                                  "--------------------",
                                  "--------------------",
                                  "--------------------"]),
-    [io:format("~20s ~20.2f ~20.2f ~p~n", [N, M#metric.avg, M#metric.std, M#metric.itteration]) ||
+    [io:format("~20s ~20.2f ~20.2f ~p~n", [N, M#running_avg.avg, M#running_avg.std, M#running_avg.itteration]) ||
         {N, M} <- Metrics],
     Dist = distance(State),
-    {I, W, E} = lists:foldl(fun ({_, #metric{info = I0, warn = W0, error = E0}},
+    {I, W, E} = lists:foldl(fun ({_, #running_avg{info = I0, warn = W0, error = E0}},
                                  {Ia, Wa, Ea}) ->
                                     {Ia + I0, Wa + W0, Ea + E0}
                             end, {0, 0, 0}, Metrics),
@@ -152,7 +133,6 @@ handle_call(stats, _, State = #state{metrics = Metrics} ) ->
               "===================="
               "===~n"),
     {reply, ok, State};
-
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -168,18 +148,33 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({put, Host, Time, M, V, T}, State =
+handle_cast({put, Host, Time, Name, V, T}, State =
                 #state{metrics = Metrics,
                        db = DB,
                        ip=IP,
                        time = T0}) ->
     Metrics1 =
-        orddict:update(M, fun (Met) ->
-                                  process_warnings(Host, IP, M,
-                                                   update_metric(Met, V), T, V)
-                          end, #metric{avg=V}, Metrics),
+        orddict:update(Name,
+                       fun (Met) ->
+                               M0 = tachyon_statistics:avg_update(Met, V),
+                               {A, M} = tachyon_statistics:avg_analyze(M0, V, T),
+                               case A of
+                                   {error, Msg, Args} ->
+                                       lager:error("[~s(~s)/~s] " ++ Msg,
+                                                   [Host, IP, Name | Args]);
+                                   {warn, Msg, Args} ->
+                                       lager:warning("[~s(~s)/~s] " ++ Msg,
+                                                   [Host, IP, Name | Args]);
+                                   {info, Msg, Args} ->
+                                       lager:info("[~s(~s)/~s] " ++ Msg,
+                                                  [Host, IP, Name | Args]);
+                                   _ ->
+                                       ok
+                               end,
+                               M
+                          end, #running_avg{avg=V}, Metrics),
     DB1 = DB,
-    Metr = orddict:fetch(M, Metrics1),
+    Metr = orddict:fetch(Name, Metrics1),
     State1  = State#state{metrics = Metrics1},
     Msg0 = case Time of
                T0 ->
@@ -189,9 +184,9 @@ handle_cast({put, Host, Time, M, V, T}, State =
                                   [T0, distance(State), Host])]
            end,
     TelnetMsg = [io_lib:format("put cloud.~s.avg ~p ~p host=~s~n",
-                               [M, Time, Metr#metric.avg, Host]),
+                               [Name, Time, Metr#running_avg.avg, Host]),
                  io_lib:format("put cloud.~s.std ~p ~p host=~s~n",
-                               [M, Time, Metr#metric.std, Host]) | Msg0],
+                               [Name, Time, Metr#running_avg.std, Host]) | Msg0],
     DB1 = case gen_tcp:send(DB, TelnetMsg) of
               {error, Reason} ->
                   timer:sleep(1000),
@@ -253,74 +248,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 distance(#state{metrics = Metrics}) ->
-    lists:foldl(fun({_, #metric{dist = Dist}}, Acc) ->
+    lists:foldl(fun({_, #running_avg{dist = Dist}}, Acc) ->
                         Acc + Dist
                 end, 0.0, Metrics).
-
-update_metric(Met, V) ->
-    D = Met#metric.avg - V,
-    Dsq = D*D,
-    Iter = Met#metric.itteration,
-    Var0 = Met#metric.var,
-    Avg0 = Met#metric.avg,
-    {Var, Avg} =
-        case Iter of
-            _I0 when _I0 < ?MIN_ITER ->
-                {?UPD(Var0, Dsq, ?QUICK_DECAY),
-                 ?UPD(Avg0, V, ?QUICK_DECAY)};
-            _ ->
-                {?UPD(Var0, Dsq, ?DECAY),
-                 ?UPD(Avg0, V, ?DECAY)}
-        end,
-    Std = math:sqrt(Var),
-    Dist = if
-               Std > 0 ->
-                   abs(D/Std);
-               true ->
-                   0.0
-           end,
-    Met#metric{
-       var = Var, std = Std, avg = Avg,
-       itteration = Iter + 1,
-       dist = Dist
-      }.
-
-process_warnings(Host, IP, Name,
-                 Met = #metric{
-                          std = Std, dist = Dist,
-                          itteration = Iter,
-                          info = Info0, warn = Warn0, error = Error0
-                         }, T, V) when Std > 0 ->
-    Msg = "[~s(~s)/~s] Value ~.2f is ~.2f(~.2f%) std diviations from avg ~.2f.",
-    RelDist = Dist/Std,
-    Avg = Met#metric.avg,
-    Diff = Avg - V,
-    %% We don't ant to have alerts if the total delta is less then 1%
-    Delta = abs(Diff/Avg),
-    MinDelta = 0.02,
-    Args = [Host, IP, Name, V*1.0,
-            RelDist, Delta, Avg],
-    {Info, Warn, Error} =
-        if
-            RelDist > T*3,
-            Iter > ?MIN_ITER,
-            Delta > MinDelta ->
-                lager:error(Msg, Args),
-                {Info0, Warn0, Error0 + 1};
-            RelDist > T*2,
-            Iter > ?MIN_ITER,
-            Delta > MinDelta ->
-                lager:warning(Msg, Args),
-                {Info0, Warn0 + 1, 0};
-            RelDist > T,
-            Iter > ?MIN_ITER,
-            Delta > MinDelta ->
-                lager:info(Msg, Args),
-                {Info0 + 1, 0, 0};
-        true ->
-            {0, 0, 0}
-    end,
-    Met#metric{info = Info, warn = Warn, error = Error};
-
-process_warnings(_, _, _, Met, _, _) ->
-    Met.

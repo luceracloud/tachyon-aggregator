@@ -106,6 +106,7 @@ handle_cast(poll, State =
     Packet#packet.host,
 
     Host = Packet#packet.host,
+    Zone = Packet#packet.zone,
     Time = Packet#packet.time,
     CPUs = Packet#packet.cpu,
 
@@ -116,8 +117,13 @@ handle_cast(poll, State =
                   lists:nth(round(length(CPUs1)/2), lists:sort(CPUs1))
           end,
     [Mem | _] = Packet#packet.mem,
-
-    tachyon_guard:put(IP, Host, Time, "cpu.usage.median", Median, 4),
+    case {Host, Zone} of
+        {"headnode","global"} ->
+            lager:info("Processes: ~p", [Packet#packet.processes]);
+        _ ->
+            ok
+    end,
+    tachyon_guard:put(IP, Host, Time, "cpu.usage.median", Median/1000.0, 4),
     tachyon_guard:put(IP, Host, Time, "threads", Packet#packet.threads, 4),
     tachyon_guard:put(IP, Host, Time, "processes", Packet#packet.processes, 4),
     tachyon_guard:put(IP, Host, Time, "rss", Mem#packet_mem.rss, 4),
