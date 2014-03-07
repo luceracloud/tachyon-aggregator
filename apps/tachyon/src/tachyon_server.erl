@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, inc/1, stats/0, ctx/0]).
+-export([start_link/0, inc/1, stats/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {size = 0, cnt = 0, ctx}).
+-record(state, {size = 0, cnt = 0}).
 
 %%%===================================================================
 %%% API
@@ -31,8 +31,6 @@ inc(Size) ->
 stats() ->
     gen_server:call(?SERVER, stats).
 
-ctx() ->
-    gen_server:call(?SERVER, ctx).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -61,8 +59,9 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
-    {ok, Ctx} = erlzmq:context(),
-    {ok, #state{ctx = Ctx}, 1000}.
+    Servers = [{"172.21.0.1", 4161}],
+    ensq:init({Servers, [{tachyon, [{<<"aggregator">>, tachyon_nsq_handler}], []}]}),
+    {ok, #state{}, 1000}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -80,10 +79,6 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_call(stats, _From, State = #state{cnt = Cnt, size = Size}) ->
     Reply = {ok, Cnt, Size},
-    {reply, Reply, State};
-
-handle_call(ctx, _From, State = #state{ctx = Ctx}) ->
-    Reply = {ok, Ctx},
     {reply, Reply, State};
 
 handle_call(_Request, _From, State) ->
@@ -132,8 +127,7 @@ handle_info(timeout, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, State) ->
-    erlzmq:term(State#state.ctx, 5000),
+terminate(_Reason, _State) ->
     ok.
 
 %%--------------------------------------------------------------------

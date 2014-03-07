@@ -6,7 +6,8 @@
   {applications, [
                   kernel,
                   stdlib,
-                  erlzmq
+                  lager,
+                  ensq
                  ]},
   {mod, {tachyon_app, []}},
   {env, [{clients, []}]}
