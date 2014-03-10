@@ -25,4 +25,5 @@ local: all
 	erl -pa deps/*/ebin -pa apps/*/ebin -config local -s tachyon
 
 rel: all
+	-rm -r rel/tachyon/
 	(cd rel; ../rebar generate)
