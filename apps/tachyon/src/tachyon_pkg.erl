@@ -14,7 +14,8 @@ decode(<<_HostSize:32/integer, Host:_HostSize/binary,
          Data/binary>>) ->
     case decode_data(Data) of
         {ok, V} ->
-            {ok, {Host, Zone, trunc(Time/1000000000), {Module, Instance, Name, Class},
+            %% {ok, {Host, Zone, trunc(Time/1000000000), {Module, Instance, Name, Class},
+            {ok, {Host, Zone, Time, {Module, Instance, Name, Class},
                   {Key, V}}};
         _ ->
             {error, unknown_data, Data}

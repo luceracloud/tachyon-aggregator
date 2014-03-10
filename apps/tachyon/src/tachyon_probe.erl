@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, msg/1]).
--ignore_xref([start_link/1]).
+-export([start_link/1, msg/1, fmt/4]).
+-ignore_xref([start_link/1, fmt/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -20,7 +20,7 @@
 
 -define(SERVER, ?MODULE).
 
--define(DB_SERVER, "127.0.0.1").
+-define(DB_SERVER, "172.21.0.203").
 -define(DB_PORT, 4242).
 
 -record(state, {host, db}).
@@ -65,7 +65,7 @@ msg({Host, _, _, _, _} = P) ->
 %%--------------------------------------------------------------------
 init([Host]) ->
     process_flag(trap_exit, true),
-    {ok, DB} = {ok, 1}, % gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
+    {ok, DB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
     {ok, #state{host = Host, db=DB}}.
 
 %%--------------------------------------------------------------------
@@ -100,99 +100,83 @@ handle_call(_Request, _From, State) ->
 %% put(Host, Time, Metric, Value, T)
 
 %% Disks
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].", Key/binary>>,
-    tachyon_guard:put(Host, SnapTimem, Metric, V, 4),
-    {noreply, State};
+    tachyon_guard:put(Host, SnapTime, Metric, V, 4),
+    State1 = put(<<"cloud.host.disk.metrics.", Key/binary>>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
-    tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
-    {noreply, State};
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.hard">>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
-    tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
-    {noreply, State};
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.soft">>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].errors.transport">>,
-    tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
-    {noreply, State};
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.transport">>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Illegal Request">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
-    tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
-    {noreply, State};
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.illegal">>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Predictive Failure Analysis">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
-    tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
-    {noreply, State};
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.predicted_failures">>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
 %% CPU Load
-handle_cast({Host, <<"global">>, SnapTimem,
+handle_cast({Host, <<"global">>, SnapTime,
              {<<"cpu_stat">>, Instance, _Name, _Class}, {Key, V}},
             State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    tachyon_guard:put(Host, SnapTimem, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
-    {noreply, State};
 
-handle_cast({Host, Zone, SnapTimem, {Module, Instance, Name, Class}, {Key, V}},
+    ID = list_to_binary(integer_to_list(Instance)),
+    tachyon_guard:put(Host, SnapTime, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
+    State1 = put(<<"cloud.host.cpu.", Key/binary>>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
+
+handle_cast({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}},
             State = #state{
                        db = _DB,
                        host = Host}) ->
     lager:debug("[~s:~s@~p] ~s:~p:~s(~s) ~s = ~p~n",
-                [Host, Zone, SnapTimem, Module, Instance, Class, Name, Key, V]),
-    %% Median = case [C#packet_cpu.usage || C <- CPUs] of
-    %%           [] ->
-    %%               0;
-    %%           CPUs1 ->
-    %%               lists:nth(round(length(CPUs1)/2), lists:sort(CPUs1))
-    %%       end,
-    %% [Mem | _] = Packet#packet.mem,
-    %% case {Host, Zone} of
-    %%     {"headnode","global"} ->
-    %%         lager:info("Processes: ~p", [Packet#packet.processes]);
-    %%     _ ->
-    %%         ok
-    %% end,
-    %% tachyon_guard:put(IP, Host, Time, "cpu.usage.median", Median/1000.0, 4),
-    %% tachyon_guard:put(IP, Host, Time, "threads", Packet#packet.threads, 4),
-    %% tachyon_guard:put(IP, Host, Time, "processes", Packet#packet.processes, 4),
-    %% tachyon_guard:put(IP, Host, Time, "rss", Mem#packet_mem.rss, 4),
-    %% tachyon_guard:put(IP, Host, Time, "swap", Mem#packet_mem.swap, 4),
-
-    %% Metrics = fmt_packet(Packet),
-    %% DB1 = case gen_tcp:send(DB, Metrics) of
-    %%           {error, Reason} ->
-    %%               timer:sleep(1000),
-    %%               io:format("[~s] Socket died with: ~p", [IP, Reason]),
-    %%               {ok, NewDB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
-    %%               NewDB;
-    %%           _ ->
-    %%               DB
-    %%       end,
-    %% poll(IP),
-    %%{noreply, State#state{db = DB1}};
+                [Host, Zone, SnapTime, Module, Instance, Class, Name, Key, V]),
     {noreply, State};
 
 handle_cast(Msg, State) ->
@@ -242,9 +226,33 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
+fmt(Metric, Value, Time, Args) ->
+    {Fmt, Vals} =
+        lists:foldl(fun({K, V}, {S, A}) when is_binary(V)->
+                            {S ++ " ~p=~s", [V, K | A]};
+                       ({K, V}, {S, A}) when is_number(V) ->
+                            {S ++ " ~p=~p", [V, K | A]};
+                       (_, Acc) ->
+                            Acc
+                    end, {"put ~s ~p ~p", [Value, Time, Metric]}, Args),
+    io_lib:format(Fmt ++ "~n", lists:reverse(Vals)).
+
+put(Metric, Value, Time, Args, State = #state{db = DB, host=Host}) ->
+    Metrics = fmt(Metric, Value, Time, Args),
+    DB1 = case gen_tcp:send(DB, Metrics) of
+              {error, Reason} ->
+                  lager:error("[~s] Socket died with: ~p", [Host, Reason]),
+                  {ok, NewDB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
+                  NewDB;
+              _ ->
+                  DB
+          end,
+    State#state{db = DB1}.
+
+
 %% fmt(S, P) -> io_lib:format(S, P).
 
-%% fmt_packet(Packet) ->
+%% fmt_packet(Packet) ->d
 %%     Zone = Packet#packet.zone,
 %%     Host = Packet#packet.host,
 %%     Time = Packet#packet.time,

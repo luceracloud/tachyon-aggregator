@@ -27,5 +27,3 @@ stats(Host) ->
 
 hosts() ->
     ok.
-
-
