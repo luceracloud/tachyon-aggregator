@@ -23,7 +23,7 @@
 
 -define(SERVER, ?MODULE).
 
--define(DB_SERVER, "172.21.0.1").
+-define(DB_SERVER, "172.21.0.203").
 -define(DB_PORT, 4242).
 
 -record(state, {metrics = [], db, host, time}).
