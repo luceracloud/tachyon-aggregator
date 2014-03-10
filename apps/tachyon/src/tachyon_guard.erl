@@ -23,7 +23,7 @@
 
 -define(SERVER, ?MODULE).
 
--define(DB_SERVER, "127.0.0.1").
+-define(DB_SERVER, "172.21.0.1").
 -define(DB_PORT, 4242).
 
 -record(state, {metrics = [], db, host, time}).
@@ -72,7 +72,7 @@ stats(Host) ->
 %%--------------------------------------------------------------------
 init([Host]) ->
     process_flag(trap_exit, true),
-    {ok, DB} = {ok, 1}, %gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
+    {ok, DB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
     {ok, #state{db=DB, host = Host}}.
 
 %%--------------------------------------------------------------------

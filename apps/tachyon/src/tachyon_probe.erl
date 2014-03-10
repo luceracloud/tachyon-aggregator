@@ -107,7 +107,7 @@ handle_cast({Host, <<"global">>, SnapTime,
     Metric = <<"sd[", ID/binary, "].", Key/binary>>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 4),
     State1 = put(<<"cloud.host.disk.metrics.", Key/binary>>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{disk, Instance}, {host, Host}], State),
     {noreply, State1};
 
 handle_cast({Host, <<"global">>, SnapTime,
@@ -117,7 +117,7 @@ handle_cast({Host, <<"global">>, SnapTime,
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.hard">>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{disk, Instance}, {host, Host}], State),
     {noreply, State1};
 
 handle_cast({Host, <<"global">>, SnapTime,
@@ -127,7 +127,7 @@ handle_cast({Host, <<"global">>, SnapTime,
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.soft">>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{disk, Instance}, {host, Host}], State),
     {noreply, State1};
 
 handle_cast({Host, <<"global">>, SnapTime,
@@ -137,7 +137,7 @@ handle_cast({Host, <<"global">>, SnapTime,
     Metric = <<"sd[", ID/binary, "].errors.transport">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.transport">>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{disk, Instance}, {host, Host}], State),
     {noreply, State1};
 
 handle_cast({Host, <<"global">>, SnapTime,
@@ -147,7 +147,7 @@ handle_cast({Host, <<"global">>, SnapTime,
     Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.illegal">>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{disk, Instance}, {host, Host}], State),
     {noreply, State1};
 
 handle_cast({Host, <<"global">>, SnapTime,
@@ -157,7 +157,7 @@ handle_cast({Host, <<"global">>, SnapTime,
     Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.predicted_failures">>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{disk, Instance}, {host, Host}], State),
     {noreply, State1};
 
 %% CPU Load
