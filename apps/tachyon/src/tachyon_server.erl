@@ -11,7 +11,9 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, inc/1, stats/0]).
+-export([start_link/0]).
+-ignore_xref([start_link/0]).
+
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,18 +21,11 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {size = 0, cnt = 0}).
+-record(state, {}).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
-
-inc(Size) ->
-    gen_server:cast(?SERVER, {inc, Size}).
-
-stats() ->
-    gen_server:call(?SERVER, stats).
-
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -77,9 +72,6 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(stats, _From, State = #state{cnt = Cnt, size = Size}) ->
-    Reply = {ok, Cnt, Size},
-    {reply, Reply, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -95,9 +87,6 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({inc, Inc}, State = #state{cnt = Cnt, size = Size}) ->
-    {noreply, State#state{cnt = Cnt + 1, size = Size + Inc}};
-
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -111,9 +100,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(timeout, State) ->
-    {ok, Clients} = application:get_env(tachyon, clients),
-    spawn(fun() -> [tachyon:add(IP) || IP <- Clients] end),
+handle_info(_, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------

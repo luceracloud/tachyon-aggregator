@@ -8,9 +8,9 @@
 %%%-------------------------------------------------------------------
 -module(tachyon).
 
--export([start/0, stats/0, stats/1, add/1, remove/1]).
+-export([start/0, stats/1, hosts/0]).
 
--xref_ignore([start/0, stats/0, stats/1, add/1, remove/1]).
+-ignore_xref([start/0, stats/1, hosts/0]).
 
 start() ->
     application:start(sasl),
@@ -22,15 +22,10 @@ start() ->
     application:start(ensq),
     application:start(tachyon).
 
-stats() ->
-    tachyon_guard:stats().
+stats(Host) ->
+    tachyon_guard:stats(Host).
 
-stats(IP) ->
-    tachyon_guard:stats(IP).
+hosts() ->
+    ok.
 
-add(IP) ->
-    tachyon_guard_sup:start_child(IP),
-    tachyon_probe_sup:start_child(IP).
 
-remove(IP) ->
-    tachyon_probe:stop(IP).

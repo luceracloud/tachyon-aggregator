@@ -13,11 +13,13 @@
 -include("tachyon_statistics.hrl").
 
 %% API
--export([start_link/1, put/5, stop/1, stats/1]).
+-export([start_link/1, put/5, stats/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
+
+-ignore_xref([start_link/1]).
 
 -define(SERVER, ?MODULE).
 
@@ -41,9 +43,6 @@ start_link(Host) ->
     gen_server:start_link(
       {global, {guard, Host}},
       ?MODULE, [Host], []).
-
-stop(Host) ->
-    gen_server:cast({global, {guard, Host}}, stop).
 
 put(Host, Time, Metric, Value, T) ->
     case global:whereis_name({guard, Host}) of
@@ -190,9 +189,6 @@ handle_cast({put, Host, Time, Name, V, T}, State =
     %%               DB
     %%       end,
     {noreply, State1#state{time = Time}};
-
-handle_cast(stop, State) ->
-    {stop, normal, State};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.

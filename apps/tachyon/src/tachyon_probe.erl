@@ -12,6 +12,7 @@
 
 %% API
 -export([start_link/1, msg/1]).
+-ignore_xref([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -98,6 +99,7 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 %% put(Host, Time, Metric, Value, T)
 
+%% Disks
 handle_cast({Host, <<"global">>, SnapTimem,
              {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
             State) ->
@@ -110,7 +112,7 @@ handle_cast({Host, <<"global">>, SnapTimem,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "hard_errors">>,
+    Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
     {noreply, State};
 
@@ -118,7 +120,7 @@ handle_cast({Host, <<"global">>, SnapTimem,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "soft_errors">>,
+    Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
     {noreply, State};
 
@@ -126,7 +128,7 @@ handle_cast({Host, <<"global">>, SnapTimem,
              {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}},
             State) ->
     ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "transport_errors">>,
+    Metric = <<"sd[", ID/binary, "].errors.transport">>,
     tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
     {noreply, State};
 
@@ -146,6 +148,7 @@ handle_cast({Host, <<"global">>, SnapTimem,
     tachyon_guard:put(Host, SnapTimem, Metric, V, 1),
     {noreply, State};
 
+%% CPU Load
 handle_cast({Host, <<"global">>, SnapTimem,
              {<<"cpu_stat">>, Instance, _Name, _Class}, {Key, V}},
             State) ->
@@ -157,8 +160,8 @@ handle_cast({Host, Zone, SnapTimem, {Module, Instance, Name, Class}, {Key, V}},
             State = #state{
                        db = _DB,
                        host = Host}) ->
-    io:format("[~s:~s@~p] ~s:~p:~s(~s) ~s = ~p~n",
-              [Host, Zone, SnapTimem, Module, Instance, Class, Name, Key, V]),
+    lager:debug("[~s:~s@~p] ~s:~p:~s(~s) ~s = ~p~n",
+                [Host, Zone, SnapTimem, Module, Instance, Class, Name, Key, V]),
     %% Median = case [C#packet_cpu.usage || C <- CPUs] of
     %%           [] ->
     %%               0;

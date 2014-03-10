@@ -1,4 +1,5 @@
 log
+apps/tachyon/.eunit
 erl_crash.dump
 ebin
 include/packet_pb.hrl
