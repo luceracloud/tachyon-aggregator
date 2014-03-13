@@ -99,90 +99,12 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 %% put(Host, Time, Metric, Value, T)
 
-%% Disks
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
-            State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", Key/binary>>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 4),
-    State1 = put(<<"cloud.host.disk.metrics.", Key/binary>>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
-    {noreply, State1};
+handle_cast({_, <<"global">>, _, _, _} = M, State) ->
+    handle_gz(M, State);
 
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}},
-            State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].errors.hard">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    State1 = put(<<"cloud.host.disk.errors.hard">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
-    {noreply, State1};
-
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}},
-            State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].errors.hard">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    State1 = put(<<"cloud.host.disk.errors.soft">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
-    {noreply, State1};
-
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}},
-            State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].errors.transport">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    State1 = put(<<"cloud.host.disk.errors.transport">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
-    {noreply, State1};
-
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Illegal Request">>, V}},
-            State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    State1 = put(<<"cloud.host.disk.errors.illegal">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
-    {noreply, State1};
-
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Predictive Failure Analysis">>, V}},
-            State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    State1 = put(<<"cloud.host.disk.errors.predicted_failures">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
-    {noreply, State1};
-
-%% CPU Load
-handle_cast({Host, <<"global">>, SnapTime,
-             {<<"cpu_stat">>, Instance, _Name, _Class}, {Key, V}},
-            State) ->
-
-    ID = list_to_binary(integer_to_list(Instance)),
-    tachyon_guard:put(Host, SnapTime, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
-    State1 = put(<<"cloud.host.cpu.", Key/binary>>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
-    {noreply, State1};
-
-handle_cast({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}},
-            State = #state{
-                       db = _DB,
-                       host = Host}) ->
-    lager:debug("[~s:~s@~p] ~s:~p:~s(~s) ~s = ~p~n",
-                [Host, Zone, SnapTime, Module, Instance, Class, Name, Key, V]),
-    {noreply, State};
-
-handle_cast(Msg, State) ->
-    io:format("Unknown message: ~p~n", [Msg]),
-    {noreply, State}.
-
+handle_cast(M, State) ->
+%%    io:format("~p~n", [M]),
+    handle_zone(M, State).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -249,94 +171,177 @@ put(Metric, Value, Time, Args, State = #state{db = DB, host=Host}) ->
           end,
     State#state{db = DB1}.
 
+handle_gz({Host, _, SnapTime,
+             {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
+            State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    Metric = <<"sd[", ID/binary, "].", Key/binary>>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 4),
+    State1 = put(<<"cloud.host.disk.metrics.", Key/binary>>, V, SnapTime,
+                 [{disk, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%% fmt(S, P) -> io_lib:format(S, P).
+handle_gz({Host, _, SnapTime,
+             {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}},
+            State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    Metric = <<"sd[", ID/binary, "].errors.hard">>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.hard">>, V, SnapTime,
+                 [{disk, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%% fmt_packet(Packet) ->d
-%%     Zone = Packet#packet.zone,
-%%     Host = Packet#packet.host,
-%%     Time = Packet#packet.time,
-%%     [Mem | _] = Packet#packet.mem,
-%%     Base = fmt_generic(Time, Host, Zone, [{"cloud.threads", Packet#packet.threads},
-%%                                           {"cloud.processes", Packet#packet.processes},
-%%                                           {"cloud.rss", Mem#packet_mem.rss},
-%%                                           {"cloud.swap", Mem#packet_mem.swap}]),
-%%     CPU1Data = [
-%%                 fmt("put cloud.cpu.usage ~p ~p host=~s zone=~s cpu=~p~n",
-%%                     [Time, CPU#packet_cpu.usage / 10000, Host, Zone, CPU#packet_cpu.core])
-%%                 || CPU <- Packet#packet.cpu],
+handle_gz({Host, _, SnapTime,
+             {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}},
+            State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    Metric = <<"sd[", ID/binary, "].errors.hard">>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.soft">>, V, SnapTime,
+                 [{disk, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%%     CPU2Data = [
-%%                 fmt("put cloud.cpu.queue.length ~p ~p host=~s zone=~s cpu=~p~n",
-%%                     [Time, CPU#packet_cpuqueue.length, Host, Zone, CPU#packet_cpuqueue.core])
-%%                 || CPU <- Packet#packet.cpuqueue],
-%%     CPU3Data = [
-%%                 fmt("put cloud.cpu.queue.amount ~p ~p host=~s zone=~s cpu=~p~n",
-%%                     [Time, CPU#packet_cpuqueue.amount, Host, Zone, CPU#packet_cpuqueue.core])
-%%                 || CPU <- Packet#packet.cpuqueue],
-%%     NetData = [fmt_net(Time, Host, Zone, Net) || Net <- Packet#packet.net],
-%%     DiskData = [fmt_disk(Time, Host, Zone, Disk) || Disk <- Packet#packet.disk],
-%%     ProcData = [fmt("put cloud.proc ~p ~p executable=~s host=~s zone=~s~n",
-%%                     [Time, P#packet_process.usage, P#packet_process.execname, Host, Zone])
-%%                 || P <- Packet#packet.process],
-%%     CF1Data = [fmt("put cloud.callfreq.value ~p ~p host=~s zone=~s call=~s~n",
-%%                    [Time, P#packet_callfreq.value, Host, Zone, P#packet_callfreq.name])
-%%                || P <- Packet#packet.callfreq],
-%%     CF2Data = [fmt("put cloud.callfreq.time ~p ~p host=~s zone=~s call=~s~n",
-%%                    [Time, P#packet_callfreq.time, Host, Zone, P#packet_callfreq.name])
-%%                || P <- Packet#packet.callfreq],
-%%     [Base, DiskData, NetData, CPU1Data, CPU2Data, CPU3Data, ProcData, CF1Data, CF2Data].
+handle_gz({Host, _, SnapTime,
+             {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}},
+            State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    Metric = <<"sd[", ID/binary, "].errors.transport">>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.transport">>, V, SnapTime,
+                 [{disk, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%% fmt_generic(Time, Host, Zone, Metrics) ->
-%%     [fmt_generic(Time, Host, Zone, Metric, Value) ||
-%%         {Metric, Value} <- Metrics].
+handle_gz({Host, _, SnapTime,
+             {<<"sderr">>, Instance, _Name, _Class}, {<<"Illegal Request">>, V}},
+            State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.illegal">>, V, SnapTime,
+                 [{disk, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%% fmt_generic(Time, Host, Zone, Metric, Value) ->
-%%     fmt("put ~s ~p ~p host=~s zone=~s~n",
-%%         [Metric, Time, Value, Host, Zone]).
+handle_gz({Host, _, SnapTime,
+             {<<"sderr">>, Instance, _Name, _Class}, {<<"Predictive Failure Analysis">>, V}},
+            State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
+    State1 = put(<<"cloud.host.disk.errors.predicted_failures">>, V, SnapTime,
+                 [{disk, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%% fmt_disk(Time, Host, Zone, P = #packet_disk{
-%%                                   instance = Instance
-%%                                  }) ->
-%%     [fmt("put cloud.disk.~s ~p ~p host=~s zone=~s instance=~s~n",
-%%          [Metric, Time, def(Value), Host, Zone, Instance]) ||
-%%         {Metric, Value} <- [
-%%                             {"nread", P#packet_disk.nread},
-%%                             {"nwrittenc", P#packet_disk.nwritten},
-%%                             {"reads", P#packet_disk.reads},
-%%                             {"writes", P#packet_disk.writes},
-%%                             {"rtime", P#packet_disk.rtime},
-%%                             {"wtime", P#packet_disk.wtime},
-%%                             {"rlentime", P#packet_disk.rlentime},
-%%                             {"wlentime", P#packet_disk.wlentime},
-%%                             {"harderror", P#packet_disk.harderror},
-%%                             {"softerror", P#packet_disk.softerror},
-%%                             {"tranerror", P#packet_disk.tranerror}]].
+%% CPU Load
+handle_gz({Host, _, SnapTime,
+           {<<"cpu_stat">>, Instance, _Name, _Class}, {Key, V}},
+          State) ->
+    ID = list_to_binary(integer_to_list(Instance)),
+    tachyon_guard:put(Host, SnapTime, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
+    State1 = put(<<"cloud.host.cpu.", Key/binary>>, V, SnapTime,
+                 [{cpu, Instance}, {host, Host}], State),
+    {noreply, State1};
 
-%% def(undefined) -> 0;
-%% def(V) -> V.
+handle_gz(_, State) ->
+    {noreply, State}.
 
-%% fmt_net(Time, Host, Zone, #packet_net{
-%%                              obytes64 = OBytes,
-%%                              rbytes64 = RBytes,
-%%                              opackets = OPkgs,
-%%                              ipackets = IPkgs,
-%%                              oerrors = OErrors,
-%%                              ierrors = IErrors,
-%%                              instance = I0
-%%                             }) ->
-%%     IFace = case I0 of
-%%                 undefined ->
-%%                     "vm-local";
-%%                 _ ->
-%%                     I0
-%%             end,
-%%     [fmt("put cloud.net.~s ~p ~p host=~s zone=~s interface=~s~n",
-%%          [Metric, Time, Value, Host, Zone, IFace]) ||
-%%         {Metric, Value} <- [
-%%                             {"obytes", OBytes},
-%%                             {"rbytes", RBytes},
-%%                             {"opkgs", OPkgs},
-%%                             {"ipkgs", IPkgs},
-%%                             {"oerrors", OErrors},
-%%                             {"ierrors", IErrors}]].
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"above_base_sec">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.above_base">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"above_sec">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.above">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"baseline">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.baseline">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"burst_limit_sec">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.burst_limit">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"burst_sec">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.burst">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"effective">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.effective">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"maxusage">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.maxusage">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"nwait">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.nwait">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"usage">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.usage">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
+             {<<"value">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.cpu.value">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone(
+  {Host, Zone, SnapTime, {<<"caps">>=Module, Instance, Name, Class}, {Key, V}},
+  State) ->
+    lager:debug("[~s:~s@~p] "
+                "~s:~p:~s(~s) "
+                "~s = ~p~n",
+                [Host, Zone, SnapTime,
+                 Module, Instance, Class, Name,
+                 Key, V]),
+      {noreply, State};
+
+
+
+handle_zone({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}}, State) ->
+    lager:debug("[~s:~s@~p] "
+                "~s:~p:~s(~s) "
+                "~s = ~p~n",
+                [Host, Zone, SnapTime,
+                 Module, Instance, Class, Name,
+                 Key, V]),
+    {noreply, State}.
