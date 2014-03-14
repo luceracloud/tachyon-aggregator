@@ -6,14 +6,13 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(tachyon_server).
+-module(tachyon_metric).
 
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
--ignore_xref([start_link/0]).
-
+-export([start_link/1, msg/2]).
+-ignore_xref([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -21,7 +20,10 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-define(DB_SERVER, "172.21.0.203").
+-define(DB_PORT, 4242).
+
+-record(state, {grouping, db}).
 
 %%%===================================================================
 %%% API
@@ -34,8 +36,17 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Grouping) ->
+    gen_server:start_link({global, {metric, Grouping}}, ?MODULE, [Grouping], []).
+
+msg(Grouping, Msg) ->
+    case global:whereis_name({metric, Grouping}) of
+        undefined ->
+            {ok, Pid} = tachyon_metric_sup:start_child(Grouping),
+            gen_server:cast(Pid, {metric, Msg});
+        Pid ->
+            gen_server:cast(Pid, {metric, Msg})
+    end.
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -52,12 +63,10 @@ start_link() ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
+init([Grouping]) ->
     process_flag(trap_exit, true),
-    Servers = [{"172.21.0.1", 4161}],
-    NConnections = 5,
-    [connect(Servers) || _ <- lists:seq(1, NConnections)],
-    {ok, #state{}, 1000}.
+    {ok, DB} = tachyon_kairos:connect({?DB_SERVER, ?DB_PORT}),
+    {ok, #state{grouping = Grouping, db=DB}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -88,8 +97,9 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+
+handle_cast({metric, Msg}, State) ->
+    handle_metric(lists:sort(Msg), State).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -101,7 +111,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_, State) ->
+handle_info(_Info, State) ->
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -133,8 +143,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-connect(Servers) ->
-    ensq:init({Servers, [{<<"tachyon">>,
-                          [{<<"aggregator">>, tachyon_kstat_nsq}], []}]}),
-    ensq:init({Servers, [{<<"tachyon-metric-json">>,
-                          [{<<"aggregator">>, tachyon_jmetric_nsq}], []}]}).
+
+handle_metric([{<<"grouping">>, _}, {<<"metric">>, Metric}, {<<"tags">>, Tags},
+               {<<"time">>, Time}, {<<"value">>, Value}],
+              State = #state{db=DB}) ->
+    DB1 = tachyon_kairos:put(Metric, Value, Time, Tags, DB),
+    State1 = State#state{db = DB1},
+    {noreply, State1}.

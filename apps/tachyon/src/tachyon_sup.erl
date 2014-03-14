@@ -34,5 +34,6 @@ init([]) ->
     {ok, {{one_for_one, 5, 10},
            [
             ?CHILD(tachyon_kstat_sup, supervisor),
+            ?CHILD(tachyon_metric_sup, supervisor),
             ?CHILD(tachyon_guard_sup, supervisor),
             ?CHILD(tachyon_server, worker)]}}.

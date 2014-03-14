@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, msg/1, fmt/4]).
+-export([start_link/1, msg/1]).
 -ignore_xref([start_link/1, fmt/4]).
 
 %% gen_server callbacks
@@ -65,7 +65,7 @@ msg({Host, _, _, _, _} = P) ->
 %%--------------------------------------------------------------------
 init([Host]) ->
     process_flag(trap_exit, true),
-    {ok, DB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
+    {ok, DB} = tachyon_kairos:connect({?DB_SERVER, ?DB_PORT}),
     {ok, #state{host = Host, db=DB}}.
 
 %%--------------------------------------------------------------------
@@ -97,7 +97,6 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-%% put(Host, Time, Metric, Value, T)
 
 handle_cast({_, <<"global">>, _, _, _} = M, State) ->
     handle_gz(M, State);
@@ -148,27 +147,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-fmt(Metric, Value, Time, Args) ->
-    {Fmt, Vals} =
-        lists:foldl(fun({K, V}, {S, A}) when is_binary(V)->
-                            {S ++ " ~p=~s", [V, K | A]};
-                       ({K, V}, {S, A}) when is_number(V) ->
-                            {S ++ " ~p=~p", [V, K | A]};
-                       (_, Acc) ->
-                            Acc
-                    end, {"put ~s ~p ~p", [Value, Time, Metric]}, Args),
-    io_lib:format(Fmt ++ "~n", lists:reverse(Vals)).
-
-put(Metric, Value, Time, Args, State = #state{db = DB, host=Host}) ->
-    Metrics = fmt(Metric, Value, Time, Args),
-    DB1 = case gen_tcp:send(DB, Metrics) of
-              {error, Reason} ->
-                  lager:error("[~s] Socket died with: ~p", [Host, Reason]),
-                  {ok, NewDB} = gen_tcp:connect(?DB_SERVER, ?DB_PORT, [{packet, line}]),
-                  NewDB;
-              _ ->
-                  DB
-          end,
+put(Metric, Value, Time, Args, State = #state{db = DB}) ->
+    DB1 = tachyon_kairos:put(Metric, Value, Time, Args, DB),
     State#state{db = DB1}.
 
 handle_gz({Host, _, SnapTime,
