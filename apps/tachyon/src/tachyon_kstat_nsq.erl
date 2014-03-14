@@ -1,4 +1,4 @@
--module(tachyon_nsq_handler).
+-module(tachyon_kstat_nsq).
 
 -behaviour(ensq_channel_behaviour).
 
@@ -11,9 +11,9 @@ error(_Msg) ->
     ok.
 
 message(Msg, _) ->
-    case tachyon_pkg:decode(Msg) of
+    case tachyon_kstat_pkg:decode(Msg) of
         {ok, P} ->
-            tachyon_probe:msg(P);
+            tachyon_kstat:msg(P);
         E ->
             lager:error("[msg] ~p", [E])
     end.

@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(tachyon_probe).
+-module(tachyon_kstat).
 
 -behaviour(gen_server).
 
@@ -42,7 +42,7 @@ start_link(Host) ->
 msg({Host, _, _, _, _} = P) ->
     case global:whereis_name({host, Host}) of
         undefined ->
-            {ok, Pid} = tachyon_probe_sup:start_child(Host),
+            {ok, Pid} = tachyon_kstat_sup:start_child(Host),
             gen_server:cast(Pid, P);
         Pid ->
             gen_server:cast(Pid, P)

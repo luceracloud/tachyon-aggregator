@@ -55,7 +55,11 @@ start_link() ->
 init([]) ->
     process_flag(trap_exit, true),
     Servers = [{"172.21.0.1", 4161}],
-    ensq:init({Servers, [{tachyon, [{<<"aggregator">>, tachyon_nsq_handler}], []}]}),
+    NConnections = 5,
+    [
+     ensq:init({Servers, [{<<"tachyon">>,
+                           [{<<"aggregator">>, tachyon_kstat_nsq}], []}]})
+     || _ <- lists:seq(1,NConnections)],
     {ok, #state{}, 1000}.
 
 %%--------------------------------------------------------------------
