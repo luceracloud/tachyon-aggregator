@@ -151,6 +151,15 @@ put(Metric, Value, Time, Args, State = #state{db = DB}) ->
     DB1 = tachyon_kairos:put(Metric, Value, Time, Args, DB),
     State#state{db = DB1}.
 
+
+handle_gz({Host, _, SnapTime,
+             {<<"ip">>, _Instance, _Name, _Class}, {Key, V}},
+            State) ->
+    tachyon_guard:put(Host, SnapTime, <<"ip.", Key/binary>>, V, 4),
+    State1 = put(<<"cloud.host.ip.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
 handle_gz({Host, _, SnapTime,
              {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
             State) ->
