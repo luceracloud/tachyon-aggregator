@@ -30,7 +30,7 @@ put(Metric, Value, Time, Args, K = #kairosdb{db=DB, host=Host, port=Port}) ->
 
 fmt(Metric, Value, Time, Args) ->
     ["put ", Metric, $ , integer_to_list(Time), $ , integer_to_list(Value) |
-     fmt_args(Args, [])].
+     fmt_args(Args, "\n")].
 
 fmt_args([{K, V}|R], Acc) when is_atom(K) ->
     fmt_args([{atom_to_list(K), V}|R], Acc);
@@ -53,11 +53,11 @@ fmt_args([], Acc) ->
 fmt_test() ->
     Str = fmt(<<"a.metric">>, 0, 1, [{hypervisor, <<"bla">>}, {id, 1}]),
     Bin = list_to_binary(Str),
-    ?assertEqual(<<"put a.metric 1 0 id=1 hypervisor=bla">>, Bin).
+    ?assertEqual(<<"put a.metric 1 0 id=1 hypervisor=bla\n">>, Bin).
 
 fmtno_arg_test() ->
     Str = fmt(<<"a.metric">>, 0, 1, []),
     Bin = list_to_binary(Str),
-    ?assertEqual(<<"put a.metric 1 0">>, Bin).
+    ?assertEqual(<<"put a.metric 1 0\n">>, Bin).
 
 -endif.
