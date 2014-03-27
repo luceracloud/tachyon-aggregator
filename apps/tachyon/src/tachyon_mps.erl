@@ -113,7 +113,7 @@ handle_cast(_Msg, State) ->
 %%--------------------------------------------------------------------
 handle_info(tick, State = #state{handled = H, provided = P, db=DB}) ->
     {MegaSecs, Secs, _} = now(),
-	T = (MegaSecs*1000000 + Secs),
+    T = (MegaSecs*1000000 + Secs),
     DB1 = tachyon_kairos:put(<<"tachyon.messages.handled">>, H, T, [], DB),
     DB2 = tachyon_kairos:put(<<"tachyon.messages.provided">>, P, T, [], DB1),
     erlang:send_after(1000, self(), tick),

@@ -11,10 +11,12 @@ error(_Msg) ->
     ok.
 
 message(Msg, _) ->
+    tachyon_mps:provide(),
     case tachyon_kstat_pkg:decode(Msg) of
-        {ok, P} ->
-            tachyon_mps:provide(),
-            tachyon_kstat:msg(P);
+        {ok, {_, <<"global">>, _, _, _} = P} ->
+            tachyon_kstat_host:msg(P);
+        {ok, {_, _Zone, _, _, _} = P} ->
+            tachyon_kstat_zone:msg(P);
         E ->
             lager:error("[msg] ~p", [E])
     end.

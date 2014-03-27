@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(tachyon_kstat_sup).
+-module(tachyon_kstat_host_sup).
 
 -behaviour(supervisor).
 
@@ -55,8 +55,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    Element = {tachyon_kstat, {tachyon_kstat, start_link, []},
-               transient, infinity, worker, [tachyon_kstat]},
+    Element = {tachyon_kstat_host, {tachyon_kstat_host, start_link, []},
+               transient, infinity, worker, [tachyon_kstat_host]},
     Children = [Element],
     RestartStrategy = {simple_one_for_one, 5, 10},
     {ok, {RestartStrategy, Children}}.

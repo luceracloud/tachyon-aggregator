@@ -36,14 +36,14 @@ fmt_args([{K, V}|R], Acc) when is_atom(K) ->
     fmt_args([{atom_to_list(K), V}|R], Acc);
 fmt_args([{K, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$ ,K, $=, integer_to_list(V) | Acc]);
-    %% watch the  ^- space here
+%% watch the      ^- space here
 fmt_args([{K, V}|R], Acc) when is_float(V) ->
     fmt_args(R, [$ ,K, $=, float_to_list(V) | Acc]);
-    %% watch the  ^- space here
+%% watch the      ^- space here
 fmt_args([{K, V}|R], Acc) when is_binary(V) orelse
                                is_list(V) ->
     fmt_args(R, [$ , K, $=, V | Acc]);
-    %% watch the  ^- space here
+%% watch the      ^- space here
 
 fmt_args([], Acc) ->
     Acc.

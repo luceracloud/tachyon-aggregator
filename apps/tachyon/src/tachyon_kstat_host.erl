@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 26 Jul 2013 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(tachyon_kstat).
+-module(tachyon_kstat_host).
 
 -behaviour(gen_server).
 
@@ -42,7 +42,7 @@ start_link(Host) ->
 msg({Host, _, _, _, _} = P) ->
     case global:whereis_name({host, Host}) of
         undefined ->
-            {ok, Pid} = tachyon_kstat_sup:start_child(Host),
+            {ok, Pid} = tachyon_kstat_host_sup:start_child(Host),
             gen_server:cast(Pid, P);
         Pid ->
             gen_server:cast(Pid, P)
@@ -98,19 +98,11 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 
-handle_cast({_, <<"global">>, _, _, _} = M, State) ->
-    case process_info(self(), message_queue_len) of
-        {message_queue_len,_N} when _N < 10000 ->
-            tachyon_mps:handle(),
-            handle_gz(M, State);
-        _ -> {stop, overflow, State}
-    end;
-
 handle_cast(M, State) ->
     case process_info(self(), message_queue_len) of
         {message_queue_len,_N} when _N < 10000 ->
             tachyon_mps:handle(),
-            handle_zone(M, State);
+            handle_gz(M, State);
         _ -> {stop, overflow, State}
     end.
 
@@ -240,106 +232,4 @@ handle_gz({Host, _, SnapTime,
     {noreply, State1};
 
 handle_gz(_, State) ->
-    {noreply, State}.
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"above_base_sec">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.above_base">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"above_sec">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.above">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"baseline">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.baseline">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"burst_limit_sec">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.burst_limit">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"burst_sec">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.burst">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"effective">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.effective">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"maxusage">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.maxusage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"nwait">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.nwait">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"usage">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.usage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone({Host, Zone, SnapTime,
-             {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
-             {<<"value">>, V}},
-            State) ->
-    State1 = put(<<"cloud.zones.cpu.value">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
-    {noreply, State1};
-
-handle_zone(
-  {Host, Zone, SnapTime, {<<"caps">>=Module, Instance, Name, Class}, {Key, V}},
-  State) ->
-    lager:debug("[~s:~s@~p] "
-                "~s:~p:~s(~s) "
-                "~s = ~p~n",
-                [Host, Zone, SnapTime,
-                 Module, Instance, Class, Name,
-                 Key, V]),
-      {noreply, State};
-
-
-
-handle_zone({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}}, State) ->
-    lager:debug("[~s:~s@~p] "
-                "~s:~p:~s(~s) "
-                "~s = ~p~n",
-                [Host, Zone, SnapTime,
-                 Module, Instance, Class, Name,
-                 Key, V]),
     {noreply, State}.
