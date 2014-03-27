@@ -232,6 +232,60 @@ handle_zone({Host, Zone, SnapTime,
                  [{host, Host}, {zone, Zone}], State),
     {noreply, State1};
 
+%% Memory
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"physicalmem_zone_", _/binary>>, _},
+             {<<"usage">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.mem.usage">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"physicalmem_zone_", _/binary>>, _},
+             {<<"value">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.mem.value">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+%% Swap
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"swapresv_zone_", _/binary>>, _},
+             {<<"usage">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.swap.usage">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"swapresv_zone_", _/binary>>, _},
+             {<<"value">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.swap.value">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+%% Procs
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"nprocs_zone_", _/binary>>, _},
+             {<<"usage">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.procs.usage">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
+handle_zone({Host, Zone, SnapTime,
+             {<<"caps">>, _, <<"nprocs_zone_", _/binary>>, _},
+             {<<"value">>, V}},
+            State) ->
+    State1 = put(<<"cloud.zones.procs.value">>, V, SnapTime,
+                 [{host, Host}, {zone, Zone}], State),
+    {noreply, State1};
+
 handle_zone(
   {Host, Zone, SnapTime, {<<"caps">>=Module, Instance, Name, Class}, {Key, V}},
   State) ->
