@@ -23,4 +23,5 @@ error(_Msg) ->
 message(Msg, _) ->
     P = jsx:decode(Msg),
     G = proplists:get_value(<<"grouping">>, P),
+    tachyon_mps:provide(),
     tachyon_metric:msg(G, P).

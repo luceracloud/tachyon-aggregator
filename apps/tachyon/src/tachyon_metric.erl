@@ -147,6 +147,7 @@ code_change(_OldVsn, State, _Extra) ->
 handle_metric([{<<"grouping">>, _}, {<<"metric">>, Metric}, {<<"tags">>, Tags},
                {<<"time">>, Time}, {<<"value">>, Value}],
               State = #state{db=DB}) ->
+    tachyon_mps:handle(),
     DB1 = tachyon_kairos:put(Metric, Value, Time, Tags, DB),
     State1 = State#state{db = DB1},
     {noreply, State1}.
