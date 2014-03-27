@@ -12,7 +12,7 @@
 
 %% API
 -export([start_link/1, msg/1]).
--ignore_xref([start_link/1, fmt/4]).
+-ignore_xref([start_link/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,

@@ -36,4 +36,5 @@ init([]) ->
             ?CHILD(tachyon_kstat_sup, supervisor),
             ?CHILD(tachyon_metric_sup, supervisor),
             ?CHILD(tachyon_guard_sup, supervisor),
+            ?CHILD(tachyon_mps, worker),
             ?CHILD(tachyon_server, worker)]}}.
