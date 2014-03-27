@@ -1,5 +1,9 @@
 -module(tachyon_kairos).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([connect/1, put/5]).
 -record(kairosdb, {db, host, port}).
 
@@ -25,12 +29,30 @@ put(Metric, Value, Time, Args, K = #kairosdb{db=DB, host=Host, port=Port}) ->
     DB1.
 
 fmt(Metric, Value, Time, Args) ->
-    {Fmt, Vals} =
-        lists:foldl(fun({K, V}, {S, A}) when is_binary(V)->
-                            {S ++ " ~p=~s", [V, K | A]};
-                       ({K, V}, {S, A}) when is_number(V) ->
-                            {S ++ " ~p=~p", [V, K | A]};
-                       (_, Acc) ->
-                            Acc
-                    end, {"put ~s ~p ~p", [Value, Time, Metric]}, Args),
-    io_lib:format(Fmt ++ "~n", lists:reverse(Vals)).
+    ["put ", Metric, $ , integer_to_list(Time), $ , integer_to_list(Value) |
+     fmt_args(Args, [])].
+
+fmt_args([{K, V}|R], Acc) when is_atom(K) ->
+    fmt_args([{atom_to_list(K), V}|R], Acc);
+fmt_args([{K, V}|R], Acc) when is_integer(V) ->
+    fmt_args(R, [$ ,K, $=, integer_to_list(V) | Acc]);
+    %% watch the  ^- space here
+fmt_args([{K, V}|R], Acc) when is_float(V) ->
+    fmt_args(R, [$ ,K, $=, float_to_list(V) | Acc]);
+    %% watch the  ^- space here
+fmt_args([{K, V}|R], Acc) when is_binary(V) orelse
+                               is_list(V) ->
+    fmt_args(R, [$ , K, $=, V | Acc]);
+    %% watch the  ^- space here
+
+fmt_args([], Acc) ->
+    Acc.
+
+-ifdef(TEST).
+
+fmt_test() ->
+    Str = fmt(<<"a.metric">>, 0, 1, [{hypervisor, <<"bla">>}, {id, 1}]),
+    Bin = list_to_binary(Str),
+    ?assertEqual(<<"put a.metric 1 0 id=1 hypervisor=bla">>, Bin).
+
+-endif.
