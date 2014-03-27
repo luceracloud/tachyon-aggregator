@@ -95,7 +95,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(provide, State = #state{provided = P}) ->
     {noreply, State#state{provided = P+1}};
 
-handle_cast(handled, State = #state{handled = H}) ->
+handle_cast(handle, State = #state{handled = H}) ->
     {noreply, State#state{handled = H+1}};
 
 handle_cast(_Msg, State) ->
