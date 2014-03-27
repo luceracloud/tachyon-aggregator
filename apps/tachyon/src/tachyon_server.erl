@@ -55,7 +55,12 @@ start_link() ->
 init([]) ->
     process_flag(trap_exit, true),
     Servers = [{"172.21.0.1", 4161}],
-    NConnections = 5,
+    NConnections = case application:get_env(connections) of
+        {ok, N} ->
+            N;
+        _ ->
+            20
+        end,
     [connect(Servers) || _ <- lists:seq(1, NConnections)],
     {ok, #state{}, 1000}.
 
