@@ -55,13 +55,20 @@ start_link() ->
 init([]) ->
     process_flag(trap_exit, true),
     Servers = [{"172.21.0.1", 4161}],
-    NConnections = case application:get_env(connections) of
-        {ok, N} ->
-            N;
-        _ ->
-            20
-        end,
-    [connect(Servers) || _ <- lists:seq(1, NConnections)],
+    MetricConns = case application:get_env(metric_connections) of
+                      {ok, NMet} ->
+                          NMet;
+                      _ ->
+                          5
+                  end,
+    KStatConns = case application:get_env(kstat_connections) of
+                     {ok, NKStat} ->
+                         NKStat;
+                     _ ->
+                         5
+                 end,
+    [connect(kstat, Servers) || _ <- lists:seq(1, KStatConns)],
+    [connect(jmetric, Servers) || _ <- lists:seq(1, MetricConns)],
     {ok, #state{}, 1000}.
 
 %%--------------------------------------------------------------------
@@ -138,8 +145,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-connect(Servers) ->
+connect(kstat, Servers) ->
     ensq:init({Servers, [{<<"tachyon">>,
-                          [{<<"aggregator">>, tachyon_kstat_nsq}], []}]}),
+                          [{<<"aggregator">>, tachyon_kstat_nsq}], []}]});
+
+connect(jmetric, Servers) ->
     ensq:init({Servers, [{<<"tachyon-metric-json">>,
                           [{<<"aggregator">>, tachyon_jmetric_nsq}], []}]}).
