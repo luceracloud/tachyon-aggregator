@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, inc/0]).
+-export([start_link/0, provide/0, handle/0]).
 -ignore_xref([start_link/0]).
 
 %% gen_server callbacks
@@ -22,7 +22,7 @@
 -define(DB_SERVER, "172.21.0.203").
 -define(DB_PORT, 4242).
 
--record(state, {cnt=0, db}).
+-record(state, {provided=0, handled=0, db}).
 
 %%%===================================================================
 %%% API
@@ -38,8 +38,11 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-inc() ->
-    gen_server:cast(?SERVER, inc).
+provide() ->
+    gen_server:cast(?SERVER, provide).
+
+handle() ->
+    gen_server:cast(?SERVER, handle).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -89,8 +92,11 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(inc, State = #state{cnt = C}) ->
-    {noreply, State#state{cnt = C+1}};
+handle_cast(provide, State = #state{provided = P}) ->
+    {noreply, State#state{provided = P+1}};
+
+handle_cast(handled, State = #state{handled = H}) ->
+    {noreply, State#state{handled = H+1}};
 
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -105,12 +111,13 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(tick, State = #state{cnt=C, db=DB}) ->
+handle_info(tick, State = #state{handled = H, provided = P, db=DB}) ->
     {MegaSecs, Secs, _} = now(),
 	T = (MegaSecs*1000000 + Secs),
-    DB1 = tachyon_kairos:put(<<"tachyon.messages">>, C, T, [], DB),
+    DB1 = tachyon_kairos:put(<<"tachyon.messages.handled">>, H, T, [], DB),
+    DB2 = tachyon_kairos:put(<<"tachyon.messages.provided">>, P, T, [], DB1),
     erlang:send_after(1000, self(), tick),
-    {noreply, State#state{cnt=0, db=DB1}};
+    {noreply, State#state{handled=0, provided=0, db=DB2}};
 
 handle_info(_Info, State) ->
     {noreply, State}.

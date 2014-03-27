@@ -101,6 +101,7 @@ handle_call(_Request, _From, State) ->
 handle_cast({_, <<"global">>, _, _, _} = M, State) ->
     case process_info(self(), message_queue_len) of
         {message_queue_len,_N} when _N < 10000 ->
+            tachyon_mps:handle(),
             handle_gz(M, State);
         _ -> {stop, overflow, State}
     end;
@@ -108,6 +109,7 @@ handle_cast({_, <<"global">>, _, _, _} = M, State) ->
 handle_cast(M, State) ->
     case process_info(self(), message_queue_len) of
         {message_queue_len,_N} when _N < 10000 ->
+            tachyon_mps:handle(),
             handle_zone(M, State);
         _ -> {stop, overflow, State}
     end.
