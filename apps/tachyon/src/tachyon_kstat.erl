@@ -99,11 +99,18 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 
 handle_cast({_, <<"global">>, _, _, _} = M, State) ->
-    handle_gz(M, State);
+    case process_info(self(), message_queue_len) of
+        {message_queue_len,_N} when _N < 10000 ->
+            handle_gz(M, State);
+        _ -> {stop, overflow, State}
+    end;
 
 handle_cast(M, State) ->
-%%    io:format("~p~n", [M]),
-    handle_zone(M, State).
+    case process_info(self(), message_queue_len) of
+        {message_queue_len,_N} when _N < 10000 ->
+            handle_zone(M, State);
+        _ -> {stop, overflow, State}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
