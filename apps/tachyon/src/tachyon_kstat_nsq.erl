@@ -13,6 +13,7 @@ error(_Msg) ->
 message(Msg, _) ->
     case tachyon_kstat_pkg:decode(Msg) of
         {ok, P} ->
+            tachyon_mps:inc(),
             tachyon_kstat:msg(P);
         E ->
             lager:error("[msg] ~p", [E])
