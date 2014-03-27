@@ -89,6 +89,9 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_cast(inc, State = #state{cnt = C}) ->
+    {noreply, State#state{cnt = C+1}};
+
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -103,8 +106,8 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(tick, State = #state{cnt=C, db=DB}) ->
-    {MegaSecs,Secs,MicroSecs} = now(),
-	T = (MegaSecs*1000000 + Secs)*1000000 + MicroSecs,
+    {MegaSecs, Secs, _MicroSecs} = now(),
+	T = (MegaSecs*1000000 + Secs),
     DB1 = tachyon_kairos:put(<<"tachyon.messages">>, C, T, [], DB),
     erlang:send_after(1000, self(), tick),
     {noreply, State#state{cnt=0, db=DB1}};
