@@ -43,7 +43,7 @@ start_link(Host) ->
     gen_server:start_link(
       {global, {guard, Host}},
       ?MODULE, [Host], []).
-
+-ifdef(GUARD).
 put(Host, Time, Metric, Value, T) ->
     case global:whereis_name({guard, Host}) of
         undefined ->
@@ -52,6 +52,10 @@ put(Host, Time, Metric, Value, T) ->
         Pid ->
             gen_server:cast(Pid, {put, Host, Time, Metric, Value, T})
     end.
+-else.
+put(_Host, _Time, _Metric, _Value, _T) ->
+    ok.
+-endif.
 
 stats(Host) ->
     gen_server:call({global, {guard, Host}}, stats).
