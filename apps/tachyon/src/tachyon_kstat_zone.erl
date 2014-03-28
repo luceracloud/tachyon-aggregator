@@ -287,18 +287,6 @@ handle_zone({Host, Zone, SnapTime,
                  [{host, Host}, {zone, Zone}], State),
     {noreply, State1};
 
-handle_zone(
-  {Host, Zone, SnapTime, {<<"caps">>=Module, Instance, Name, Class}, {Key, V}},
-  State) ->
-    lager:debug("[~s:~s@~p] "
-                "~s:~p:~s(~s) "
-                "~s = ~p~n",
-                [Host, Zone, SnapTime,
-                 Module, Instance, Class, Name,
-                 Key, V]),
-      {noreply, State};
-
-
 
 handle_zone({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}}, State) ->
     lager:debug("[~s:~s@~p] "
