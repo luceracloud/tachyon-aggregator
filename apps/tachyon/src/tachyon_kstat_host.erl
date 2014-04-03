@@ -103,7 +103,7 @@ handle_cast(M, State) ->
         {message_queue_len,_N} when _N < 10000 ->
             tachyon_mps:handle(),
             handle_gz(M, State);
-        _ -> 
+        _ ->
             {noreply,  State}
     end.
 
