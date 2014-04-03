@@ -154,16 +154,25 @@ put(Metric, Value, Time, Args, State = #state{db = DB}) ->
 
 
 handle_gz({Host, _, SnapTime,
-             {<<"ip">>, _Instance, _Name, _Class}, {Key, V}},
-            State) ->
+           {<<"ip">>, _Instance, _Name, _Class}, {Key, V}},
+          State) ->
     tachyon_guard:put(Host, SnapTime, <<"ip.", Key/binary>>, V, 4),
     State1 = put(<<"cloud.host.ip.", Key/binary>>, V, SnapTime,
                  [{host, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
-             {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
-            State) ->
+           {<<"zfs">>, _Instance, <<"arcstat">>, _Class}, {Key, V}},
+          State) ->
+    Metric = <<"arc.", Key/binary>>,
+    tachyon_guard:put(Host, SnapTime, Metric, V, 4),
+    State1 = put(<<"cloud.host.arc.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
+handle_gz({Host, _, SnapTime,
+           {<<"sd">>, Instance, _Name, _Class}, {Key, V}},
+          State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].", Key/binary>>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 4),
@@ -172,8 +181,8 @@ handle_gz({Host, _, SnapTime,
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}},
-            State) ->
+           {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}},
+          State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -182,8 +191,8 @@ handle_gz({Host, _, SnapTime,
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}},
-            State) ->
+           {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}},
+          State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -192,8 +201,8 @@ handle_gz({Host, _, SnapTime,
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}},
-            State) ->
+           {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}},
+          State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].errors.transport">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -202,8 +211,8 @@ handle_gz({Host, _, SnapTime,
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Illegal Request">>, V}},
-            State) ->
+           {<<"sderr">>, Instance, _Name, _Class}, {<<"Illegal Request">>, V}},
+          State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -212,8 +221,8 @@ handle_gz({Host, _, SnapTime,
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
-             {<<"sderr">>, Instance, _Name, _Class}, {<<"Predictive Failure Analysis">>, V}},
-            State) ->
+           {<<"sderr">>, Instance, _Name, _Class}, {<<"Predictive Failure Analysis">>, V}},
+          State) ->
     ID = list_to_binary(integer_to_list(Instance)),
     Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
