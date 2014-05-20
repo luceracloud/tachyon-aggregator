@@ -20,9 +20,6 @@
 
 -define(SERVER, ?MODULE).
 
--define(DB_SERVER, "172.21.0.203").
--define(DB_PORT, 4242).
-
 -record(state, {host, db}).
 
 %%%===================================================================
@@ -65,8 +62,9 @@ msg({Host, _, _, _, _} = P) ->
 %%--------------------------------------------------------------------
 init([Host]) ->
     process_flag(trap_exit, true),
-    {ok, DB} = tachyon_kairos:connect({?DB_SERVER, ?DB_PORT}),
-    {ok, #state{host = Host, db=DB}}.
+    {ok, DB} = tachyon_kairos:connect(),
+    {ok, Statsd} = tachyon_statsd:connect(),
+    {ok, #state{host = Host, db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -149,10 +147,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-put(Metric, Value, Time, Args, State = #state{db = DB}) ->
-    DB1 = tachyon_kairos:put(Metric, Value, Time, Args, DB),
-    State#state{db = DB1}.
-
+put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
+    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
+               {Mod, DB} <- DBs],
+    State#state{db = DBs1}.
 
 handle_gz({Host, _, SnapTime,
            {<<"ip">>, _Instance, _Name, _Class}, {Key, V}},

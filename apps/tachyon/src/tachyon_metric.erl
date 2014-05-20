@@ -20,8 +20,6 @@
 
 -define(SERVER, ?MODULE).
 
--define(DB_SERVER, "172.21.0.203").
--define(DB_PORT, 4242).
 
 -record(state, {grouping, db}).
 
@@ -65,8 +63,9 @@ msg(Grouping, Msg) ->
 %%--------------------------------------------------------------------
 init([Grouping]) ->
     process_flag(trap_exit, true),
-    {ok, DB} = tachyon_kairos:connect({?DB_SERVER, ?DB_PORT}),
-    {ok, #state{grouping = Grouping, db=DB}}.
+    {ok, DB} = tachyon_kairos:connect(),
+    {ok, Statsd} = tachyon_statsd:connect(),
+    {ok, #state{grouping = Grouping, db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -146,8 +145,9 @@ code_change(_OldVsn, State, _Extra) ->
 
 handle_metric([{<<"grouping">>, _}, {<<"metric">>, Metric}, {<<"tags">>, Tags},
                {<<"time">>, Time}, {<<"value">>, Value}],
-              State = #state{db=DB}) ->
+              State = #state{db=DBs}) ->
     tachyon_mps:handle(),
-    DB1 = tachyon_kairos:put(Metric, Value, Time, Tags, DB),
-    State1 = State#state{db = DB1},
+    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Tags, DB)} ||
+               {Mod, DB} <- DBs],
+    State1 = State#state{db = DBs1},
     {noreply, State1}.

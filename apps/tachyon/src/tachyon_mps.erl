@@ -19,8 +19,6 @@
          terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(DB_SERVER, "172.21.0.203").
--define(DB_PORT, 4242).
 
 -record(state, {provided=0, handled=0, db}).
 
@@ -61,8 +59,9 @@ handle() ->
 %%--------------------------------------------------------------------
 init([]) ->
     erlang:send_after(1000, self(), tick),
-    {ok, DB} = tachyon_kairos:connect({?DB_SERVER, ?DB_PORT}),
-    {ok, #state{db=DB}}.
+    {ok, DB} = tachyon_kairos:connect(),
+    {ok, Statsd} = tachyon_statsd:connect(),
+    {ok, #state{db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -111,13 +110,13 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(tick, State = #state{handled = H, provided = P, db=DB}) ->
+handle_info(tick, State = #state{handled = H, provided = P}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
-    DB1 = tachyon_kairos:put(<<"tachyon.messages.handled">>, H, T, [], DB),
-    DB2 = tachyon_kairos:put(<<"tachyon.messages.provided">>, P, T, [], DB1),
+    State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
+    State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
     erlang:send_after(1000, self(), tick),
-    {noreply, State#state{handled=0, provided=0, db=DB2}};
+    {noreply, State2#state{handled=0, provided=0}};
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -150,3 +149,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
+    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
+               {Mod, DB} <- DBs],
+    State#state{db = DBs1}.
