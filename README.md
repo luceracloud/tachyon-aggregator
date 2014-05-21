@@ -2,6 +2,15 @@ dtrace / kstat statistic services
 =================================
 
 
+pushing data
+------------
+
+```
+curl -d '{"grouping": "fifo","metric": "fifo.vm.createions","time": 12345,"value": 1,"tags": {"fifo-host":"fifo01"}}' http://172.21.0.1:4151/put?topic=tachyon-metric-json
+```
+
+where `172.21.0.1` is a NSQ endpoint.
+
 general
 -------
 
