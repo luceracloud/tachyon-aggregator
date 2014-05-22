@@ -5,7 +5,7 @@
 -endif.
 
 -export([connect/0, put/5]).
--ignore_xref([connect/1, put/5]).
+-ignore_xref([put/5]).
 -record(statsd, {enabled}).
 
 connect() ->
@@ -17,9 +17,9 @@ connect() ->
     end.
 
 
-put(Metric, Value, _Time, Args, #statsd{enabled=true}) ->
+put(Metric, Value, Time, Args, #statsd{enabled=true}) ->
     Metrics = fmt(Metric, Args),
-    estatsd:gauge(Metrics, Value),
+    estatsd:gauge(Metrics, Time, Value),
     #statsd{enabled=true};
 
 put(_Metric, _Value, _Time, _Args, #statsd{enabled=false}) ->

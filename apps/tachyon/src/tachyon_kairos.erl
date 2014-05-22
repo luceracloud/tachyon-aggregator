@@ -5,6 +5,7 @@
 -endif.
 
 -export([connect/0, put/5]).
+-ignore_xref([put/5]).
 -record(kairosdb, {enabled = true, db, host, port}).
 
 connect() ->
