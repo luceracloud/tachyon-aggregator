@@ -38,21 +38,21 @@ put(_Metric, _Value, _Time, _Args, DB) ->
     DB.
 
 fmt(Metric, Value, Time, Args) ->
-    ["put ", Metric, $\s, integer_to_list(Time), $ , integer_to_list(Value) |
+    ["put ", Metric, $\s, integer_to_list(Time), $\s, integer_to_list(Value) |
      fmt_args(Args, "\n")].
 
 fmt_args([{K, V}|R], Acc) when is_atom(K) ->
     fmt_args([{atom_to_list(K), V}|R], Acc);
+
 fmt_args([{K, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$\s, K, $=, integer_to_list(V) | Acc]);
-%% watch the      ^- space here
+
 fmt_args([{K, V}|R], Acc) when is_float(V) ->
     fmt_args(R, [$\s, K, $=, float_to_list(V) | Acc]);
-%% watch the      ^- space here
+
 fmt_args([{K, V}|R], Acc) when is_binary(V) orelse
                                is_list(V) ->
     fmt_args(R, [$\s, K, $=, V | Acc]);
-%% watch the      ^- space here
 
 fmt_args([], Acc) ->
     Acc.

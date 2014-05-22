@@ -152,140 +152,268 @@ put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
                {Mod, DB} <- DBs],
     State#state{db = DBs1}.
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"above_base_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.above_base">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"above_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.above">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"baseline">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.baseline">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"burst_limit_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.burst_limit">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"burst_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.burst">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"effective">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.effective">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"maxusage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.maxusage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"nwait">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.nwait">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.usage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"cpucaps_zone_", _/binary>>, _},
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.value">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
 %% Memory
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"physicalmem_zone_", _/binary>>, _},
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.mem.usage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"physicalmem_zone_", _/binary>>, _},
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.mem.value">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
 %% Swap
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"swapresv_zone_", _/binary>>, _},
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.swap.usage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"swapresv_zone_", _/binary>>, _},
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.swap.value">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
 %% Procs
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"nprocs_zone_", _/binary>>, _},
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.procs.usage">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
-handle_zone({Host, Zone, SnapTime,
+handle_zone({_Host, Zone, SnapTime,
              {<<"caps">>, _, <<"nprocs_zone_", _/binary>>, _},
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.procs.value">>, V, SnapTime,
-                 [{host, Host}, {zone, Zone}], State),
+                 [{zone, Zone}], State),
     {noreply, State1};
 
+
+%% Net
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"brdcstrcv">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.brdcstrcv">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"brdcstxmt">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.brdcstxmt">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"collisions">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.collisions">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"ierrors">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.ierrors">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"ipackets64">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.ipackets">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"multircv">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.multircv">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"multixmt">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.multixmt">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"norcvbuf">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.norcvbuf">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"noxmtbuf">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.noxmtbuf">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"obytes64">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.obytes">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"oerrors">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.oerrors">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"opackets64">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.opackets">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"rbytes64">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.rbytes">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
+
+handle_zone({_Host, Zone, SnapTime,
+             {<<"link">>, _, IFInstance, _},
+             {<<"unknowns">>, V}},
+            State) ->
+    IFace = parse_iface(IFInstance),
+    State1 = put(<<"cloud.zones.net.unknowns">>, V, SnapTime,
+                 [{zone, Zone}, {interface, IFace}], State),
+    {noreply, State1};
 
 handle_zone({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}}, State) ->
     lager:debug("[~s:~s@~p] "
@@ -295,3 +423,12 @@ handle_zone({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}}, S
                  Module, Instance, Class, Name,
                  Key, V]),
     {noreply, State}.
+
+
+parse_iface(<<$_, IFace/binary>>) ->
+    IFace;
+parse_iface(<<_, Rest/binary>>) ->
+    parse_iface(Rest);
+parse_iface(<<>>) ->
+    <<"net">>.
+
