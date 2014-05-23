@@ -17,7 +17,7 @@
   {datatype, integer}]}.
 
 %% @doc the NSQ topic on which kstat binary metrics are received
-{mapping, "kstat.topic", "tacyhon.kstat_topic",
+{mapping, "kstat.topic", "tachyon.kstat_topic",
  [{default, "tachyon-metrics-bin"},
   {datatype, string}]}.
 
