@@ -18,10 +18,7 @@ connect() ->
 
 
 put(Metric, Value, Time, Args, #statsd{enabled=true}) ->
-    MetricS = e2qc:cache(statsd_metric, {Metric, Args},
-                        fun () ->
-                                fmt(Metric, Args)
-                        end),
+    MetricS = fmt(Metric, Args),
     estatsd:gauge(MetricS, Time, Value),
     #statsd{enabled=true};
 
