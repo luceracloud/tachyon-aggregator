@@ -2,17 +2,17 @@
 %% @doc Erlang NSQ client.
 
 %% @doc the NSQ topic on which JSON metrics are received
-{mapping, "metric.json_topic", "tacyhon.metric_json_topic",
+{mapping, "metric.json_topic", "tachyon.metric_json_topic",
  [{default, "tachyon-metrics-json"},
   {datatype, string}]}.
 
 %% @doc the NSQ topic on which binary metrics are received
-{mapping, "metric.bin_topic", "tacyhon.metric_bin_topic",
+{mapping, "metric.bin_topic", "tachyon.metric_bin_topic",
  [{default, "tachyon-metrics-bin"},
   {datatype, string}]}.
 
 %% @doc The number of connections used to receive general metrics
-{mapping, "metric.connections", "tacyhon.metric_connections",
+{mapping, "metric.connections", "tachyon.metric_connections",
  [{default, 5},
   {datatype, integer}]}.
 
@@ -22,14 +22,15 @@
   {datatype, string}]}.
 
 %% @doc The number of connections used to receive kstat metrics
-{mapping, "kstat.connections", "tacyhon.kstat_connections",
+{mapping, "kstat.connections", "tachyon.kstat_connections",
  [{default, 30},
   {datatype, integer}]}.
 
 %% @doc The kairosdb endpoint to use, if not set no data will be written
 %% to kairosdb.
 {mapping, "kairosdb", "tachyon.kairosdb",
- [{datatype, ip}]}.
+ [{commented, {"127.0.0.1", 4242}},
+  {datatype, ip}]}.
 
 %% @doc Enable or disable writing to statsd.
 {mapping, "statsd", "tachyon.statsd",
@@ -39,7 +40,7 @@
 {translation,
  "tachyon.statsd",
  fun(Conf) ->
-         case cuttlefish:conf_get("tachyon.statsd", Conf) of
+         case cuttlefish:conf_get("statsd", Conf) of
              enabled ->
                  true;
              disabled ->
