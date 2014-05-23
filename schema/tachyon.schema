@@ -39,7 +39,7 @@
 {translation,
  "tachyon.statsd",
  fun(Conf) ->
-         case cuttlefish:conf_get("kstat.arc", Conf) of
+         case cuttlefish:conf_get("tachyon.statsd", Conf) of
              enabled ->
                  true;
              disabled ->
