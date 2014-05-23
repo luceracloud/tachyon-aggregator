@@ -33,11 +33,11 @@
 
 %% @doc Enable or disable writing to statsd.
 {mapping, "statsd", "tachyon.statsd",
- [{default, off},
+ [{default, disabled},
   {datatype, {enum, [enabled, disabled]}}]}.
 
 {translation,
- "sasl.tachyon.statsd",
+ "tachyon.statsd",
  fun(Conf) ->
          case cuttlefish:conf_get("kstat.arc", Conf) of
              enabled ->
