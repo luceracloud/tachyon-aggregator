@@ -239,5 +239,49 @@ handle_gz({Host, _, SnapTime,
                  [{cpu, Instance}, {host, Host}], State),
     {noreply, State1};
 
+%% IP_NIC_EVENT_QUEUE
+handle_gz({Host, _, SnapTime,
+           {<<"unix">>, _Instance, <<"vnd_str_cache">>, _Class}, {Key, V}},
+          State) ->
+    State1 = put(<<"cloud.host.cache.streams.vnd.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
+handle_gz({Host, _, SnapTime,
+           {<<"unix">>, _Instance, <<"dld_str_cache">>, _Class}, {Key, V}},
+          State) ->
+    State1 = put(<<"cloud.host.cache.streams.vnd.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
+handle_gz({Host, _, SnapTime,
+           {<<"unix">>, _Instance, <<"udp_conn_cache">>, _Class}, {Key, V}},
+          State) ->
+    State1 = put(<<"cloud.host.cache.connections.udp.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
+handle_gz({Host, _, SnapTime,
+           {<<"unix">>, _Instance, <<"tcp_conn_cache">>, _Class}, {Key, V}},
+          State) ->
+    State1 = put(<<"cloud.host.cache.connections.tcp.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
+handle_gz({Host, _, SnapTime,
+           {<<"unix">>, _Instance, <<"socket_cache">>, _Class}, {Key, V}},
+          State) ->
+    State1 = put(<<"cloud.host.cache.socket.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
+%% Netork Caches
+handle_gz({Host, _, SnapTime,
+           {<<"unix">>, _Instance, <<"IP_NIC_EVENT_QUEUE">>, _Class}, {Key, V}},
+          State) ->
+    State1 = put(<<"cloud.host.ip_nic_event_queue.", Key/binary>>, V, SnapTime,
+                 [{host, Host}], State),
+    {noreply, State1};
+
 handle_gz(_, State) ->
     {noreply, State}.
