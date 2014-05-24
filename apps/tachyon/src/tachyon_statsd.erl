@@ -18,14 +18,15 @@ connect() ->
 
 
 put(Metric, Value, Time, Args, #statsd{enabled=true}) ->
-    estatsd:gauge(fmt(Metric, Args), Time, Value),
+    MetricS = fmt(Metric, Args),
+    estatsd:gauge(MetricS, Time, Value),
     #statsd{enabled=true};
 
 put(_Metric, _Value, _Time, _Args, #statsd{enabled=false}) ->
     #statsd{enabled=false}.
 
 fmt(Metric, Args) ->
-    [Metric | fmt_args(lists:reverse(Args), [])].
+    list_to_binary([Metric | fmt_args(lists:reverse(Args), "")]).
 
 fmt_args([{_, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$., integer_to_list(V) | Acc]);
@@ -42,12 +43,10 @@ fmt_args([], Acc) ->
 
 fmt_test() ->
     Fmt = fmt(<<"a.metric">>, [{hypervisor, <<"bla">>}, {id, 1}]),
-    S = list_to_binary(Fmt),
-    ?assertEqual(<<"a.metric.bla.1">>, S).
+    ?assertEqual(<<"a.metric.bla.1">>, Fmt).
 
 fmtno_arg_test() ->
     Fmt = fmt(<<"a.metric">>, []),
-    S = list_to_binary(Fmt),
-    ?assertEqual(<<"a.metric">>, S).
+    ?assertEqual(<<"a.metric">>, Fmt).
 
 -endif.
