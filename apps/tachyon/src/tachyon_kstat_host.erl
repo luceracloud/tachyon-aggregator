@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, msg/1]).
+-export([start_link/1, msg/2]).
 -ignore_xref([start_link/1]).
 
 %% gen_server callbacks
@@ -36,14 +36,8 @@
 start_link(Host) ->
     gen_server:start_link({global, {host, Host}}, ?MODULE, [Host], []).
 
-msg({Host, _, _, _, _} = P) ->
-    case global:whereis_name({host, Host}) of
-        undefined ->
-            {ok, Pid} = tachyon_kstat_host_sup:start_child(Host),
-            gen_server:cast(Pid, P);
-        Pid ->
-            gen_server:cast(Pid, P)
-    end.
+msg(Pid, P) ->
+    gen_server:cast(Pid, P).
 
 %%%===================================================================
 %%% gen_server callbacks
