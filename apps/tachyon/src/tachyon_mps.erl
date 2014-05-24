@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, provide/0, handle/0]).
+-export([start_link/0, provide/0, handle/0, send/0]).
 -ignore_xref([start_link/0]).
 
 %% gen_server callbacks
@@ -20,7 +20,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {provided=0, handled=0, db}).
+-record(state, {provided=0, handled=0, send=0, db}).
 
 %%%===================================================================
 %%% API
@@ -41,6 +41,9 @@ provide() ->
 
 handle() ->
     gen_server:cast(?SERVER, handle).
+
+send() ->
+    gen_server:cast(?SERVER, send).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -97,6 +100,9 @@ handle_cast(provide, State = #state{provided = P}) ->
 handle_cast(handle, State = #state{handled = H}) ->
     {noreply, State#state{handled = H+1}};
 
+handle_cast(send, State = #state{send = S}) ->
+    {noreply, State#state{send = S+1}};
+
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -110,13 +116,14 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(tick, State = #state{handled = H, provided = P}) ->
+handle_info(tick, State = #state{handled = H, provided = P, send = S}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
     State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
     State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
+    State2 = put(<<"tachyon.messages.send">>, S, T, [], State1),
     erlang:send_after(1000, self(), tick),
-    {noreply, State2#state{handled=0, provided=0}};
+    {noreply, State2#state{handled=0, provided=0, send=0}};
 
 handle_info(_Info, State) ->
     {noreply, State}.

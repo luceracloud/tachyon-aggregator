@@ -17,12 +17,13 @@ connect() ->
     end.
 
 
-put(Metric, Value, Time, Args, #statsd{enabled=true}) ->
+put(Metric, Value, Time, Args, S=#statsd{enabled=true}) ->
     estatsd:gauge(fmt(Metric, Args), Time, Value),
-    #statsd{enabled=true};
+    tachyon:mps_send(),
+    S;
 
-put(_Metric, _Value, _Time, _Args, #statsd{enabled=false}) ->
-    #statsd{enabled=false}.
+put(_Metric, _Value, _Time, _Args, S) ->
+    S.
 
 fmt(Metric, Args) ->
     [Metric | fmt_args(lists:reverse(Args), [])].
