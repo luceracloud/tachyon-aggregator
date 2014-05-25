@@ -21,7 +21,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {channels = []}).
 
 %%%===================================================================
 %%% API
@@ -67,9 +67,10 @@ init([]) ->
                      _ ->
                          5
                  end,
-    [connect(kstat, Servers) || _ <- lists:seq(1, KStatConns)],
-    [connect(jmetric, Servers) || _ <- lists:seq(1, MetricConns)],
-    {ok, #state{}, 1000}.
+    Replies = [connect(kstat, Servers) || _ <- lists:seq(1, KStatConns)] ++
+        [connect(jmetric, Servers) || _ <- lists:seq(1, MetricConns)],
+    Pids = [Pid || {ok, Pid} <- Replies],
+    {ok, #state{channels = Pids}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -127,7 +128,8 @@ handle_info(_, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(_Reason, _State = #state{channels = Pids}) ->
+    [ensq_topic:stop(Pid) || Pid <- Pids],
     ok.
 
 %%--------------------------------------------------------------------

@@ -6,7 +6,11 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(kairosdb, {enabled = true, db, host, port}).
+
+-define(FLUSH_CNT, 100).
+
+-record(kairosdb, {enabled = true, db, host, port,
+                   metrics = [], cnt = 0, max = ?FLUSH_CNT}).
 
 connect() ->
     case application:get_env(tachyon, kairosdb) of
@@ -21,9 +25,11 @@ connect() ->
             #kairosdb{enabled = false}
     end.
 
-put(Metric, Value, Time, Args, K = #kairosdb{enabled = true, db=DB, host=Host, port=Port}) ->
+put(Metric, Value, Time, Args,
+    K = #kairosdb{enabled = true, db=DB, host=Host, port=Port, cnt = Cnt,
+                  max = Cnt, metrics = Ms}) ->
     Metrics = fmt(Metric, Value, Time, Args),
-    K1 = case gen_tcp:send(DB, Metrics) of
+    K1 = case gen_tcp:send(DB, [Metrics | Ms]) of
              {error, Reason} ->
                  gen_tcp:close(DB),
                  lager:error("[~s] Socket died with: ~p", [Host, Reason]),
@@ -33,7 +39,13 @@ put(Metric, Value, Time, Args, K = #kairosdb{enabled = true, db=DB, host=Host, p
                  K
          end,
     tachyon_mps:send(),
-    K1;
+    K1#kairosdb{cnt = 0, metrics = []};
+
+put(Metric, Value, Time, Args,
+    K = #kairosdb{enabled = true, cnt = Cnt,metrics = Ms}) ->
+    Metrics = fmt(Metric, Value, Time, Args),
+    tachyon_mps:send(),
+    K#kairosdb{metrics = [Metrics | Ms], cnt = Cnt + 1};
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
