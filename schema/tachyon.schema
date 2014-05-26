@@ -32,19 +32,33 @@
  [{commented, {"127.0.0.1", 4242}},
   {datatype, ip}]}.
 
+%% @doc The kairosdb endpoint to use, if not set no data will be written
+%% to kairosdb.
+{mapping, "kairosdb.buffer_size", "tachyon.kairosdb_buffer_size",
+ [{default, 100},
+  {datatype, integer}]}.
+
 %% @doc Enable or disable writing to statsd.
 {mapping, "statsd", "tachyon.statsd",
- [{default, disabled},
-  {datatype, {enum, [enabled, disabled]}}]}.
+ [{commented, {"127.0.0.1", 4242}},
+  {datatype, ip}]}.
+
 
 {translation,
  "tachyon.statsd",
  fun(Conf) ->
-         case cuttlefish:conf_get("statsd", Conf) of
-             enabled ->
-                 true;
-             disabled ->
-                 false
+         case cuttlefish:conf_get("statsd", Conf, undefined) of
+             undefined ->
+                 false;
+             _ ->
+                 true
          end
+ end
+}.
+
+{translation,
+ "estatsd.graphite",
+ fun(Conf) ->
+         cuttlefish:conf_get("statsd", Conf, {"127.0.0.1", 2003})
  end
 }.

@@ -121,9 +121,9 @@ handle_info(tick, State = #state{handled = H, provided = P, send = S}) ->
     T = (MegaSecs*1000000 + Secs),
     State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
     State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
-    State2 = put(<<"tachyon.messages.send">>, S, T, [], State1),
+    State3 = put(<<"tachyon.messages.send">>, S, T, [], State2),
     erlang:send_after(1000, self(), tick),
-    {noreply, State2#state{handled=0, provided=0, send=0}};
+    {noreply, State3#state{handled=0, provided=0, send=0}};
 
 handle_info(_Info, State) ->
     {noreply, State}.

@@ -6,14 +6,22 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(kairosdb, {enabled = true, db, host, port}).
+
+-record(kairosdb, {enabled = true, db, host, port, cnt=0, max=100, acc=[]}).
 
 connect() ->
+    Max = case application:get_env(tachyon, kairosdb_buffer_size) of
+              {ok, V} ->
+                  V;
+              _ ->
+                  100
+          end,
     case application:get_env(tachyon, kairosdb) of
         {ok, {Host, Port}} ->
-            case gen_tcp:connect(Host, Port, [{packet, line}]) of
+            case gen_tcp:connect(Host, Port, []) of
                 {ok, DB} ->
-                    {ok, #kairosdb{enabled = true, db=DB, host=Host, port=Port}};
+                    {ok, #kairosdb{enabled = true, db=DB, host=Host, port=Port,
+                                  max = Max}};
                 E ->
                     E
             end;
@@ -21,19 +29,25 @@ connect() ->
             #kairosdb{enabled = false}
     end.
 
-put(Metric, Value, Time, Args, K = #kairosdb{enabled = true, db=DB, host=Host, port=Port}) ->
-    Metrics = fmt(Metric, Value, Time, Args),
+put(Metric, Value, Time, Args,
+    K = #kairosdb{enabled=true, db=DB, host=Host, port=Port, cnt=C, max=M,
+                  acc=Acc}) when C > M ->
+    Metrics = [fmt(Metric, Value, Time, Args) | Acc],
     K1 = case gen_tcp:send(DB, Metrics) of
              {error, Reason} ->
                  gen_tcp:close(DB),
                  lager:error("[~s] Socket died with: ~p", [Host, Reason]),
-                 {ok, NewDB} = gen_tcp:connect(Host, Port, [{packet, line}], 100),
+                 {ok, NewDB} = gen_tcp:connect(Host, Port, [], 100),
                  K#kairosdb{db=NewDB};
              _ ->
                  K
          end,
     tachyon_mps:send(),
-    K1;
+    K1#kairosdb{acc = [], cnt = 0};
+
+put(Metric, Value, Time, Args, K = #kairosdb{enabled = true, cnt=C, acc=Acc}) ->
+    tachyon_mps:send(),
+    K#kairosdb{cnt=C+1, acc=[fmt(Metric, Value, Time, Args) | Acc]};
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
