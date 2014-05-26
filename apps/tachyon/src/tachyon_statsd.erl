@@ -19,7 +19,7 @@ connect() ->
 
 put(Metric, Value, Time, Args, S=#statsd{enabled=true}) ->
     estatsd:gauge(fmt(Metric, Args), Time, Value),
-    tachyon_mps:send(),
+    tachyon:mps_send(),
     S;
 
 put(_Metric, _Value, _Time, _Args, S) ->
