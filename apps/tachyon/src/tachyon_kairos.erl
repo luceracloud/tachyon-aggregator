@@ -54,7 +54,7 @@ put(_Metric, _Value, _Time, _Args, K) ->
 
 fmt(Metric, Value, Time, Args) when is_integer(Value) ->
     ["put ", Metric, $\s, integer_to_list(Time), $\s, integer_to_list(Value) |
-     fmt_args(Args, "\n")].
+     fmt_args(Args, "\n")];
 
 fmt(Metric, Value, Time, Args) when is_float(Value) ->
     ["put ", Metric, $\s, integer_to_list(Time), $\s, float_to_list(Value) |
