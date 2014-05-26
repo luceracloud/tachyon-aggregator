@@ -112,9 +112,9 @@ handle_call(stats, _, State = #state{metrics = Metrics0} ) ->
     io:format("~20s ~20s ~20s ~s~n", ["Metric", "Average",
                                       "Standard Derivation", "Itterations"]),
     io:format("~20s ~20s ~20s ~s~n", ["--------------------",
-                                 "--------------------",
-                                 "--------------------",
-                                 "--------------------"]),
+                                      "--------------------",
+                                      "--------------------",
+                                      "--------------------"]),
     [io:format("~20s ~20.2f ~20.2f ~p~n", [N, M#running_avg.avg, M#running_avg.std, M#running_avg.itteration]) ||
         {N, M} <- Metrics],
     Dist = distance(State),
@@ -151,26 +151,27 @@ handle_cast({put, Host, Time, Name, V, T}, State =
                 #state{metrics = Metrics,
                        db = _DB,
                        time = _T0}) ->
-    Metrics1 =
-        gb_trees:update(Name,
-                       fun (Met) ->
-                               M0 = tachyon_statistics:avg_update(Met, V),
-                               {A, M} = tachyon_statistics:avg_analyze(M0, V, T),
-                               case A of
-                                   {error, Msg, Args} ->
-                                       lager:error("[~s/~s] " ++ Msg,
-                                                   [Host, Name | Args]);
-                                   {warn, Msg, Args} ->
-                                       lager:warning("[~s/~s] " ++ Msg,
-                                                   [Host, Name | Args]);
-                                   {info, Msg, Args} ->
-                                       lager:info("[~s/~s] " ++ Msg,
-                                                  [Host, Name | Args]);
-                                   _ ->
-                                       ok
-                               end,
-                               M
-                          end, #running_avg{avg=V}, Metrics),
+    Metrics1 = case gb_trees:lookup(Name, Metrics) of
+                   none ->
+                       gb_trees:insert(Name, #running_avg{avg=V}, Metrics);
+                   {value, Met} ->
+                       M0 = tachyon_statistics:avg_update(Met, V),
+                       {A, M} = tachyon_statistics:avg_analyze(M0, V, T),
+                       case A of
+                           {error, Msg, Args} ->
+                               lager:error("[~s/~s] " ++ Msg,
+                                           [Host, Name | Args]);
+                           {warn, Msg, Args} ->
+                               lager:warning("[~s/~s] " ++ Msg,
+                                             [Host, Name | Args]);
+                           {info, Msg, Args} ->
+                               lager:info("[~s/~s] " ++ Msg,
+                                          [Host, Name | Args]);
+                           _ ->
+                               ok
+                       end,
+                       gb_trees:update(Name, M, Metrics)
+               end,
     %%_Metr = gb_trees:fetch(Name, Metrics1),
     State1  = State#state{metrics = Metrics1},
     %% Msg0 = case Time of

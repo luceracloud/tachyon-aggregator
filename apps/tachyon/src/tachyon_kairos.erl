@@ -42,9 +42,6 @@ fmt(Metric, Value, Time, Args) ->
     ["put ", Metric, $\s, integer_to_list(Time), $\s, integer_to_list(Value) |
      fmt_args(Args, "\n")].
 
-fmt_args([{K, V}|R], Acc) when is_atom(K) ->
-    fmt_args([{atom_to_list(K), V}|R], Acc);
-
 fmt_args([{K, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$\s, K, $=, integer_to_list(V) | Acc]);
 

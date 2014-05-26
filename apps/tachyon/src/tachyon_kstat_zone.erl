@@ -157,7 +157,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"above_base_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.above_base">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -165,7 +165,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"above_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.above">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -173,7 +173,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"baseline">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.baseline">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -181,7 +181,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"burst_limit_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.burst_limit">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -189,7 +189,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"burst_sec">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.burst">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -197,7 +197,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"effective">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.effective">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -205,7 +205,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"maxusage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.maxusage">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -213,7 +213,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"nwait">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.nwait">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -221,7 +221,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.usage">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -229,7 +229,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.cpu.value">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 %% Memory
@@ -239,7 +239,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.mem.usage">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -247,7 +247,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.mem.value">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 %% Swap
@@ -257,7 +257,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.swap.usage">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -265,7 +265,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.swap.value">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 %% Procs
@@ -275,7 +275,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"usage">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.procs.usage">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -283,7 +283,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"value">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.procs.value">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 
@@ -295,7 +295,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.brdcstrcv">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -304,7 +304,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.brdcstxmt">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -313,7 +313,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.collisions">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -322,7 +322,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.ierrors">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -331,7 +331,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.ipackets">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -340,7 +340,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.multircv">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -349,7 +349,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.multixmt">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -358,7 +358,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.norcvbuf">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -367,7 +367,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.noxmtbuf">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -376,7 +376,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.obytes">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -385,7 +385,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.oerrors">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -394,7 +394,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.opackets">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -403,7 +403,7 @@ handle_zone({_Host, Zone, SnapTime,
             State) ->
     IFace = parse_iface(IFInstance),
     State1 = put(<<"cloud.zones.net.rbytes">>, V, SnapTime,
-                 [{zone, Zone}, {interface, IFace}], State),
+                 [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State),
     {noreply, State1};
 
 %% VFS
@@ -413,7 +413,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"100ms_ops">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.ops.100ms">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -421,7 +421,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"10ms_ops">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.ops.10ms">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -429,7 +429,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"10s_ops">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.ops.10s">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -437,7 +437,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"1s_ops">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.ops.1s">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -445,7 +445,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"delay_cnt">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.delay_cnt">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -453,7 +453,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"delay_time">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.delay_time">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -461,7 +461,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"nread">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.read.n">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -469,7 +469,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"reads">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.read.count">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -477,7 +477,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"rlentime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.read.lentime">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -485,7 +485,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"rtime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.read.time">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -493,14 +493,14 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"nwritten">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.write.n">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 handle_zone({_Host, Zone, SnapTime,
              {<<"zone_vfs">>, _, _, _},
              {<<"writes">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.write.count">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -508,7 +508,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"wlentime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.write.lentime">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -516,7 +516,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"wtime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.vfs.write.time">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 
@@ -527,7 +527,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"nread">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.read.n">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -535,7 +535,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"reads">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.read.count">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -543,7 +543,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"rlentime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.read.lentime">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -551,7 +551,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"rtime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.read.time">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -559,14 +559,14 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"nwritten">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.write.n">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 handle_zone({_Host, Zone, SnapTime,
              {<<"zone_zfs">>, _, _, _},
              {<<"writes">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.write.count">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -574,7 +574,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"wlentime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.write.lentime">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 handle_zone({_Host, Zone, SnapTime,
@@ -582,7 +582,7 @@ handle_zone({_Host, Zone, SnapTime,
              {<<"wtime">>, V}},
             State) ->
     State1 = put(<<"cloud.zones.zfs.write.time">>, V, SnapTime,
-                 [{zone, Zone}], State),
+                 [{<<"zone">>, Zone}], State),
     {noreply, State1};
 
 %% handle_zone({Host, Zone, SnapTime, {Module, Instance, Name, Class}, {Key, V}}, State) ->

@@ -54,20 +54,15 @@ avg_analyze( Met = #running_avg{
                       std = Std, dist = Dist, avg = Avg,
                       info = Info0, warn = Warn0, error = Error0
                      }, V, T) ->
-    RelDist =
-        if
-            Std > 0 ->
-                Dist/Std;
-            true ->
-                0
-        end,
+    RelDist = if
+                  Std > 0 -> Dist/Std;
+                  true    -> 0
+              end,
     Diff = Avg - V,
     %% We don't ant to have alerts if the total delta is less then 1%
     Delta = if
-                Avg > 0 ->
-                    Diff/Avg;
-                true ->
-                    0
+                Avg > 0 -> Diff/Avg;
+                true    -> 0
             end,
     MinDelta = 0.02,
     Msg = "Last value ~.2f was ~.2f(~.2f%) std diviations from avg ~.2f.",

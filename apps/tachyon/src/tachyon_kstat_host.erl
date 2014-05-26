@@ -157,7 +157,7 @@ handle_gz({Host, _, SnapTime,
           State) ->
     tachyon_guard:put(Host, SnapTime, <<"ip.", Key/binary>>, V, 4),
     State1 = put(<<"cloud.host.ip.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -166,7 +166,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"arc.", Key/binary>>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 4),
     State1 = put(<<"cloud.host.arc.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -176,7 +176,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"sd[", ID/binary, "].", Key/binary>>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 4),
     State1 = put(<<"cloud.host.disk.metrics.", Key/binary>>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"disk">>, Instance}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -186,7 +186,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.hard">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"disk">>, Instance}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -196,7 +196,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"sd[", ID/binary, "].errors.hard">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.soft">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"disk">>, Instance}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -206,7 +206,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"sd[", ID/binary, "].errors.transport">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.transport">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"disk">>, Instance}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -216,7 +216,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.illegal">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"disk">>, Instance}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
@@ -226,7 +226,7 @@ handle_gz({Host, _, SnapTime,
     Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
     tachyon_guard:put(Host, SnapTime, Metric, V, 1),
     State1 = put(<<"cloud.host.disk.errors.predicted_failures">>, V, SnapTime,
-                 [{disk, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"disk">>, Instance}], State),
     {noreply, State1};
 
 %% CPU Load
@@ -236,7 +236,7 @@ handle_gz({Host, _, SnapTime,
     ID = list_to_binary(integer_to_list(Instance)),
     tachyon_guard:put(Host, SnapTime, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
     State1 = put(<<"cloud.host.cpu.", Key/binary>>, V, SnapTime,
-                 [{cpu, Instance}, {host, Host}], State),
+                 [{<<"host">>, Host}, {<<"cpu">>, Instance}], State),
     {noreply, State1};
 
 %% IP_NIC_EVENT_QUEUE
@@ -244,35 +244,35 @@ handle_gz({Host, _, SnapTime,
            {<<"unix">>, _Instance, <<"vnd_str_cache">>, _Class}, {Key, V}},
           State) ->
     State1 = put(<<"cloud.host.cache.streams.vnd.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
            {<<"unix">>, _Instance, <<"dld_str_cache">>, _Class}, {Key, V}},
           State) ->
     State1 = put(<<"cloud.host.cache.streams.vnd.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
            {<<"unix">>, _Instance, <<"udp_conn_cache">>, _Class}, {Key, V}},
           State) ->
     State1 = put(<<"cloud.host.cache.connections.udp.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
            {<<"unix">>, _Instance, <<"tcp_conn_cache">>, _Class}, {Key, V}},
           State) ->
     State1 = put(<<"cloud.host.cache.connections.tcp.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz({Host, _, SnapTime,
            {<<"unix">>, _Instance, <<"socket_cache">>, _Class}, {Key, V}},
           State) ->
     State1 = put(<<"cloud.host.cache.socket.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 %% Netork Caches
@@ -280,7 +280,7 @@ handle_gz({Host, _, SnapTime,
            {<<"unix">>, _Instance, <<"IP_NIC_EVENT_QUEUE">>, _Class}, {Key, V}},
           State) ->
     State1 = put(<<"cloud.host.ip_nic_event_queue.", Key/binary>>, V, SnapTime,
-                 [{host, Host}], State),
+                 [{<<"host">>, Host}], State),
     {noreply, State1};
 
 handle_gz(_, State) ->
