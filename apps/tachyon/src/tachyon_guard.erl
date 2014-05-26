@@ -22,11 +22,12 @@
 -ignore_xref([start_link/1]).
 
 -define(SERVER, ?MODULE).
+-define(GUARD).
 
 -define(DB_SERVER, "172.21.0.203").
 -define(DB_PORT, 4242).
 
--record(state, {metrics = [], db, host, time}).
+-record(state, {metrics = gb_trees:empty(), db, host, time}).
 
 %%%===================================================================
 %%% API
@@ -94,7 +95,8 @@ init([Host]) ->
 %% @end
 %%--------------------------------------------------------------------
 
-handle_call(stats, _, State = #state{metrics = Metrics} ) ->
+handle_call(stats, _, State = #state{metrics = Metrics0} ) ->
+    Metrics = gb_trees:to_list(Metrics0),
     io:format("===================="
               "===================="
               "===================="
@@ -150,7 +152,7 @@ handle_cast({put, Host, Time, Name, V, T}, State =
                        db = _DB,
                        time = _T0}) ->
     Metrics1 =
-        orddict:update(Name,
+        gb_trees:update(Name,
                        fun (Met) ->
                                M0 = tachyon_statistics:avg_update(Met, V),
                                {A, M} = tachyon_statistics:avg_analyze(M0, V, T),
@@ -169,7 +171,7 @@ handle_cast({put, Host, Time, Name, V, T}, State =
                                end,
                                M
                           end, #running_avg{avg=V}, Metrics),
-    _Metr = orddict:fetch(Name, Metrics1),
+    %%_Metr = gb_trees:fetch(Name, Metrics1),
     State1  = State#state{metrics = Metrics1},
     %% Msg0 = case Time of
     %%            T0 ->
