@@ -22,7 +22,7 @@
 -ignore_xref([start_link/1]).
 
 -define(SERVER, ?MODULE).
--define(GUARD).
+-define(GUARD, true).
 
 -define(DB_SERVER, "172.21.0.203").
 -define(DB_PORT, 4242).
