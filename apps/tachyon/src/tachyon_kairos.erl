@@ -58,7 +58,7 @@ fmt_args([], Acc) ->
 -ifdef(TEST).
 
 fmt_test() ->
-    Str = fmt(<<"a.metric">>, 0, 1, [{hypervisor, <<"bla">>}, {id, 1}]),
+    Str = fmt(<<"a.metric">>, 0, 1, [{<<"hypervisor">>, <<"bla">>}, {<<"id">>, 1}]),
     Bin = list_to_binary(Str),
     ?assertEqual(<<"put a.metric 1 0 id=1 hypervisor=bla\n">>, Bin).
 
