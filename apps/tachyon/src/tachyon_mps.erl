@@ -68,7 +68,9 @@ send() ->
 init([]) ->
     erlang:send_after(1000, self(), tick),
     ets:new(?COUNTERS, [named_table, set, public, {write_concurrency, true}]),
-
+    ets:insert(?COUNTERS, {provided, 0}),
+    ets:insert(?COUNTERS, {handled, 0}),
+    ets:insert(?COUNTERS, {send, 0}),
     {ok, DB} = tachyon_kairos:connect(),
     {ok, Statsd} = tachyon_statsd:connect(),
     {ok, #state{db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
@@ -122,7 +124,9 @@ handle_info(tick, State = #state{}) ->
      {provided, P},
      {send, S}
     ] = lists:sort(ets:tab2list(?COUNTERS)),
-    ets:delete_all_objects(?COUNTERS),
+    ets:insert(?COUNTERS, {provided, 0}),
+    ets:insert(?COUNTERS, {handled, 0}),
+    ets:insert(?COUNTERS, {send, 0}),
     State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
     State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
     State3 = put(<<"tachyon.messages.send">>, S, T, [], State2),
