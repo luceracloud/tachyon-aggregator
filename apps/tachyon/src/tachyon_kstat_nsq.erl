@@ -26,7 +26,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ClassSize:32/integer, _Class:_ClassSize/binary,
           _Instance:64/integer,
           6:32/integer, "crtime", _/binary>>, _, State) ->
-    State;
+    {ok, State};
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ZoneSize:32/integer, _Zone:_ZoneSize/binary,
@@ -36,7 +36,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ClassSize:32/integer, _Class:_ClassSize/binary,
           _Instance:64/integer,
           8:32/integer, "snaptime", _/binary>>, _, State) ->
-    State;
+    {ok, State};
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ZoneSize:32/integer, _Zone:_ZoneSize/binary,
@@ -46,7 +46,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ClassSize:32/integer, _Class:_ClassSize/binary,
           _Instance:64/integer,
           8:32/integer, "zonename", _/binary>>, _, State) ->
-    State;
+    {ok, State};
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ZoneSize:32/integer, _Zone:_ZoneSize/binary,
@@ -56,7 +56,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ClassSize:32/integer, _Class:_ClassSize/binary,
           _Instance:64/integer,
           5:32/integer, "class", _/binary>>, _, State) ->
-    State;
+    {ok, State};
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -251,7 +251,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
             put(<<"cloud.zones.swap.", Key/binary>>, V, SnapTime,
                 [{<<"zone">>, Zone}], State);
         _ ->
-            State
+            {ok,State}
     end;
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
