@@ -53,6 +53,9 @@ start(Host) ->
 %%--------------------------------------------------------------------
 init(From, Ref, Host) ->
     process_flag(trap_exit, true),
+    %% Setting the priority to hight ensure we go thourgh the data before we
+    %% consume new one
+    process_flag(priority, high),
     {ok, DB} = tachyon_kairos:connect(),
     {ok, Statsd} = tachyon_statsd:connect(),
     From ! {Ref, {ok, self()}},
@@ -73,7 +76,6 @@ loop(State) ->
 
         {Host, _, SnapTime,
          {<<"sd">>, Instance, _Name, _Class}, {Key, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             Metric = <<"sd[", ID/binary, "].", Key/binary>>,
             tachyon_guard:put(Host, SnapTime, Metric, V, 4),
@@ -82,7 +84,6 @@ loop(State) ->
 
         {Host, _, SnapTime,
          {<<"sderr">>, Instance, _Name, _Class}, {<<"Hard Errors">>, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             Metric = <<"sd[", ID/binary, "].errors.hard">>,
             tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -91,7 +92,6 @@ loop(State) ->
 
         {Host, _, SnapTime,
          {<<"sderr">>, Instance, _Name, _Class}, {<<"Soft Errors">>, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             Metric = <<"sd[", ID/binary, "].errors.hard">>,
             tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -100,7 +100,6 @@ loop(State) ->
 
         {Host, _, SnapTime,
          {<<"sderr">>, Instance, _Name, _Class}, {<<"Transport Errors">>, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             Metric = <<"sd[", ID/binary, "].errors.transport">>,
             tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -109,7 +108,6 @@ loop(State) ->
 
         {Host, _, SnapTime,
          {<<"sderr">>, Instance, _Name, _Class}, {<<"Illegal Request">>, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
             tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -118,7 +116,6 @@ loop(State) ->
 
         {Host, _, SnapTime,
          {<<"sderr">>, Instance, _Name, _Class}, {<<"Predictive Failure Analysis">>, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
             tachyon_guard:put(Host, SnapTime, Metric, V, 1),
@@ -128,7 +125,6 @@ loop(State) ->
         %% CPU Load
         {Host, _, SnapTime,
          {<<"cpu_stat">>, Instance, _Name, _Class}, {Key, V}} ->
-
             ID = list_to_binary(integer_to_list(Instance)),
             tachyon_guard:put(Host, SnapTime, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
             loop(put(<<"cloud.host.cpu.", Key/binary>>, V, SnapTime,
