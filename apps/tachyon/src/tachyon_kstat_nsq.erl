@@ -13,10 +13,10 @@ error(_Msg) ->
 message(Msg, _) ->
     tachyon_mps:provide(),
     case tachyon_kstat_pkg:decode(Msg) of
-        {ok, {_, <<"global">>, _, _, _} = P} ->
-            tachyon_kstat_host:msg(P);
-        {ok, {_, _Zone, _, _, _} = P} ->
-            tachyon_kstat_zone:msg(P);
+        {ok, {Host, <<"global">>, _, _, _} = P} ->
+            tproc:where(host, Host) ! P;
+        {ok, {_, Zone, _, _, _} = P} ->
+            tproc:where(zone, Zone) ! P;
         E ->
             lager:error("[msg] ~p", [E])
     end.

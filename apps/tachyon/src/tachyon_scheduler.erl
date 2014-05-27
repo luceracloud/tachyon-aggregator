@@ -107,7 +107,7 @@ handle_info(tick, State = #state{last = Ts0}) ->
     Times = [{I, (A1 - A0)/(T1 - T0)} || {{I, A0, T0}, {I, A1, T1}} <- lists:zip(Ts0,Ts1)],
     State1 =
         lists:foldl(fun({I, T}, StateAcc) ->
-                        put(<<"tachyon.scheduler">>, T, Time,
+                        put(<<"tachyon.scheduler">>, T*100, Time,
                             [{<<"scheduler">>,  I}], StateAcc)
                     end, State, Times),
     erlang:send_after(1000, self(), tick),
