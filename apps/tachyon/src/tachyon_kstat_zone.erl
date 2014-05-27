@@ -37,8 +37,7 @@ start_link(Zone) ->
     gen_server:start_link({global, {zone, Zone}}, ?MODULE, [], []).
 
 start(Zone) ->
-    {ok, Pid} = tachyon_kstat_zone_sup:start_child(Zone),
-    Pid.
+    tachyon_kstat_zone_sup:start_child(Zone).
 
 %%%===================================================================
 %%% gen_server callbacks
