@@ -1,6 +1,7 @@
 -module(tachyon_kstat_pkg).
 
 -export([decode/1]).
+-ignore_xref([decode/1]).
 
 decode(<<_HostSize:32/integer, Host:_HostSize/binary,
          _ZoneSize:32/integer, Zone:_ZoneSize/binary,
