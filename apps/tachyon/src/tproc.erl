@@ -87,9 +87,10 @@ handle_call({register, ID = {Mod, Name}}, _From, State) ->
             erlang:monitor(process, Pid),
             ets:insert(?TBL, {ID, Pid}),
             {reply, Pid, State};
-        Pid ->
+        [{_, Pid}] ->
             {reply, Pid, State}
     end;
+
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
