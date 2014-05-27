@@ -63,7 +63,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    ets:new(?TBL, [ordered_set, named_table, {read_concurrency, true}]),
+    ets:new(?TBL, [public, ordered_set, named_table, {read_concurrency, true}]),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------

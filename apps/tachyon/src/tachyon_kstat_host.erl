@@ -9,7 +9,7 @@
 -module(tachyon_kstat_host).
 
 %% API
--export([init/1, start/1]).
+-export([init/3, start/1]).
 -ignore_xref([start/1]).
 
 -record(state, {host, db}).
@@ -27,7 +27,14 @@
 %%--------------------------------------------------------------------
 
 start(Host) ->
-    spawn(tachyon_kstat_host, init, [Host]).
+    Ref = make_ref(),
+    spawn(tachyon_kstat_host, init, [self(), Ref, Host]),
+    receive
+        {Ref, Reply} ->
+            Reply
+    after 5000 ->
+            {error, timeout}
+    end.
 
 %%%===================================================================
 %%% Interal Code
@@ -44,10 +51,11 @@ start(Host) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init(Host) ->
+init(From, Ref, Host) ->
     process_flag(trap_exit, true),
     {ok, DB} = tachyon_kairos:connect(),
     {ok, Statsd} = tachyon_statsd:connect(),
+    From ! {Ref, {ok, self()}},
     loop(#state{host = Host, db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}).
 
 loop(State) ->
