@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, where/2]).
+-export([start_link/0, where/1]).
 -ignore_xref([start_link/0]).
 
 %% gen_server callbacks
@@ -20,8 +20,7 @@
 
 -define(SERVER, ?MODULE).
 
--define(ZONES, tproc_zones).
--define(HOSTS, tproc_hosts).
+-define(TBL, tproc).
 
 -record(state, {}).
 
@@ -30,20 +29,12 @@
 %%%===================================================================
 
 
-where(zone, Name) ->
-    case ets:lookup(?ZONES, Name) of
+where(ID) ->
+    case ets:lookup(?TBL, ID) of
         [{_, Pid}] ->
             Pid;
         [] ->
-            gen_server:call(?SERVER, {register, zone, Name})
-    end;
-
-where(host, Name) ->
-    case ets:lookup(?HOSTS, Name) of
-        [{_, Pid}] ->
-            Pid;
-        [] ->
-            gen_server:call(?SERVER, {register, host, Name})
+            gen_server:call(?SERVER, {register, ID})
     end.
 
 %%--------------------------------------------------------------------
@@ -72,8 +63,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    ets:new(?ZONES, [ordered_set, public, named_table, {read_concurrency, true}]),
-    ets:new(?HOSTS, [ordered_set, public, named_table, {read_concurrency, true}]),
+    ets:new(?TBL, [ordered_set, named_table, {read_concurrency, true}]),
     {ok, #state{}}.
 
 %%--------------------------------------------------------------------
@@ -90,26 +80,16 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({register, host, Name}, _From, State) ->
-    case ets:lookup(?HOSTS, Name) of
+handle_call({register, ID = {Mod, Name}}, _From, State) ->
+    case ets:lookup(?TBL, ID) of
         [] ->
-            {ok, Pid} = tachyon_kstat_host:start(Name),
-            ets:insert(?HOSTS, {Name, Pid}),
+            {ok, Pid} = Mod:start(Name),
+            erlang:monitor(process, Pid),
+            ets:insert(?TBL, {ID, Pid}),
             {reply, Pid, State};
         Pid ->
             {reply, Pid, State}
     end;
-
-handle_call({register, zone, Name}, _From, State) ->
-    case ets:lookup(?ZONES, Name) of
-        [] ->
-            {ok, Pid} = tachyon_kstat_zone:start(Name),
-            ets:insert(?ZONES, {Name, Pid}),
-            {reply, Pid, State};
-        Pid ->
-            {reply, Pid, State}
-    end;
-
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -137,6 +117,11 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+
+handle_info({'DOWN', _, _, Pid, _}, State) ->
+    ets:match_delete(?TBL, {'_', Pid}),
+    {noreply, State};
+
 handle_info(_Info, State) ->
     {noreply, State}.
 

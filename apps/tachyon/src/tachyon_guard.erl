@@ -13,13 +13,13 @@
 -include("tachyon_statistics.hrl").
 
 %% API
--export([start_link/1, put/5, stats/1]).
+-export([start_link/1, put/5, stats/1, start/1]).
+-ignore_xref([start_link/1, start/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--ignore_xref([start_link/1]).
 
 -define(SERVER, ?MODULE).
 -define(GUARD, true).
@@ -44,15 +44,13 @@ start_link(Host) ->
     gen_server:start_link(
       {global, {guard, Host}},
       ?MODULE, [Host], []).
+
+start(Host) ->
+    tachyon_guard_sup:start_child(Host).
+
 -ifdef(GUARD).
 put(Host, Time, Metric, Value, T) ->
-    case global:whereis_name({guard, Host}) of
-        undefined ->
-            {ok, Pid} = tachyon_guard_sup:start_child(Host),
-            gen_server:cast(Pid, {put, Host, Time, Metric, Value, T});
-        Pid ->
-            gen_server:cast(Pid, {put, Host, Time, Metric, Value, T})
-    end.
+    tproc:where({tachyon_guard, Host}) ! {put, Host, Time, Metric, Value, T}.
 -else.
 put(_Host, _Time, _Metric, _Value, _T) ->
     ok.
@@ -147,7 +145,22 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({put, Host, Time, Name, V, T}, State =
+
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Handling all non call/cast messages
+%%
+%% @spec handle_info(Info, State) -> {noreply, State} |
+%%                                   {noreply, State, Timeout} |
+%%                                   {stop, Reason, State}
+%% @end
+%%--------------------------------------------------------------------
+
+handle_info({put, Host, Time, Name, V, T}, State =
                 #state{metrics = Metrics,
                        db = _DB,
                        time = _T0}) ->
@@ -197,19 +210,6 @@ handle_cast({put, Host, Time, Name, V, T}, State =
     %%       end,
     {noreply, State1#state{time = Time}};
 
-handle_cast(_Msg, State) ->
-    {noreply, State}.
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Handling all non call/cast messages
-%%
-%% @spec handle_info(Info, State) -> {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, State}
-%% @end
-%%--------------------------------------------------------------------
 handle_info(_Info, State) ->
     {noreply, State}.
 
