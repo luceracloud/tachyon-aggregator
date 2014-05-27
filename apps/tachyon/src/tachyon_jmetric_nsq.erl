@@ -2,13 +2,16 @@
 
 -behaviour(ensq_channel_behaviour).
 
--export([response/1, message/2, error/1]).
+-export([init/0, response/2, message/3, error/2]).
 
-response(_Msg) ->
-    ok.
+init() ->
+    {ok, undefined}.
 
-error(_Msg) ->
-    ok.
+response(_Msg, State) ->
+    {ok, State}.
+
+error(_Msg, State) ->
+    {ok, State}.
 
 
 %% message should look like
@@ -20,8 +23,9 @@ error(_Msg) ->
 %%  "tags": [{"key":"value"}]
 %% }
 
-message(Msg, _) ->
+message(Msg, _, State) ->
     P = jsx:decode(Msg),
     G = proplists:get_value(<<"grouping">>, P),
     tachyon_mps:provide(),
-    tachyon_metric:msg(G, P).
+    tachyon_metric:msg(G, P),
+    {ok, State}.
