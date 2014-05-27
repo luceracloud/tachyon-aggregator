@@ -180,7 +180,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           6:32/integer, "global",
           _/binary>>, _, State) ->
-    State;
+    {ok, State};
 
 message(Msg, _, State) ->
     tachyon_mps:provide(),
