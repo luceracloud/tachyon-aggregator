@@ -186,9 +186,9 @@ message(Msg, _, State) ->
     tachyon_mps:provide(),
     case tachyon_kstat_pkg:decode(Msg) of
         {ok, {_, <<"global">>, _, _, _}} ->
-            State;
+            {ok, State};
         {ok, P} ->
-            {ok, do_zone(P, State)};
+            do_zone(P, State);
         E ->
             lager:error("[msg] ~p", [E]),
             {ok, State}
@@ -525,7 +525,7 @@ do_zone(Msg, State) ->
             put(<<"cloud.zones.zfs.write.time">>, V, SnapTime,
                 [{<<"zone">>, Zone}], State);
         _ ->
-            State
+            {ok, State}
     end.
 
 parse_iface(<<"z", _, $_, IFace/binary>>) ->
@@ -545,4 +545,4 @@ parse_iface1(<<>>) ->
 put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
     DBs1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
                {Mod, DB} <- DBs],
-    State#state{db = DBs1}.
+    {ok, State#state{db = DBs1}}.
