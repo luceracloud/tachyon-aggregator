@@ -35,8 +35,7 @@ where(zone, Name) ->
         [{_, Pid}] ->
             Pid;
         [] ->
-            {ok, Pid} = gen_server:call(?SERVER, {register, zone, Name}),
-            Pid
+            gen_server:call(?SERVER, {register, zone, Name})
     end;
 
 where(host, Name) ->
@@ -44,8 +43,7 @@ where(host, Name) ->
         [{_, Pid}] ->
             Pid;
         [] ->
-            {ok, Pid} = gen_server:call(?SERVER, {register, host, Name}),
-            Pid
+            gen_server:call(?SERVER, {register, host, Name})
     end.
 
 %%--------------------------------------------------------------------
@@ -94,7 +92,7 @@ init([]) ->
 %%--------------------------------------------------------------------
 handle_call({register, host, Name}, _From, State) ->
     case ets:lookup(?HOSTS, Name) of
-        undefined ->
+        [] ->
             {ok, Pid} = tachyon_kstat_host:start(Name),
             ets:insert(?HOSTS, {Name, Pid}),
             {reply, Pid, State};
@@ -104,7 +102,7 @@ handle_call({register, host, Name}, _From, State) ->
 
 handle_call({register, zone, Name}, _From, State) ->
     case ets:lookup(?ZONES, Name) of
-        undefined ->
+        [] ->
             {ok, Pid} = tachyon_kstat_zone:start(Name),
             ets:insert(?ZONES, {Name, Pid}),
             {reply, Pid, State};
