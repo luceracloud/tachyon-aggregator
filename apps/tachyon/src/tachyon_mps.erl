@@ -19,7 +19,9 @@
          terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(COUNTERS, tachyon_counters).
+-define(COUNTERS_PROV, tachyon_counters_provided).
+-define(COUNTERS_HAND, tachyon_counters_handled).
+-define(COUNTERS_SEND, tachyon_counters_send).
 -record(state, {db}).
 
 %%%===================================================================
@@ -37,15 +39,33 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 provide() ->
-    ets:update_counter(?COUNTERS, provided, 1),
+    try
+        ets:update_counter(?COUNTERS_PROV, self(), 1)
+    catch
+        error:badarg ->
+
+            ets:insert(?COUNTERS_PROV, {self(), 1})
+    end,
     ok.
 
 handle() ->
-    ets:update_counter(?COUNTERS, handled, 1),
+    try
+        ets:update_counter(?COUNTERS_HAND, self(), 1)
+    catch
+        error:badarg ->
+
+            ets:insert(?COUNTERS_HAND, {self(), 1})
+    end,
     ok.
 
 send() ->
-    ets:update_counter(?COUNTERS, send, 1),
+    try
+        ets:update_counter(?COUNTERS_SEND, self(), 1)
+    catch
+        error:badarg ->
+
+            ets:insert(?COUNTERS_SEND, {self(), 1})
+    end,
     ok.
 
 
@@ -67,10 +87,9 @@ send() ->
 %%--------------------------------------------------------------------
 init([]) ->
     erlang:send_after(1000, self(), tick),
-    ets:new(?COUNTERS, [named_table, set, public, {write_concurrency, true}]),
-    ets:insert(?COUNTERS, {provided, 0}),
-    ets:insert(?COUNTERS, {handled, 0}),
-    ets:insert(?COUNTERS, {send, 0}),
+    ets:new(?COUNTERS_PROV, [named_table, set, public, {write_concurrency, true}]),
+    ets:new(?COUNTERS_HAND, [named_table, set, public, {write_concurrency, true}]),
+    ets:new(?COUNTERS_SEND, [named_table, set, public, {write_concurrency, true}]),
     {ok, DB} = tachyon_kairos:connect(),
     {ok, Statsd} = tachyon_statsd:connect(),
     {ok, #state{db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
@@ -119,14 +138,12 @@ handle_cast(_Msg, State) ->
 handle_info(tick, State = #state{}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
-    [
-     {handled, H},
-     {provided, P},
-     {send, S}
-    ] = lists:sort(ets:tab2list(?COUNTERS)),
-    ets:insert(?COUNTERS, {provided, 0}),
-    ets:insert(?COUNTERS, {handled, 0}),
-    ets:insert(?COUNTERS, {send, 0}),
+    P = lists:sum([N || {_, N} <-ets:tab2list(?COUNTERS_PROV)]),
+    S = lists:sum([N || {_, N} <-ets:tab2list(?COUNTERS_SEND)]),
+    H = lists:sum([N || {_, N} <-ets:tab2list(?COUNTERS_HAND)]),
+    ets:delete_all_objects(?COUNTERS_PROV),
+    ets:delete_all_objects(?COUNTERS_SEND),
+    ets:delete_all_objects(?COUNTERS_SEND),
     State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
     State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
     State3 = put(<<"tachyon.messages.send">>, S, T, [], State2),
