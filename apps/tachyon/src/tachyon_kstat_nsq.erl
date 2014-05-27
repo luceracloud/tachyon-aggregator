@@ -17,7 +17,6 @@ response(_Msg, State) ->
 error(_Msg, State) ->
     {ok, State}.
 
-
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ZoneSize:32/integer, _Zone:_ZoneSize/binary,
           _SnapTime:64/integer,

@@ -19,8 +19,8 @@
          terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
-
--record(state, {provided=0, handled=0, send=0, db}).
+-define(COUNTERS, tachyon_counters).
+-record(state, {db}).
 
 %%%===================================================================
 %%% API
@@ -37,13 +37,18 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 provide() ->
-    gen_server:cast(?SERVER, provide).
+    ets:update_counter(?COUNTERS, provided, 1),
+    ok.
 
 handle() ->
-    gen_server:cast(?SERVER, handle).
+    ets:update_counter(?COUNTERS, handled, 1),
+    ok.
 
 send() ->
-    gen_server:cast(?SERVER, send).
+    ets:update_counter(?COUNTERS, send, 1),
+    ok.
+
+
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -62,6 +67,8 @@ send() ->
 %%--------------------------------------------------------------------
 init([]) ->
     erlang:send_after(1000, self(), tick),
+    ets:new(?COUNTERS, [named_table, set, public, {write_concurrency, true}]),
+
     {ok, DB} = tachyon_kairos:connect(),
     {ok, Statsd} = tachyon_statsd:connect(),
     {ok, #state{db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
@@ -94,15 +101,6 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast(provide, State = #state{provided = P}) ->
-    {noreply, State#state{provided = P+1}};
-
-handle_cast(handle, State = #state{handled = H}) ->
-    {noreply, State#state{handled = H+1}};
-
-handle_cast(send, State = #state{send = S}) ->
-    {noreply, State#state{send = S+1}};
-
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -116,14 +114,20 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(tick, State = #state{handled = H, provided = P, send = S}) ->
+handle_info(tick, State = #state{}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
+    [
+     {handled, H},
+     {provided, P},
+     {send, S}
+    ] = lists:sort(ets:tab2list(?COUNTERS)),
+    ets:delete_all_objects(?COUNTERS),
     State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
     State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
     State3 = put(<<"tachyon.messages.send">>, S, T, [], State2),
     erlang:send_after(1000, self(), tick),
-    {noreply, State3#state{handled=0, provided=0, send=0}};
+    {noreply, State3};
 
 handle_info(_Info, State) ->
     {noreply, State}.
