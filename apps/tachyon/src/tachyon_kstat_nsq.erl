@@ -19,4 +19,5 @@ message(Msg, _) ->
             tproc:where(zone, Zone) ! P;
         E ->
             lager:error("[msg] ~p", [E])
-    end.
+    end,
+    ok.
