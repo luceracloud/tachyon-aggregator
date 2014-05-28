@@ -138,12 +138,18 @@ handle_cast(_Msg, State) ->
 handle_info(tick, State = #state{}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
-    P = lists:sum([N || {_, N} <-ets:tab2list(?COUNTERS_PROV)]),
-    S = lists:sum([N || {_, N} <-ets:tab2list(?COUNTERS_SEND)]),
-    H = lists:sum([N || {_, N} <-ets:tab2list(?COUNTERS_HAND)]),
+
+    TblP = ets:tab2list(?COUNTERS_PROV),
     ets:delete_all_objects(?COUNTERS_PROV),
+    P = lists:sum([N || {_, N} <- TblP]),
+
+    TblS = ets:tab2list(?COUNTERS_SEND),
     ets:delete_all_objects(?COUNTERS_SEND),
-    ets:delete_all_objects(?COUNTERS_SEND),
+    S = lists:sum([N || {_, N} <- TblS]),
+
+    TblH = ets:tab2list(?COUNTERS_HAND),
+    ets:delete_all_objects(?COUNTERS_HAND),
+    H = lists:sum([N || {_, N} <- TblH]),
     State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
     State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
     State3 = put(<<"tachyon.messages.send">>, S, T, [], State2),
