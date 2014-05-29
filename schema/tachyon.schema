@@ -43,7 +43,6 @@
  [{commented, {"127.0.0.1", 4242}},
   {datatype, ip}]}.
 
-
 {translation,
  "tachyon.statsd",
  fun(Conf) ->
@@ -60,5 +59,20 @@
  "estatsd.graphite",
  fun(Conf) ->
          cuttlefish:conf_get("statsd", Conf, {"127.0.0.1", 2003})
+ end
+}.
+
+%% @doc One more more nsqlookupd http interfaces for tachyon to discover
+%% the channels.
+
+{mapping, "nsqlookupd.$name", "tachyon.nsqlookupd",
+ [{default, {"127.0.0.1", 4161}},
+  {datatype, ip}]}.
+
+{translation,
+ "tachyon.nsqlookupd",
+ fun(Conf) ->
+         HTTP = cuttlefish_variable:filter_by_prefix("nsqlookupd", Conf),
+         [ IP || {_, IP} <- HTTP]
  end
 }.

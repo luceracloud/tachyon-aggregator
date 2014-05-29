@@ -54,7 +54,7 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     process_flag(trap_exit, true),
-    Servers = [{"172.21.0.1", 4161}],
+    {ok, Servers} = application:get_env(nsqlookupd),
     MetricConns = case application:get_env(metric_connections) of
                       {ok, NMet} ->
                           NMet;
