@@ -23,7 +23,7 @@
 
 %% @doc The number of connections used to receive kstat metrics
 {mapping, "kstat.connections", "tachyon.kstat_connections",
- [{default, 30},
+ [{default, 10},
   {datatype, integer}]}.
 
 %% @doc The kairosdb endpoint to use, if not set no data will be written
