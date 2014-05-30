@@ -144,7 +144,6 @@ loop(State) ->
                                ets:insert(Metrics, {Name, M})
                        end,
             %%_Metr = gb_trees:fetch(Name, Metrics1),
-            State1  = State#state{metrics = Metrics1},
             %% Msg0 = case Time of
             %%            T0 ->
             %%                [];
@@ -166,7 +165,7 @@ loop(State) ->
             %%           _ ->
             %%               DB
             %%       end,
-            loop(State1);
+            loop(State);
         {'EXIT', _FromPid, _Reason} ->
             ok;
         _ ->
