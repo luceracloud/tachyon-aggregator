@@ -72,7 +72,7 @@ init(Host, Ref, From) ->
     process_flag(trap_exit, true),
     {ok, DB} = tachyon_backend:init(),
     From ! {Ref, {ok, self()}},
-    TID = ets:new(?TBL, [public, set, {read_concurrency, true}]),
+    TID = ets:new(?TBL, []),
     loop(#state{db=DB, host = Host, metrics=TID}).
 
 loop(State) ->
@@ -116,33 +116,28 @@ loop(State) ->
                       "===================="
                       "===~n"),
             loop(State);
-
-
         {put, Host, _Time, Name, V, T} ->
-            #state{metrics = Metrics,
-                   db = _DB,
-                   time = _T0} = State,
-            Metrics1 = case ets:lookup(Metrics, Name) of
-                           [] ->
-                               ets:insert(Metrics, {Name, #running_avg{avg=V}});
-                           [{_, Met}] ->
-                               M0 = tachyon_statistics:avg_update(Met, V),
-                               {A, M} = tachyon_statistics:avg_analyze(M0, V, T),
-                               case A of
-                                   {error, Msg, Args} ->
-                                       lager:error("[~s/~s] " ++ Msg,
-                                                   [Host, Name | Args]);
-                                   {warn, Msg, Args} ->
-                                       lager:warning("[~s/~s] " ++ Msg,
-                                                     [Host, Name | Args]);
-                                   {info, Msg, Args} ->
-                                       lager:info("[~s/~s] " ++ Msg,
-                                                  [Host, Name | Args]);
-                                   _ ->
-                                       ok
-                               end,
-                               ets:insert(Metrics, {Name, M})
-                       end,
+            #state{metrics = Metrics, db = _DB, time = _T0} = State,
+            case ets:lookup(Metrics, Name) of
+                [] ->
+                    ets:insert(Metrics, {Name, #running_avg{avg=V}});
+                [{_, Met}] ->
+                    {A, M} = tachyon_statistics:update_and_analyze(Met, V, T),
+                    case A of
+                        {error, Msg, Args} ->
+                            lager:error("[~s/~s] " ++ Msg,
+                                        [Host, Name | Args]);
+                        {warn, Msg, Args} ->
+                            lager:warning("[~s/~s] " ++ Msg,
+                                          [Host, Name | Args]);
+                        {info, Msg, Args} ->
+                            lager:info("[~s/~s] " ++ Msg,
+                                       [Host, Name | Args]);
+                        _ ->
+                            ok
+                    end,
+                    ets:insert(Metrics, {Name, M})
+            end,
             %%_Metr = gb_trees:fetch(Name, Metrics1),
             %% Msg0 = case Time of
             %%            T0 ->
@@ -166,6 +161,8 @@ loop(State) ->
             %%               DB
             %%       end,
             loop(State);
+        tick ->
+            erlang:send_after(1000, self(), tick);
         {'EXIT', _FromPid, _Reason} ->
             ok;
         _ ->
