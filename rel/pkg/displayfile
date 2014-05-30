@@ -1,0 +1,10 @@
+.------------------------------------------------------------------------------.
+| By default the service is disabled since it's common that you will need to   |
+| do some additional configurations.                                           |
+|                                                                              |
+| Please have a look at the configuraiton files:                               |
+|                                                                              |
+|  * /opt/local/tachyon/etc/tachyon.conf                                       |
+|                                                                              |
+`------------------------------------------------------------------------------'
+

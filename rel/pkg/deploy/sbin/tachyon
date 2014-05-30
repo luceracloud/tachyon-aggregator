@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+/opt/local/tachyon/bin/tachyon $@
