@@ -63,9 +63,8 @@ msg(Grouping, Msg) ->
 %%--------------------------------------------------------------------
 init([Grouping]) ->
     process_flag(trap_exit, true),
-    {ok, DB} = tachyon_kairos:connect(),
-    {ok, Statsd} = tachyon_statsd:connect(),
-    {ok, #state{grouping = Grouping, db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
+    {ok, DB} = tachyon_backend:init(),
+    {ok, #state{grouping = Grouping, db=DB}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -145,9 +144,8 @@ code_change(_OldVsn, State, _Extra) ->
 
 handle_metric([{<<"grouping">>, _}, {<<"metric">>, Metric}, {<<"tags">>, Tags},
                {<<"time">>, Time}, {<<"value">>, Value}],
-              State = #state{db=DBs}) ->
+              State = #state{db=DB}) ->
+    tachyon_mps:provide(),
     tachyon_mps:handle(),
-    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Tags, DB)} ||
-               {Mod, DB} <- DBs],
-    State1 = State#state{db = DBs1},
-    {noreply, State1}.
+    DB1 = tachyon_backend:put(Metric, Value, Time, Tags, DB),
+    {noreply, State#state{db = DB1}}.

@@ -147,7 +147,7 @@ code_change(_OldVsn, State, _Extra) ->
 
 connect(kstat, Servers) ->
     ensq:init({Servers, [{<<"tachyon">>,
-                          [{<<"aggregator">>, tachyon_kstat_nsq}], []}]});
+                          [{<<"aggregator">>, tachyon_kstat}], []}]});
 
 connect(jmetric, Servers) ->
     ensq:init({Servers, [{<<"tachyon-metric-json">>,

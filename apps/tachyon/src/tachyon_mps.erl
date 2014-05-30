@@ -90,9 +90,8 @@ init([]) ->
     ets:new(?COUNTERS_PROV, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_HAND, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_SEND, [named_table, set, public, {write_concurrency, true}]),
-    {ok, DB} = tachyon_kairos:connect(),
-    {ok, Statsd} = tachyon_statsd:connect(),
-    {ok, #state{db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
+    {ok, DB} = tachyon_backend:init(),
+    {ok, #state{db=DB}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -150,11 +149,13 @@ handle_info(tick, State = #state{}) ->
     TblH = ets:tab2list(?COUNTERS_HAND),
     ets:delete_all_objects(?COUNTERS_HAND),
     H = lists:sum([N || {_, N} <- TblH]),
-    State1 = put(<<"tachyon.messages.handled">>, H, T, [], State),
-    State2 = put(<<"tachyon.messages.provided">>, P, T, [], State1),
-    State3 = put(<<"tachyon.messages.send">>, S, T, [], State2),
+
+    DB1 = tachyon_backend:put(<<"tachyon.messages.handled">>, H, T, [], State#state.db),
+    %% We send 3 metrics here so provided is + 3
+    DB2 = tachyon_backend:put(<<"tachyon.messages.provided">>, P + 3, T, [], DB1),
+    DB3 = tachyon_backend:put(<<"tachyon.messages.send">>, S, T, [], DB2),
     erlang:send_after(1000, self(), tick),
-    {noreply, State3};
+    {noreply, State#state{db = DB3}};
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -187,8 +188,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
-    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
-               {Mod, DB} <- DBs],
-    State#state{db = DBs1}.

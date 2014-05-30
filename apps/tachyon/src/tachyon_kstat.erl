@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 30 May 2014 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(tachyon_kstat_nsq).
+-module(tachyon_kstat).
 
 -behaviour(ensq_channel_behaviour).
 
@@ -15,9 +15,8 @@
 -export([init/0, response/2, message/3, error/2]).
 
 init() ->
-    {ok, DB} = tachyon_kairos:connect(),
-    {ok, Statsd} = tachyon_statsd:connect(),
-    {ok, #state{db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
+    {ok, DB} = tachyon_backend:init(),
+    {ok, #state{db=DB}}.
 
 response(_Msg, State) ->
     {ok, State}.
@@ -316,10 +315,8 @@ parse_iface1(<<_, Rest/binary>>) ->
 parse_iface1(<<>>) ->
     <<"net">>.
 
-put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
+put(Metric, Value, Time, Args, State = #state{db = DB}) ->
     tachyon_mps:provide(),
     tachyon_mps:handle(),
-
-    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
-               {Mod, DB} <- DBs],
-    {ok, State#state{db = DBs1}}.
+    DB1 = tachyon_backend:put(Metric, Value, Time, Args, DB),
+    {ok, State#state{db = DB1}}.

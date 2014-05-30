@@ -55,9 +55,8 @@ init([]) ->
     erlang:system_flag(scheduler_wall_time, true),
     L = lists:sort(erlang:statistics(scheduler_wall_time)),
     erlang:send_after(1000, self(), tick),
-    {ok, DB} = tachyon_kairos:connect(),
-    {ok, Statsd} = tachyon_statsd:connect(),
-    {ok, #state{last = L, db=[{tachyon_kairos, DB}, {tachyon_statsd, Statsd}]}}.
+    {ok, DB} = tachyon_backend:init(),
+    {ok, #state{last = L, db=DB}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -105,13 +104,15 @@ handle_info(tick, State = #state{last = Ts0}) ->
     Time = (MegaSecs*1000000 + Secs),
     Ts1 = lists:sort(erlang:statistics(scheduler_wall_time)),
     Times = [{I, (A1 - A0)/(T1 - T0)} || {{I, A0, T0}, {I, A1, T1}} <- lists:zip(Ts0,Ts1)],
-    State1 =
-        lists:foldl(fun({I, T}, StateAcc) ->
-                        put(<<"tachyon.scheduler">>, T*100, Time,
-                            [{<<"scheduler">>,  I}], StateAcc)
-                    end, State, Times),
+    DB1 =
+        lists:foldl(fun({I, T}, DBAcc) ->
+                            tachyon_mps:provide(),
+                            tachyon_backend:put(
+                              <<"tachyon.scheduler">>, T*100, Time,
+                              [{<<"scheduler">>,  I}], DBAcc)
+                    end, State#state.db, Times),
     erlang:send_after(1000, self(), tick),
-    {noreply, State1#state{last=Ts1}};
+    {noreply, State#state{last=Ts1, db=DB1}};
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -144,8 +145,3 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-put(Metric, Value, Time, Args, State = #state{db = DBs}) ->
-    DBs1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
-               {Mod, DB} <- DBs],
-    State#state{db = DBs1}.
