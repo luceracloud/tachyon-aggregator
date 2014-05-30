@@ -17,8 +17,7 @@
 -define(SERVER, ?MODULE).
 -define(GUARD, true).
 
--define(DB_SERVER, "172.21.0.203").
--define(DB_PORT, 4242).
+-define(TBL, ?MODULE).
 
 -record(state, {metrics = gb_trees:empty(), db, host, time}).
 
@@ -73,7 +72,8 @@ init(Host, Ref, From) ->
     process_flag(trap_exit, true),
     {ok, DB} = tachyon_backend:init(),
     From ! {Ref, {ok, self()}},
-    loop(#state{db=DB, host = Host}).
+    TID = ets:new(?TBL, [public, set, {read_concurrency, true}]),
+    loop(#state{db=DB, host = Host, metrics=TID}).
 
 loop(State) ->
     receive
@@ -122,10 +122,10 @@ loop(State) ->
             #state{metrics = Metrics,
                    db = _DB,
                    time = _T0} = State,
-            Metrics1 = case gb_trees:lookup(Name, Metrics) of
-                           none ->
-                               gb_trees:insert(Name, #running_avg{avg=V}, Metrics);
-                           {value, Met} ->
+            Metrics1 = case ets:lookup(Metrics, Name) of
+                           [] ->
+                               ets:insert(Metrics, {Name, #running_avg{avg=V}});
+                           [{_, Met}] ->
                                M0 = tachyon_statistics:avg_update(Met, V),
                                {A, M} = tachyon_statistics:avg_analyze(M0, V, T),
                                case A of
@@ -141,7 +141,7 @@ loop(State) ->
                                    _ ->
                                        ok
                                end,
-                               gb_trees:update(Name, M, Metrics)
+                               ets:insert(Metrics, {Name, M})
                        end,
             %%_Metr = gb_trees:fetch(Name, Metrics1),
             State1  = State#state{metrics = Metrics1},
