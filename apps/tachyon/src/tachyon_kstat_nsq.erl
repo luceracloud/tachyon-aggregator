@@ -1,3 +1,11 @@
+%%%-------------------------------------------------------------------
+%%% @author Heinz Nikolaus Gies <heinz@licenser.net>
+%%% @copyright (C) 2014, Lucera Financial Infrastructures
+%%% @doc
+%%%
+%%% @end
+%%% Created : 30 May 2014 by Heinz Nikolaus Gies <heinz@licenser.net>
+%%%-------------------------------------------------------------------
 -module(tachyon_kstat_nsq).
 
 -behaviour(ensq_channel_behaviour).

@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Heinz Nikolaus Gies <heinz@licenser.net>
-%%% @copyright (C) 2014, Heinz Nikolaus Gies
+%%% @copyright (C) 2014, Lucera Financial Infrastructures
 %%% @doc
 %%%
 %%% @end
