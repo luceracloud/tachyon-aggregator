@@ -4,9 +4,9 @@
 Copyright 2012 Project FiFo / Heinz N. Gies
 -->
 
-<service_bundle type='manifest' name='sniffle'>
+<service_bundle type='manifest' name='tachyon'>
   <service
-      name='network/sniffle'
+      name='network/tachyon'
       type='service'
       version='0.3.0'>
     <create_default_instance enabled='false' />
@@ -44,13 +44,13 @@ Copyright 2012 Project FiFo / Heinz N. Gies
     <exec_method
         type='method'
         name='start'
-        exec='/opt/local/fifo-sniffle/bin/sniffle %m'
+        exec='/opt/local/tachyon/bin/tachyon %m'
         timeout_seconds='30'>
       <method_context>
-        <!--method_credential user='sniffle' group='sniffle' /-->
+        <!--method_credential user='tachyon' group='tachyon' /-->
         <method_environment>
           <envvar name='PATH' value='/opt/local/gnu/bin:/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin'/>
-          <envvar name='HOME' value='/var/db/sniffle'/>
+          <envvar name='HOME' value='/var/db/tachyon'/>
           <!--envvar name='http_proxy' value='http://10.0.0.1'/-->
         </method_environment>
       </method_context>
@@ -59,13 +59,13 @@ Copyright 2012 Project FiFo / Heinz N. Gies
     <exec_method
         name='restart'
         type='method'
-        exec='/opt/local/fifo-sniffle/bin/sniffle %m'
+        exec='/opt/local/tachyon/bin/tachyon %m'
         timeout_seconds='120'>
       <method_context>
-        <!--method_credential user='sniffle' group='sniffle' /-->
+        <!--method_credential user='tachyon' group='tachyon' /-->
         <method_environment>
           <envvar name='PATH' value='/opt/local/gnu/bin:/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin'/>
-          <envvar name='HOME' value='/var/db/sniffle'/>
+          <envvar name='HOME' value='/var/db/tachyon'/>
           <!--envvar name='http_proxy' value='http://10.0.0.1'/-->
         </method_environment>
       </method_context>
@@ -74,13 +74,13 @@ Copyright 2012 Project FiFo / Heinz N. Gies
     <exec_method
         name='stop'
         type='method'
-        exec='/opt/local/fifo-sniffle/bin/sniffle %m'
+        exec='/opt/local/tachyon/bin/tachyon %m'
         timeout_seconds='120'>
       <method_context>
-        <!--method_credential user='sniffle' group='sniffle' /-->
+        <!--method_credential user='tachyon' group='tachyon' /-->
         <method_environment>
           <envvar name='PATH' value='/opt/local/gnu/bin:/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin'/>
-          <envvar name='HOME' value='/var/db/sniffle'/>
+          <envvar name='HOME' value='/var/db/tachyon'/>
           <!--envvar name='http_proxy' value='http://10.0.0.1'/-->
         </method_environment>
       </method_context>
