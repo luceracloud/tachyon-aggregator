@@ -12,11 +12,11 @@
 -include("tachyon_statistics.hrl").
 
 -export([avg_update/2,
-         avg_analyze/3,
-         update_and_analyze/3]).
+         avg_analyze/2,
+         update_and_analyze/2]).
 
 -ignore_xref([avg_update/2,
-              avg_analyze/3]).
+              avg_analyze/2]).
 
 -define(UPD(Avg, N, Decay),
         (Avg*Decay) + (N*(1-Decay))).
@@ -53,13 +53,14 @@ avg_update(Met = #running_avg{
       dist = Dist
      }.
 
-avg_analyze(M = #running_avg{itteration = Iter, min_iter = MinIter}, _, _)
+avg_analyze(M = #running_avg{itteration = Iter, min_iter = MinIter}, _)
   when Iter =< MinIter ->
     {ok, M};
 avg_analyze( Met = #running_avg{
                       std = Std, dist = Dist, avg = Avg,
-                      info = Info0, warn = Warn0, error = Error0
-                     }, V, T) ->
+                      info = Info0, warn = Warn0, error = Error0,
+                      t_error = TError, t_warn = TWarn, t_info = TInfo
+                     }, V) ->
     RelDist = if
                   Std > 0 -> Dist/Std;
                   true    -> 0
@@ -75,14 +76,13 @@ avg_analyze( Met = #running_avg{
     Args = [V*1.0, RelDist, Delta*100, Avg],
     {Reply, Info, Warn, Error} =
         if
-            RelDist > T*3,
-            Delta > MinDelta ->
+            MinDelta < Delta ->
+                {ok, 0, 0, 0};
+            RelDist > TError ->
                 {{error, Msg, Args}, Info0, Warn0, Error0 + 1};
-            RelDist > T*2,
-            Delta > MinDelta ->
+            RelDist > TWarn ->
                 {{warn, Msg, Args}, Info0, Warn0 + 1, 0};
-            RelDist > T,
-            Delta > MinDelta ->
+            RelDist > TInfo ->
                 {{info, Msg, Args}, Info0 + 1, 0, 0};
             true ->
                 {ok, 0, 0, 0}
@@ -97,8 +97,9 @@ update_and_analyze(Met = #running_avg{
                             decay = Decay,
                             itteration = Iter,
                             var = Var0,
-                            info = Info0, warn = Warn0, error = Error0
-                           }, V, T) ->
+                            info = Info0, warn = Warn0, error = Error0,
+                            t_error = TError, t_warn = TWarn, t_info = TInfo
+                           }, V) ->
     D = Avg0 - V,
     Dsq = D*D,
     {Var, Avg} =
@@ -139,14 +140,13 @@ update_and_analyze(Met = #running_avg{
             Args = [V*1.0, RelDist, Delta*100, Avg],
             {Reply, Info, Warn, Error} =
                 if
-                    RelDist > T*3,
-                    Delta > MinDelta ->
+                    MinDelta < Delta ->
+                        {ok, 0, 0, 0};
+                    RelDist > TError ->
                         {{error, Msg, Args}, Info0, Warn0, Error0 + 1};
-                    RelDist > T*2,
-                    Delta > MinDelta ->
+                    RelDist > TWarn ->
                         {{warn, Msg, Args}, Info0, Warn0 + 1, 0};
-                    RelDist > T,
-                    Delta > MinDelta ->
+                    RelDist > TInfo ->
                         {{info, Msg, Args}, Info0 + 1, 0, 0};
                     true ->
                         {ok, 0, 0, 0}

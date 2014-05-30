@@ -19,7 +19,7 @@
 
 -define(TBL, ?MODULE).
 
--record(state, {metrics = gb_trees:empty(), db, host, time}).
+-record(state, {metrics, db, host, time}).
 
 %%%===================================================================
 %%% API
@@ -120,9 +120,13 @@ loop(State) ->
             #state{metrics = Metrics, db = _DB, time = _T0} = State,
             case ets:lookup(Metrics, Name) of
                 [] ->
-                    ets:insert(Metrics, {Name, #running_avg{avg=V}});
+                    ets:insert(Metrics,
+                               {Name, #running_avg{
+                                         avg=V, t_info = T,
+                                         t_warn = T*2, t_error = T*3
+                                        }});
                 [{_, Met}] ->
-                    {A, M} = tachyon_statistics:update_and_analyze(Met, V, T),
+                    {A, M} = tachyon_statistics:update_and_analyze(Met, V),
                     case A of
                         {error, Msg, Args} ->
                             lager:error("[~s/~s] " ++ Msg,
