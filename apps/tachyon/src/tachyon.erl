@@ -8,9 +8,13 @@
 %%%-------------------------------------------------------------------
 -module(tachyon).
 
--export([start/0, stats/1, hosts/0]).
+-export([start/0,
+         %stats/1,
+         hosts/0]).
 
--ignore_xref([start/0, stats/1, hosts/0]).
+-ignore_xref([start/0,
+              %stats/1,
+              hosts/0]).
 
 start() ->
     application:start(sasl),
@@ -23,8 +27,8 @@ start() ->
     application:start(estatsd),
     application:start(tachyon).
 
-stats(Host) ->
-    tachyon_guard:stats(Host).
+%%stats(Host) ->
+%%    tachyon_guard:stats(Host).
 
 hosts() ->
     ok.
