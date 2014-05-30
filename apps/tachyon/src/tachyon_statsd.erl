@@ -40,8 +40,9 @@ fmt_args([{_, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$., integer_to_list(V) | Acc]);
 fmt_args([{_, V}|R], Acc) when is_float(V) ->
     fmt_args(R, [$., float_to_list(V) | Acc]);
-fmt_args([{_, V}|R], Acc) when is_binary(V) orelse
-                               is_list(V) ->
+fmt_args([{_, V}|R], Acc) when is_binary(V) ->
+    fmt_args(R, [<<$., V/binary>> | Acc]);
+fmt_args([{_, V}|R], Acc) when is_list(V) ->
     fmt_args(R, [$., V | Acc]);
 
 fmt_args([], Acc) ->

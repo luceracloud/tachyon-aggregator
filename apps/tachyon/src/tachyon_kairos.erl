@@ -61,22 +61,22 @@ put(_Metric, _Value, _Time, _Args, K) ->
     K.
 
 fmt(Metric, Value, Time, Args) when is_integer(Value) ->
-    ["put ", Metric, $\s, integer_to_list(Time), $\s, integer_to_list(Value) |
-     fmt_args(Args, "\n")];
+    [<<"put ", Metric/binary, $\s>>, integer_to_list(Time), $\s,
+     integer_to_list(Value) | fmt_args(Args, <<"\n">>)];
 
 fmt(Metric, Value, Time, Args) when is_float(Value) ->
-    ["put ", Metric, $\s, integer_to_list(Time), $\s, float_to_list(Value) |
-     fmt_args(Args, "\n")].
+    [<<"put ", Metric/binary, $\s>>, integer_to_list(Time), $\s,
+     float_to_list(Value) | fmt_args(Args, <<"\n">>)].
 
 fmt_args([{K, V}|R], Acc) when is_integer(V) ->
-    fmt_args(R, [$\s, K, $=, integer_to_list(V) | Acc]);
+    fmt_args(R, [<<$\s, K/binary, $=>>, integer_to_list(V) | Acc]);
 
 fmt_args([{K, V}|R], Acc) when is_float(V) ->
-    fmt_args(R, [$\s, K, $=, float_to_list(V) | Acc]);
+    fmt_args(R, [<<$\s, K/binary, $=>>, float_to_list(V) | Acc]);
 
 fmt_args([{K, V}|R], Acc) when is_binary(V) orelse
                                is_list(V) ->
-    fmt_args(R, [$\s, K, $=, V | Acc]);
+    fmt_args(R, [<<$\s, K/binary, $=>>, V | Acc]);
 
 fmt_args([], Acc) ->
     Acc.
