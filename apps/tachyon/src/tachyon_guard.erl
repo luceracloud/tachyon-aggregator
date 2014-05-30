@@ -11,7 +11,7 @@
 -include("tachyon_statistics.hrl").
 
 %% API
--export([init/1, put/5, stats/1, start/1]).
+-export([init/3, put/5, stats/1, start/1]).
 -ignore_xref([start/1]).
 
 -define(SERVER, ?MODULE).
@@ -35,7 +35,14 @@
 %%--------------------------------------------------------------------
 
 start(Host) ->
-    spawn(tachyon_guard, init, [Host]).
+    Ref = make_ref(),
+    spawn(tachyon_guard, init, [Host, Ref, self()]),
+    receive
+        {Ref, R} ->
+            R
+    after 5000 ->
+            {error, timeout}
+    end.
 
 -ifdef(GUARD).
 put(Host, Time, Metric, Value, T) ->
@@ -62,9 +69,10 @@ stats(Host) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init(Host) ->
+init(Host, Ref, From) ->
     process_flag(trap_exit, true),
     {ok, DB} = tachyon_backend:init(),
+    From ! {Ref, {ok, self()}},
     loop(#state{db=DB, host = Host}).
 
 loop(State) ->
