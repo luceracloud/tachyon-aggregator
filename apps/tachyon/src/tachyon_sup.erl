@@ -35,7 +35,6 @@ init([]) ->
           [
            ?CHILD(tachyon_mps, worker),
            ?CHILD(tachyon_metric_sup, supervisor),
-           ?CHILD(tachyon_guard_sup, supervisor),
            ?CHILD(tproc, worker),
            ?CHILD(tachyon_scheduler, worker),
            ?CHILD(tachyon_server, worker)]}}.
