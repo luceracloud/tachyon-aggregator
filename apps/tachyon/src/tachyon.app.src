@@ -8,7 +8,6 @@
                   stdlib,
                   lager,
                   ensq,
-                  e2qc,
                   estatsd
                  ]},
   {mod, {tachyon_app, []}},
