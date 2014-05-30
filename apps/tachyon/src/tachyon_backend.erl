@@ -20,4 +20,4 @@ init() ->
 put(Metric, Value, Time, Args, Backend = #tachyon_backend{backends=Backends}) ->
     Backends1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||
                     {Mod, DB} <- Backends],
-    {ok, Backend#tachyon_backend{backends = Backends1}}.
+    Backend#tachyon_backend{backends = Backends1}.
