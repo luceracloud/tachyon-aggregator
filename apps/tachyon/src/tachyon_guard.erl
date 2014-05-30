@@ -46,9 +46,9 @@ put(_Host, _Time, _Metric, _Value, _T) ->
 -endif.
 
 stats(Host) ->
-    gen_server:call({global, {guard, Host}}, stats).
+    tproc:where({tachyon_guard, Host}) ! stats.
 %%%===================================================================
-%%% gen_server callbacks
+%%% callbacks
 %%%===================================================================
 
 %%--------------------------------------------------------------------
