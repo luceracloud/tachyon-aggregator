@@ -5,3 +5,4 @@ ebin
 include/packet_pb.hrl
 deps
 rel/tachyon
+tachyon.version
