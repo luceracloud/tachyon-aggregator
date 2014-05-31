@@ -1,4 +1,4 @@
-.PHONY: all clean console deps pkg
+.PHONY: all clean console deps package
 
 all:
 	./rebar compile
@@ -31,5 +31,5 @@ rel: all
 deps:
 	./rebar get-deps
 
-pkg:
+package:
 	make -c rel/pkg
