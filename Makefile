@@ -31,5 +31,5 @@ rel: all
 deps:
 	./rebar get-deps
 
-package:
+package: rel
 	make -C rel/pkg
