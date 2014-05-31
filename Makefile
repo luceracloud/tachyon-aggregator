@@ -32,4 +32,4 @@ deps:
 	./rebar get-deps
 
 package:
-	make -c rel/pkg
+	make -C rel/pkg
