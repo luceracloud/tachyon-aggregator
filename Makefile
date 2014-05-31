@@ -1,4 +1,4 @@
-.PHONY: all clean console
+.PHONY: all clean console deps pkg
 
 all:
 	./rebar compile
@@ -27,3 +27,9 @@ local: all
 rel: all
 	-rm -r rel/tachyon/
 	(cd rel; ../rebar generate)
+
+deps:
+	./rebar get-deps
+
+pkg:
+	make -c rel/pkg
