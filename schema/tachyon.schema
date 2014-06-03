@@ -44,18 +44,6 @@
   {datatype, ip}]}.
 
 {translation,
- "tachyon.statsd",
- fun(Conf) ->
-         case cuttlefish:conf_get("statsd", Conf, undefined) of
-             undefined ->
-                 false;
-             _ ->
-                 true
-         end
- end
-}.
-
-{translation,
  "estatsd.graphite",
  fun(Conf) ->
          cuttlefish:conf_get("statsd", Conf, {"127.0.0.1", 2003})

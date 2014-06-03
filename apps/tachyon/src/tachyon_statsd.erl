@@ -61,7 +61,7 @@ put(_Metric, _Value, _Time, _Args, K) ->
     K.
 
 
-fmt(Metric, Args, Value, Time)  ->
+fmt(Metric, Value, Time, Args)  ->
     [Metric | fmt_args(lists:reverse(Args), [$\s, integer_to_list(Value), $\s, integer_to_list(Time), $\n])].
 
 fmt_args([{_, V}|R], Acc) when is_integer(V) ->
