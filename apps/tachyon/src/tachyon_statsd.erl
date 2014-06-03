@@ -60,9 +60,15 @@ put(Metric, Value, Time, Args, K = #statsd{enabled = true, cnt=C, acc=Acc}) ->
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
 
+fmt(Metric, Value, Time, Args)  when is_integer(Value) ->
+    [Metric | fmt_args(lists:reverse(Args), [$\s, integer_to_list(Value), $\s, integer_to_list(Time), $\n])];
 
-fmt(Metric, Value, Time, Args)  ->
-    [Metric | fmt_args(lists:reverse(Args), [$\s, integer_to_list(Value), $\s, integer_to_list(Time), $\n])].
+fmt(Metric, Value, Time, Args)  when is_float(Value) ->
+    [Metric | fmt_args(lists:reverse(Args), [$\s, float_to_list(Value), $\s, integer_to_list(Time), $\n])];
+
+fmt(_, _, _, _) ->
+    [].
+
 
 fmt_args([{_, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$., integer_to_list(V) | Acc]);
