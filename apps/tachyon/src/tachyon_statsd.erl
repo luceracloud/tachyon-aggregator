@@ -14,27 +14,55 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(statsd, {enabled}).
+-record(statsd, {enabled, db, host, port, cnt=0, max=100, acc=[]}).
 
 connect() ->
+    Max = case application:get_env(tachyon, kairosdb) of
+              {ok, V} ->
+                  V;
+              _ ->
+                  100
+          end,
     case application:get_env(tachyon, statsd) of
-        {ok, true} ->
-            {ok, #statsd{enabled=true}};
+        {ok, {Host, Port}} ->
+            case gen_tcp:connect(Host, Port, []) of
+                {ok, DB} ->
+                    {ok, #statsd{enabled = true, db=DB, host=Host, port=Port,
+                                 max = Max}};
+                E ->
+                    E
+            end;
         _ ->
-            {ok, #statsd{enabled=false}}
+            #statsd{enabled = false}
     end.
 
 
-put(Metric, Value, Time, Args, S=#statsd{enabled=true}) ->
-    estatsd:gauge(fmt(Metric, Args), Time, Value),
+put(Metric, Value, Time, Args,
+    K = #statsd{enabled=true, db=DB, host=Host, port=Port, cnt=C, max=M,
+                  acc=Acc}) when C > M ->
+    Metrics = [fmt(Metric, Value, Time, Args) | Acc],
+    K1 = case gen_tcp:send(DB, Metrics) of
+             {error, Reason} ->
+                 gen_tcp:close(DB),
+                 lager:error("[~s] Socket died with: ~p", [Host, Reason]),
+                 {ok, NewDB} = gen_tcp:connect(Host, Port, [], 100),
+                 K#statsd{db=NewDB};
+             _ ->
+                 K
+         end,
     tachyon_mps:send(),
-    S;
+    K1#statsd{acc = [], cnt = 0};
 
-put(_Metric, _Value, _Time, _Args, S) ->
-    S.
+put(Metric, Value, Time, Args, K = #statsd{enabled = true, cnt=C, acc=Acc}) ->
+    tachyon_mps:send(),
+    K#statsd{cnt=C+1, acc=[fmt(Metric, Value, Time, Args) | Acc]};
 
-fmt(Metric, Args) ->
-    [Metric | fmt_args(lists:reverse(Args), [])].
+put(_Metric, _Value, _Time, _Args, K) ->
+    K.
+
+
+fmt(Metric, Args, Value, Time)  ->
+    [Metric | fmt_args(lists:reverse(Args), [$\s, integer_to_list(Value), $\s, integer_to_list(Time), $\n])].
 
 fmt_args([{_, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$., integer_to_list(V) | Acc]);
@@ -51,13 +79,13 @@ fmt_args([], Acc) ->
 -ifdef(TEST).
 
 fmt_test() ->
-    Fmt = fmt(<<"a.metric">>, [{hypervisor, <<"bla">>}, {id, 1}]),
+    Fmt = fmt(<<"a.metric">>, [{hypervisor, <<"bla">>}, {id, 1}], 123, 456),
     S = list_to_binary(Fmt),
-    ?assertEqual(<<"a.metric.bla.1">>, S).
+    ?assertEqual(<<"a.metric.bla.1 123 456\n">>, S).
 
 fmtno_arg_test() ->
-    Fmt = fmt(<<"a.metric">>, []),
+    Fmt = fmt(<<"a.metric">>, [], 1, 2),
     S = list_to_binary(Fmt),
-    ?assertEqual(<<"a.metric">>, S).
+    ?assertEqual(<<"a.metric 1 2\n">>, S).
 
 -endif.
