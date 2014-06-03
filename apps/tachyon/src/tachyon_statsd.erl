@@ -17,7 +17,7 @@
 -record(statsd, {enabled, db, host, port, cnt=0, max=100, acc=[]}).
 
 connect() ->
-    Max = case application:get_env(tachyon, kairosdb) of
+    Max = case application:get_env(tachyon, statsd_buffer_size) of
               {ok, V} ->
                   V;
               _ ->
@@ -39,7 +39,7 @@ connect() ->
 
 put(Metric, Value, Time, Args,
     K = #statsd{enabled=true, db=DB, host=Host, port=Port, cnt=C, max=M,
-                  acc=Acc}) when C > M ->
+                acc=Acc}) when C > M ->
     Metrics = [fmt(Metric, Value, Time, Args) | Acc],
     K1 = case gen_tcp:send(DB, Metrics) of
              {error, Reason} ->

@@ -38,6 +38,12 @@
  [{default, 100},
   {datatype, integer}]}.
 
+%% @doc The kairosdb endpoint to use, if not set no data will be written
+%% to kairosdb.
+{mapping, "statsd.buffer_size", "tachyon.statsd_buffer_size",
+ [{default, 100},
+  {datatype, integer}]}.
+
 %% @doc Enable or disable writing to statsd.
 {mapping, "statsd", "tachyon.statsd",
  [{commented, {"127.0.0.1", 4242}},
