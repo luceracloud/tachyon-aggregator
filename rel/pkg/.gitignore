@@ -1,0 +1,4 @@
+build-info
+packlist
+*.gz
+deploy/tachyon

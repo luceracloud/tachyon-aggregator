@@ -6,3 +6,4 @@ include/packet_pb.hrl
 deps
 rel/tachyon
 tachyon.version
+sniffle.version
