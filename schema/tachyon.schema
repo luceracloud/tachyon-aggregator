@@ -1,6 +1,11 @@
 %% -*- erlang -*-
 %% @doc Erlang NSQ client.
 
+%% @doc The topic to use.
+{mapping, "channel", "tachyon.channel",
+ [{default, "aggregator"},
+  {datatype, string}]}.
+
 %% @doc the NSQ topic on which JSON metrics are received
 {mapping, "metric.json_topic", "tachyon.metric_json_topic",
  [{default, "tachyon-metrics-json"},

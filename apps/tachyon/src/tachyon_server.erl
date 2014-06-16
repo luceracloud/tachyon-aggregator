@@ -67,8 +67,14 @@ init([]) ->
                      _ ->
                          5
                  end,
-    [connect(kstat, Servers) || _ <- lists:seq(1, KStatConns)],
-    [connect(jmetric, Servers) || _ <- lists:seq(1, MetricConns)],
+    Channel = case application:get_env(channel) of
+                  {ok, C} ->
+                      list_to_binary(C);
+                  _ ->
+                      <<"aggregator">>
+              end,
+    [connect(kstat, Channel, Servers) || _ <- lists:seq(1, KStatConns)],
+    [connect(jmetric, Channel, Servers) || _ <- lists:seq(1, MetricConns)],
     {ok, #state{}, 1000}.
 
 %%--------------------------------------------------------------------
@@ -145,10 +151,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-connect(kstat, Servers) ->
+connect(kstat, Channel, Servers) ->
     ensq:init({Servers, [{<<"tachyon">>,
-                          [{<<"aggregator">>, tachyon_kstat}], []}]});
+                          [{Channel, tachyon_kstat}], []}]});
 
-connect(jmetric, Servers) ->
+connect(jmetric, Channel, Servers) ->
     ensq:init({Servers, [{<<"tachyon-metric-json">>,
-                          [{<<"aggregator">>, tachyon_jmetric_nsq}], []}]}).
+                          [{Channel, tachyon_jmetric_nsq}], []}]}).

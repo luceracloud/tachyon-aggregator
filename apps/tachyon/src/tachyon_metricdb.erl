@@ -36,6 +36,7 @@ put(Metric, Value, Time, Args,
     case gen_udp:send(DB, Host, Port, M) of
         {error, _Reason} ->
             gen_udp:close(DB),
+            %%lager:error("[~s] Socket died with: ~p", [Host, Reason]),
             {ok, NewDB} = gen_udp:open(0, [{active, false}, binary]),
             K#metricdb{db=NewDB};
         _ ->
