@@ -26,7 +26,7 @@ connect() ->
                     E
             end;
         _ ->
-            #metricdb{enabled = false}
+            {ok, #metricdb{enabled = false}}
     end.
 
 put(Metric, Value, Time, Args,

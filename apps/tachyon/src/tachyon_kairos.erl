@@ -34,7 +34,7 @@ connect() ->
                     E
             end;
         _ ->
-            #kairosdb{enabled = false}
+            {ok,  #kairosdb{enabled = false}}
     end.
 
 put(Metric, Value, Time, Args,

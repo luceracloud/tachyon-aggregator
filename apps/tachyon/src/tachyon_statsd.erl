@@ -33,7 +33,7 @@ connect() ->
                     E
             end;
         _ ->
-            #statsd{enabled = false}
+            {ok, #statsd{enabled = false}}
     end.
 
 
