@@ -56,6 +56,12 @@
  end
 }.
 
+%% @doc The MetricDB backend (if used).
+{mapping, "metricdb", "tachyon.metricdb",
+ [{commented, {"127.0.0.1", 4444}},
+  {datatype, ip}]}.
+
+
 %% @doc One more more nsqlookupd http interfaces for tachyon to discover
 %% the channels.
 
