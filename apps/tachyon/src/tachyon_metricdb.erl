@@ -49,12 +49,12 @@ put(_Metric, _Value, _Time, _Args, K) ->
 fmt(Metric, Value, Time, Args)  when is_integer(Value) ->
     M = fmt_args(Args, Metric),
     MS = byte_size(M),
-    <<0, Time:64/integer, MS:16/integer, M/binary, 1, Value:64/signed-integer>>;
+    <<0, Time:64/integer, MS:16/integer, M/binary, 9:16, 1, Value:64/signed-integer>>;
 
 fmt(Metric, Value, Time, Args)  when is_float(Value) ->
     M = fmt_args(Args, Metric),
     MS = byte_size(M),
-    <<0, Time:64/integer, MS:16/integer, M/binary, 2, Value:64/float>>.
+    <<0, Time:64/integer, MS:16/integer, M/binary, 9:16, 2, Value:64/float>>.
 
 i2b(I) ->
     list_to_binary(integer_to_list(I)).
