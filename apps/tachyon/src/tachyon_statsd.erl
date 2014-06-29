@@ -54,8 +54,13 @@ put(Metric, Value, Time, Args,
     K1#statsd{acc = [], cnt = 0};
 
 put(Metric, Value, Time, Args, K = #statsd{enabled = true, cnt=C, acc=Acc}) ->
-    tachyon_mps:send(),
-    K#statsd{cnt=C+1, acc=[fmt(Metric, Value, Time, Args) | Acc]};
+    case random:uniform(5) of
+        1 ->
+          tachyon_mps:send(),
+          K#statsd{cnt=C+1, acc=[fmt(Metric, Value, Time, Args) | Acc]};
+        _ ->
+          K
+    end;
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.

@@ -14,9 +14,9 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(metricdb, {enabled, db, host, port, acc = <<>>}).
+-record(metricdb, {enabled, db, host, port, acc = <<>>, port_inc = 0, port_num=30}).
 
--define(BUFFER_SIZE, 7000).
+-define(BUFFER_SIZE, 4096).
 
 connect() ->
     case application:get_env(tachyon, metricdb) of
@@ -39,17 +39,19 @@ put(Metric, Value, Time, Args,
     K#metricdb{acc = <<Acc/binary, M/binary>>};
 
 put(Metric, Value, Time, Args,
-    K = #metricdb{enabled=true, db=DB, host=Host, port=Port, acc=Acc}) ->
+    K = #metricdb{enabled=true, db=DB, host=Host, port=Port, acc=Acc, port_inc=I, port_num=Max}) ->
     tachyon_mps:send(),
     M = fmt(Metric, Value, Time, Args),
-    case gen_udp:send(DB, Host, Port, <<Acc/binary, M/binary>>) of
-        {error, _Reason} ->
+    I1 = (I + 1) rem Max,
+    K1 = K#metricdb{port_inc = I1},
+    case gen_udp:send(DB, Host, Port + I, <<Acc/binary, M/binary>>) of
+        {error, Reason} ->
             gen_udp:close(DB),
-            %%lager:error("[~s] Socket died with: ~p", [Host, Reason]),
+            lager:error("[~s] Socket died with: ~p", [Host, Reason]),
             {ok, NewDB} = gen_udp:open(0, [{active, false}, binary]),
-            K#metricdb{db=NewDB, acc = <<>>};
+            K1#metricdb{db=NewDB, acc = <<>>};
         _ ->
-            K#metricdb{acc = <<>>}
+            K1#metricdb{acc = <<>>}
     end;
 
 put(_Metric, _Value, _Time, _Args, K) ->
