@@ -8,6 +8,8 @@
 %%%-------------------------------------------------------------------
 -module(tachyon_metricdb).
 
+-include_lib("dproto/include/dproto.hrl").
+
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 -endif.
@@ -57,13 +59,11 @@ put(_Metric, _Value, _Time, _Args, K) ->
 
 fmt(Metric, Value, Time, Args)  when is_integer(Value) ->
     M = fmt_args(Args, Metric),
-    MS = byte_size(M),
-    <<0, Time:64/integer, MS:16/integer, M/binary, 9:16, 1, Value:64/signed-integer>>;
+    <<?PUT, (dproto_udp:encode_points(<<"tachyon">>, M, Time, Value))/binary>>;
 
 fmt(Metric, Value, Time, Args)  when is_float(Value) ->
     M = fmt_args(Args, Metric),
-    MS = byte_size(M),
-    <<0, Time:64/integer, MS:16/integer, M/binary, 9:16, 2, Value:64/float>>.
+    <<?PUT, (dproto_udp:encode_points(<<"tachyon">>, M, Time, round(Value)))/binary>>.
 
 i2b(I) ->
     list_to_binary(integer_to_list(I)).
