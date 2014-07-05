@@ -33,7 +33,7 @@ connect() ->
                     E
             end;
         _ ->
-            #statsd{enabled = false}
+            {ok, #statsd{enabled = false}}
     end.
 
 
@@ -54,8 +54,13 @@ put(Metric, Value, Time, Args,
     K1#statsd{acc = [], cnt = 0};
 
 put(Metric, Value, Time, Args, K = #statsd{enabled = true, cnt=C, acc=Acc}) ->
-    tachyon_mps:send(),
-    K#statsd{cnt=C+1, acc=[fmt(Metric, Value, Time, Args) | Acc]};
+    case random:uniform(5) of
+        1 ->
+          tachyon_mps:send(),
+          K#statsd{cnt=C+1, acc=[fmt(Metric, Value, Time, Args) | Acc]};
+        _ ->
+          K
+    end;
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
@@ -68,7 +73,6 @@ fmt(Metric, Value, Time, Args)  when is_float(Value) ->
 
 fmt(_, _, _, _) ->
     [].
-
 
 fmt_args([{_, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, [$., integer_to_list(V) | Acc]);
@@ -85,12 +89,12 @@ fmt_args([], Acc) ->
 -ifdef(TEST).
 
 fmt_test() ->
-    Fmt = fmt(<<"a.metric">>, [{hypervisor, <<"bla">>}, {id, 1}], 123, 456),
+    Fmt = fmt(<<"a.metric">>, 123, 456, [{hypervisor, <<"bla">>}, {id, 1}]),
     S = list_to_binary(Fmt),
     ?assertEqual(<<"a.metric.bla.1 123 456\n">>, S).
 
 fmtno_arg_test() ->
-    Fmt = fmt(<<"a.metric">>, [], 1, 2),
+    Fmt = fmt(<<"a.metric">>, 1, 2, []),
     S = list_to_binary(Fmt),
     ?assertEqual(<<"a.metric 1 2\n">>, S).
 
