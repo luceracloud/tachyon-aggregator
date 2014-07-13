@@ -61,11 +61,27 @@
  end
 }.
 
-%% @doc The MetricDB backend (if used).
-{mapping, "metricdb", "tachyon.metricdb",
+%% @doc The DalmatinerDB backend (if used).
+{mapping, "dalmatinerdb.ip", "tachyon.ddb_ip",
  [{commented, {"127.0.0.1", 4444}},
   {datatype, ip}]}.
 
+
+%% @doc The DalmatinerDB backend (if used).
+{mapping, "dalmatinerdb.buffer_size", "tachyon.ddb_buffer_size",
+ [{default, 4096},
+  {datatype, bytesize}]}.
+
+%% @doc The number of ports for DalmatinerDB provides, writes will
+%% round robin through them.
+{mapping, "dalmatinerdb.num_ports", "tachyon.ddb_num_ports",
+ [{default, 30},
+  {datatype, integer}]}.
+
+%% @doc The bucket to write to when sending data to DalmatinerDB
+{mapping, "dalmatinerdb.bucket", "tachyon.ddb_bucket",
+ [{default, "tachyon"},
+  {datatype, string}]}.
 
 %% @doc One more more nsqlookupd http interfaces for tachyon to discover
 %% the channels.

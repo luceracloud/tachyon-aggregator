@@ -15,10 +15,10 @@
 init() ->
     {ok, DB} = tachyon_kairos:connect(),
     {ok, Statsd} = tachyon_statsd:connect(),
-    {ok, MetricDB} = tachyon_metricdb:connect(),
+    {ok, Ddb} = tachyon_ddb:connect(),
     {ok, #tachyon_backend{backends=[{tachyon_kairos, DB},
                                     {tachyon_statsd, Statsd},
-                                    {tachyon_metricdb, MetricDB}]}}.
+                                    {tachyon_ddb, Ddb}]}}.
 
 put(Metric, Value, Time, Args, Backend = #tachyon_backend{backends=Backends}) ->
     Backends1 = [{Mod, Mod:put(Metric, Value, Time, Args, DB)} ||

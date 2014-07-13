@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 27 Mar 2014 by Heinz Nikolaus Gies <heinz@licenser.net>
 %%%-------------------------------------------------------------------
--module(tachyon_metricdb).
+-module(tachyon_ddb).
 
 -include_lib("dproto/include/dproto.hrl").
 
@@ -16,56 +16,63 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(metricdb, {enabled, db, host, port, acc = <<>>, port_inc = 0, port_num=30}).
+-record(ddb, {enabled, db, host, port, acc = <<>>, port_inc = 0,
+              buffer_size=4096, port_num=30, bucket = <<"tachyon">>}).
 
 -define(BUFFER_SIZE, 4096).
 
 connect() ->
-    case application:get_env(tachyon, metricdb) of
+    case application:get_env(tachyon, ddb_ip) of
         {ok, {Host, Port}} ->
+            {ok, BufferSize} = application:get_env(tachyon, ddb_buffer_size),
+            {ok, NumPorts} = application:get_env(tachyon, ddb_num_ports),
+            {ok, Bucket} = application:get_env(tachyon, ddb_bucket),
             case gen_udp:open(0, [{active, false}, binary]) of
                 {ok, DB} ->
-                    {ok, #metricdb{enabled = true, db=DB, host=Host, port=Port}};
+                    {ok, #ddb{enabled=true, db=DB, host=Host, port=Port,
+                              bucket=list_to_binary(Bucket),
+                              buffer_size=BufferSize, port_num=NumPorts}};
                 E ->
                     E
             end;
         _ ->
-            {ok, #metricdb{enabled = false}}
+            {ok, #ddb{enabled = false}}
     end.
 
 put(Metric, Value, Time, Args,
-    K = #metricdb{enabled=true, acc=Acc})
+    K = #ddb{enabled=true, acc=Acc, bucket=Bucket})
   when byte_size(Acc) < ?BUFFER_SIZE ->
     tachyon_mps:send(),
-    M = fmt(Metric, Value, Time, Args),
-    K#metricdb{acc = <<Acc/binary, M/binary>>};
+    M = fmt(Bucket, Metric, Value, Time, Args),
+    K#ddb{acc = <<Acc/binary, M/binary>>};
 
 put(Metric, Value, Time, Args,
-    K = #metricdb{enabled=true, db=DB, host=Host, port=Port, acc=Acc, port_inc=I, port_num=Max}) ->
+    K = #ddb{enabled=true, db=DB, host=Host, port=Port, acc=Acc, port_inc=I,
+             port_num=Max, bucket=Bucket}) ->
     tachyon_mps:send(),
-    M = fmt(Metric, Value, Time, Args),
+    M = fmt(Bucket, Metric, Value, Time, Args),
     I1 = (I + 1) rem Max,
-    K1 = K#metricdb{port_inc = I1},
+    K1 = K#ddb{port_inc = I1},
     case gen_udp:send(DB, Host, Port + I, <<Acc/binary, M/binary>>) of
         {error, Reason} ->
             gen_udp:close(DB),
             lager:error("[~s] Socket died with: ~p", [Host, Reason]),
             {ok, NewDB} = gen_udp:open(0, [{active, false}, binary]),
-            K1#metricdb{db=NewDB, acc = <<>>};
+            K1#ddb{db=NewDB, acc = <<>>};
         _ ->
-            K1#metricdb{acc = <<>>}
+            K1#ddb{acc = <<>>}
     end;
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
 
-fmt(Metric, Value, Time, Args)  when is_integer(Value) ->
+fmt(Bucket, Metric, Value, Time, Args)  when is_integer(Value) ->
     M = fmt_args(Args, Metric),
-    <<?PUT, (dproto_udp:encode_points(<<"tachyon">>, M, Time, Value))/binary>>;
+    <<?PUT, (dproto_udp:encode_points(Bucket, M, Time, Value))/binary>>;
 
-fmt(Metric, Value, Time, Args)  when is_float(Value) ->
+fmt(Bucket, Metric, Value, Time, Args)  when is_float(Value) ->
     M = fmt_args(Args, Metric),
-    <<?PUT, (dproto_udp:encode_points(<<"tachyon">>, M, Time, round(Value)))/binary>>.
+    <<?PUT, (dproto_udp:encode_points(Bucket, M, Time, round(Value)))/binary>>.
 
 i2b(I) ->
     list_to_binary(integer_to_list(I)).
