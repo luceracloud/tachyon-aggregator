@@ -19,8 +19,6 @@
 -record(ddb, {enabled, db, host, port, acc = <<>>, port_inc = 0,
               buffer_size=4096, port_num=30, bucket = <<"tachyon">>}).
 
--define(BUFFER_SIZE, 4096).
-
 connect() ->
     case application:get_env(tachyon, ddb_ip) of
         {ok, {Host, Port}} ->
@@ -40,44 +38,38 @@ connect() ->
     end.
 
 put(Metric, Value, Time, Args,
-    K = #ddb{enabled=true, acc=Acc, bucket=Bucket})
-  when byte_size(Acc) < ?BUFFER_SIZE ->
+    K = #ddb{enabled=true, acc=Acc, buffer_size = BS})
+  when byte_size(Acc) < BS ->
     tachyon_mps:send(),
-    M = fmt(Bucket, Metric, Value, Time, Args),
+    M = fmt(Metric, Value, Time, Args),
     K#ddb{acc = <<Acc/binary, M/binary>>};
 
 put(Metric, Value, Time, Args,
     K = #ddb{enabled=true, db=DB, host=Host, port=Port, acc=Acc, port_inc=I,
              port_num=Max, bucket=Bucket}) ->
     tachyon_mps:send(),
-    M = fmt(Bucket, Metric, Value, Time, Args),
+    M = fmt(Metric, Value, Time, Args),
     I1 = (I + 1) rem Max,
     K1 = K#ddb{port_inc = I1},
+    Empty = dproto_udp:encode_header(Bucket),
     case gen_udp:send(DB, Host, Port + I, <<Acc/binary, M/binary>>) of
         {error, Reason} ->
             gen_udp:close(DB),
             lager:error("[~s] Socket died with: ~p", [Host, Reason]),
             {ok, NewDB} = gen_udp:open(0, [{active, false}, binary]),
-            K1#ddb{db=NewDB, acc = <<>>};
+            K1#ddb{db=NewDB, acc = Empty};
         _ ->
-            K1#ddb{acc = <<>>}
+            K1#ddb{acc = Empty}
     end;
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
 
-fmt(Bucket, Metric, Value, Time, Args)  when is_integer(Value) ->
-    M = fmt_args(Args, Metric),
-    <<?PUT, (dproto_udp:encode_points(Bucket, M, Time, Value))/binary>>;
+fmt(Metric, Value, Time, Args)  when is_integer(Value) ->
+    dproto_udp:encode_points(fmt_args(Args, Metric), Time, Value);
 
-fmt(Bucket, Metric, Value, Time, Args)  when is_float(Value) ->
-    M = fmt_args(Args, Metric),
-    <<?PUT, (dproto_udp:encode_points(Bucket, M, Time, round(Value)))/binary>>.
-
-i2b(I) ->
-    list_to_binary(integer_to_list(I)).
-f2b(I) ->
-    list_to_binary(float_to_list(I)).
+fmt(Metric, Value, Time, Args)  when is_float(Value) ->
+    dproto_udp:encode_points(fmt_args(Args, Metric), Time, round(Value)).
 
 fmt_args([{_, V}|R], Acc) when is_integer(V) ->
     fmt_args(R, <<Acc/binary, $., (i2b(V))/binary>>);
@@ -90,3 +82,9 @@ fmt_args([{_, V}|R], Acc) when is_list(V) ->
 
 fmt_args([], Acc) ->
     Acc.
+
+i2b(I) ->
+    list_to_binary(integer_to_list(I)).
+f2b(I) ->
+    list_to_binary(float_to_list(I)).
+
