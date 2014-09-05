@@ -16,18 +16,18 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(ddb, {enabled, db, host, port, acc = <<>>, port_inc = 0,
+-record(ddb, {enabled, db, hosts, rhosts=[], acc = <<>>, port_inc = 0,
               buffer_size=4096, port_num=30, bucket = <<"tachyon">>}).
 
 connect() ->
-    case application:get_env(tachyon, ddb_ip) of
-        {ok, {Host, Port}} ->
+    case application:get_env(tachyon, ddb_ips) of
+        {ok, List} ->
             {ok, BufferSize} = application:get_env(tachyon, ddb_buffer_size),
             {ok, NumPorts} = application:get_env(tachyon, ddb_num_ports),
             {ok, Bucket} = application:get_env(tachyon, ddb_bucket),
             case gen_udp:open(0, [{active, false}, binary]) of
                 {ok, DB} ->
-                    {ok, #ddb{enabled=true, db=DB, host=Host, port=Port,
+                    {ok, #ddb{enabled=true, db=DB, hosts=List,
                               bucket=list_to_binary(Bucket),
                               buffer_size=BufferSize, port_num=NumPorts}};
                 E ->
@@ -45,12 +45,17 @@ put(Metric, Value, Time, Args,
     K#ddb{acc = <<Acc/binary, M/binary>>};
 
 put(Metric, Value, Time, Args,
-    K = #ddb{enabled=true, db=DB, host=Host, port=Port, acc=Acc, port_inc=I,
-             port_num=Max, bucket=Bucket}) ->
+	K = #ddb{enabled=true, hosts=[], rhosts=Hosts, port_inc=I, port_num=Max}) ->
+    I1 = (I + 1) rem Max,
+	put(Metric, Value, Time, Args,
+		K#ddb{hosts=lists:reverse(Hosts), rhosts=[], port_inc=I1});
+
+put(Metric, Value, Time, Args,
+    K = #ddb{enabled=true, db=DB, hosts=[{Host, Port} | Hosts], rhosts=HostsR,
+			 acc=Acc, port_inc=I, bucket=Bucket}) ->
     tachyon_mps:send(),
     M = fmt(Metric, Value, Time, Args),
-    I1 = (I + 1) rem Max,
-    K1 = K#ddb{port_inc = I1},
+    K1 = K#ddb{hosts=Hosts, rhosts=[{Host, Port} | HostsR]},
     Empty = dproto_udp:encode_header(Bucket),
     case gen_udp:send(DB, Host, Port + I, <<Acc/binary, M/binary>>) of
         {error, Reason} ->

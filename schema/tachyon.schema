@@ -54,18 +54,18 @@
  [{commented, {"127.0.0.1", 4242}},
   {datatype, ip}]}.
 
-{translation,
- "estatsd.graphite",
- fun(Conf) ->
-         cuttlefish:conf_get("statsd", Conf, {"127.0.0.1", 2003})
- end
-}.
-
 %% @doc The DalmatinerDB backend (if used).
-{mapping, "dalmatinerdb.ip", "tachyon.ddb_ip",
+{mapping, "dalmatinerdb.ip.$name", "tachyon.ddb_ips",
  [{commented, {"127.0.0.1", 4444}},
   {datatype, ip}]}.
 
+{translation,
+ "tachyon.ddb_ips",
+ fun(Conf) ->
+         HTTP = cuttlefish_variable:filter_by_prefix("dalmatinerdb.ip", Conf),
+         [ IP || {_, IP} <- HTTP]
+ end
+}.
 
 %% @doc The DalmatinerDB backend (if used).
 {mapping, "dalmatinerdb.buffer_size", "tachyon.ddb_buffer_size",

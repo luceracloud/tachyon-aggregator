@@ -20,7 +20,6 @@ start() ->
     application:start(goldrush),
     application:start(lager),
     application:start(ensq),
-    application:start(estatsd),
     application:start(tachyon).
 
 stats(Host) ->
