@@ -16,23 +16,27 @@
 
 -export([connect/0, put/5]).
 -ignore_xref([put/5]).
--record(ddb, {enabled, db, hosts, rhosts=[], acc = <<>>, port_inc = 0,
-              buffer_size=4096, port_num=30, bucket = <<"tachyon">>}).
+
+-define(OPTS, [{active, false}, binary, {packet, 4}]).
+
+-record(ddb, {enabled, hosts, rhosts=[], acc = <<>>,
+              buffer_size=4096, bucket = <<"tachyon">>}).
+
 
 connect() ->
     case application:get_env(tachyon, ddb_ips) of
         {ok, List} ->
             {ok, BufferSize} = application:get_env(tachyon, ddb_buffer_size),
-            {ok, NumPorts} = application:get_env(tachyon, ddb_num_ports),
-            {ok, Bucket} = application:get_env(tachyon, ddb_bucket),
-            case gen_udp:open(0, [{active, false}, binary]) of
-                {ok, DB} ->
-                    {ok, #ddb{enabled=true, db=DB, hosts=List,
-                              bucket=list_to_binary(Bucket),
-                              buffer_size=BufferSize, port_num=NumPorts}};
-                E ->
-                    E
-            end;
+            {ok, BucketS} = application:get_env(tachyon, ddb_bucket),
+            Bucket = list_to_binary(BucketS),
+            List1 = [begin
+                         {ok, Sock} = gen_tcp:connect(Host, Port, ?OPTS),
+                         {Host, Port, Sock}
+                     end ||
+                        {Host, Port} <- List],
+            {ok, #ddb{enabled=true, hosts=List1, bucket=Bucket,
+                      acc=dproto_udp:encode_header(Bucket),
+                      buffer_size=BufferSize}};
         _ ->
             {ok, #ddb{enabled = false}}
     end.
@@ -45,27 +49,27 @@ put(Metric, Value, Time, Args,
     K#ddb{acc = <<Acc/binary, M/binary>>};
 
 put(Metric, Value, Time, Args,
-	K = #ddb{enabled=true, hosts=[], rhosts=Hosts, port_inc=I, port_num=Max}) ->
-    I1 = (I + 1) rem Max,
-	put(Metric, Value, Time, Args,
-		K#ddb{hosts=lists:reverse(Hosts), rhosts=[], port_inc=I1});
+    K = #ddb{enabled=true, hosts=[], rhosts=Hosts}) ->
+    put(Metric, Value, Time, Args,
+        K#ddb{hosts=lists:reverse(Hosts), rhosts=[]});
 
 put(Metric, Value, Time, Args,
-    K = #ddb{enabled=true, db=DB, hosts=[{Host, Port} | Hosts], rhosts=HostsR,
-			 acc=Acc, port_inc=I, bucket=Bucket}) ->
+    K = #ddb{enabled=true, hosts=[{Host, Port, Sock} | Hosts], rhosts=HostsR,
+             acc=Acc, bucket=Bucket}) ->
     tachyon_mps:send(),
     M = fmt(Metric, Value, Time, Args),
-    K1 = K#ddb{hosts=Hosts, rhosts=[{Host, Port} | HostsR]},
-    Empty = dproto_udp:encode_header(Bucket),
-    case gen_udp:send(DB, Host, Port + I, <<Acc/binary, M/binary>>) of
-        {error, Reason} ->
-            gen_udp:close(DB),
-            lager:error("[~s] Socket died with: ~p", [Host, Reason]),
-            {ok, NewDB} = gen_udp:open(0, [{active, false}, binary]),
-            K1#ddb{db=NewDB, acc = Empty};
-        _ ->
-            K1#ddb{acc = Empty}
-    end;
+    K1 = K#ddb{acc = dproto_udp:encode_header(Bucket)},
+    Sock1 = case gen_tcp:send(Sock, <<Acc/binary, M/binary>>) of
+                {error, Reason} ->
+                    gen_tcp:close(Sock),
+                    lager:error("[~s] Socket died with: ~p", [Host, Reason]),
+                    {ok, NewSock} = gen_tcp:connect(Host, Port, ?OPTS),
+                    NewSock;
+                _ ->
+                    Sock
+
+            end,
+    K1#ddb{hosts=Hosts, rhosts=[{Host, Port, Sock1} | HostsR]};
 
 put(_Metric, _Value, _Time, _Args, K) ->
     K.
@@ -92,4 +96,3 @@ i2b(I) ->
     list_to_binary(integer_to_list(I)).
 f2b(I) ->
     list_to_binary(float_to_list(I)).
-
