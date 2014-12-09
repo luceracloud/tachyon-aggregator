@@ -7,8 +7,7 @@
                   kernel,
                   stdlib,
                   lager,
-                  ensq,
-                  estatsd
+                  ensq
                  ]},
   {mod, {tachyon_app, []}},
   {env, [{clients, []}]}
