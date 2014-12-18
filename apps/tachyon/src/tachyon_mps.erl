@@ -154,14 +154,14 @@ handle_info(tick, State = #state{connection = Con, node = Node}) ->
     H = lists:sum([N || {_, N} <- TblH]),
     {ok, Con1} = ddb_tcp:send(
                    dproto:metric_from_list([Node, <<"messages">>, <<"handled">>]),
-                   mmath_bin:from_list([H]), T, Con),
+                   T, mmath_bin:from_list([H]), Con),
     %% We send 3 metrics here so provided is + 3
     {ok, Con2} = ddb_tcp:send(
                    dproto:metric_from_list([Node, <<"messages">>, <<"provided">>]),
-                   mmath_bin:from_list([P + 3]), T, Con1),
+                   T, mmath_bin:from_list([P + 3]), Con1),
     {ok, Con3} = ddb_tcp:send(
                    dproto:metric_from_list([Node, <<"messages">>, <<"send">>]),
-                   mmath_bin:from_list([S]), T, Con2),
+                   T, mmath_bin:from_list([S]), Con2),
     erlang:send_after(1000, self(), tick),
     {noreply, State#state{connection = Con3}};
 
