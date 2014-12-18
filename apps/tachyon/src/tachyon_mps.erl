@@ -91,9 +91,10 @@ init([]) ->
     ets:new(?COUNTERS_HAND, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_SEND, [named_table, set, public, {write_concurrency, true}]),
     {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),
-    Con = ddb_tcp:stream_mode(<<"tachyon">>, 2, ddb_tcp:connect(Host, Port)),
+    {ok, Con} = ddb_tcp:connect(Host, Port),
+    {ok, Con1} = ddb_tcp:stream_mode(<<"tachyon">>, 2, Con),
     Node = list_to_binary(atom_to_list(node())),
-    {ok, #state{connection = Con, node = Node}}.
+    {ok, #state{connection = Con1, node = Node}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -152,10 +153,13 @@ handle_info(tick, State = #state{connection = Con, node = Node}) ->
     ets:delete_all_objects(?COUNTERS_HAND),
     H = lists:sum([N || {_, N} <- TblH]),
 
-    Con1 = ddb_tcp:send([Node, <<"messages">>, <<"handled">>], H, T, Con),
+    Con1 = ddb_tcp:send([Node, <<"messages">>, <<"handled">>], H,
+                        mmath_bin:from_list([T]), Con),
     %% We send 3 metrics here so provided is + 3
-    Con2 = ddb_tcp:send([Node, <<"messages">>, <<"provided">>], P + 3, T, Con1),
-    Con3 = ddb_tcp:send([Node, <<"messages">>, <<"send">>], S, T, Con2),
+    Con2 = ddb_tcp:send([Node, <<"messages">>, <<"provided">>],
+                        mmath_bin:from_list([P + 3]), T, Con1),
+    Con3 = ddb_tcp:send([Node, <<"messages">>, <<"send">>],
+                        mmath_bin:from_list([S]), T, Con2),
     erlang:send_after(1000, self(), tick),
     {noreply, State#state{connection = Con3}};
 

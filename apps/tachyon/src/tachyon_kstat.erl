@@ -17,13 +17,11 @@
 
 init() ->
     {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),
-    {ok,
-     #state{
-        server = ddb_tcp:stream_mode(<<"server">>, 2,
-                                     ddb_tcp:connect(Host, Port)),
-        zone = ddb_tcp:stream_mode(<<"zone">>, 2,
-                                   ddb_tcp:connect(Host, Port))
-       }}.
+    {ok, Srvs} = ddb_tcp:connect(Host, Port),
+    {ok, Srvs1} = ddb_tcp:stream_mode(<<"server">>, 2, Srvs),
+    {ok, Zones} = ddb_tcp:connect(Host, Port),
+    {ok, Zones1} = ddb_tcp:stream_mode(<<"zone">>, 2, Zones),
+    {ok, #state{server = Srvs1, zone = Zones1}}.
 
 response(_Msg, State) ->
     {ok, State}.
@@ -295,7 +293,7 @@ puts(Metric, Value, Time, State = #state{server = Con}) ->
     tachyon_mps:provide(),
     tachyon_mps:handle(),
     Metric2 = dproto:metric_from_list(Metric),
-    Con1 = ddb_tcp:send(Metric2, Time, Value, Con),
+    Con1 = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
     {ok, State#state{server = Con1}}.
 
 putz(Metric, Value, Time, State = #state{zone = Con}) ->
@@ -303,5 +301,5 @@ putz(Metric, Value, Time, State = #state{zone = Con}) ->
     tachyon_mps:provide(),
     tachyon_mps:handle(),
     Metric2 = dproto:metric_from_list(Metric),
-    Con1 = ddb_tcp:send(Metric2, Time, Value, Con),
+    Con1 = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
     {ok, State#state{zone = Con1}}.
