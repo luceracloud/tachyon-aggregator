@@ -154,7 +154,7 @@ handle_info(tick, State = #state{connection = Con, node = Node}) ->
     H = lists:sum([N || {_, N} <- TblH]),
     {ok, Con1} = ddb_tcp:send(
                    dproto:metric_from_list([Node, <<"messages">>, <<"handled">>]),
-                   H, mmath_bin:from_list([T]), Con),
+                   mmath_bin:from_list([H]), T, Con),
     %% We send 3 metrics here so provided is + 3
     {ok, Con2} = ddb_tcp:send(
                    dproto:metric_from_list([Node, <<"messages">>, <<"provided">>]),
