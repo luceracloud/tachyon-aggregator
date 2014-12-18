@@ -7,3 +7,4 @@ deps
 rel/tachyon
 tachyon.version
 sniffle.version
+.rebar

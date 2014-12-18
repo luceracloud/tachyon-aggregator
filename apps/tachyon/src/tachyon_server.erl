@@ -55,12 +55,6 @@ start_link() ->
 init([]) ->
     process_flag(trap_exit, true),
     {ok, Servers} = application:get_env(nsqlookupd),
-    MetricConns = case application:get_env(metric_connections) of
-                      {ok, NMet} ->
-                          NMet;
-                      _ ->
-                          5
-                  end,
     KStatConns = case application:get_env(kstat_connections) of
                      {ok, NKStat} ->
                          NKStat;
@@ -74,7 +68,6 @@ init([]) ->
                       <<"aggregator">>
               end,
     [connect(kstat, Channel, Servers) || _ <- lists:seq(1, KStatConns)],
-    [connect(jmetric, Channel, Servers) || _ <- lists:seq(1, MetricConns)],
     {ok, #state{}, 1000}.
 
 %%--------------------------------------------------------------------
@@ -153,8 +146,4 @@ code_change(_OldVsn, State, _Extra) ->
 
 connect(kstat, Channel, Servers) ->
     ensq:init({Servers, [{<<"tachyon">>,
-                          [{Channel, tachyon_kstat}], []}]});
-
-connect(jmetric, Channel, Servers) ->
-    ensq:init({Servers, [{<<"tachyon-metric-json">>,
-                          [{Channel, tachyon_jmetric_nsq}], []}]}).
+                          [{Channel, tachyon_kstat}], []}]}).

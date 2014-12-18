@@ -13,10 +13,10 @@ clean:
 	./rebar clean
 
 test: xref
-	./rebar eunit skip_deps=true
+	./rebar eunit skip_deps=true -r
 
 xref: all
-	./rebar xref skip_deps=true
+	./rebar xref skip_deps=true -r
 
 console:
 	erl -pa deps/*/ebin -pa apps/*/ebin

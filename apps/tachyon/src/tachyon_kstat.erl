@@ -10,13 +10,20 @@
 
 -behaviour(ensq_channel_behaviour).
 
--record(state, {db}).
+-record(state, {server, zone}).
 
 -export([init/0, response/2, message/3, error/2]).
 
+
 init() ->
-    {ok, DB} = tachyon_backend:init(),
-    {ok, #state{db=DB}}.
+    {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),
+    {ok,
+     #state{
+        server = ddb_tcp:stream_mode(<<"server">>, 2,
+                                     ddb_tcp:connect(Host, Port)),
+        zone = ddb_tcp:stream_mode(<<"zone">>, 2,
+                                   ddb_tcp:connect(Host, Port))
+       }}.
 
 response(_Msg, State) ->
     {ok, State}.
@@ -73,8 +80,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           _Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    put(<<"cloud.host.ip.", Key/binary>>, V, SnapTime,
-        [{<<"host">>, Host}], State);
+    puts([Host, <<"ip">>, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -85,10 +91,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           _Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    Metric = <<"arc.", Key/binary>>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 4),
-    put(<<"cloud.host.arc.", Key/binary>>, V, SnapTime,
-        [{<<"host">>, Host}], State);
+    puts([Host, <<"arc">>, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -99,11 +102,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", Key/binary>>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 4),
-    put(<<"cloud.host.disk.metrics.", Key/binary>>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"disk">>, Instance}], State);
+    puts([Host, <<"disk">>, Instance, <<"metrics">>, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -114,11 +113,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           11:32/integer, "Hard Errors",
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].errors.hard">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    put(<<"cloud.host.disk.errors.hard">>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"disk">>, Instance}], State);
+    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"hard">>], V, SnapTime,
+         State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -129,11 +125,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           11:32/integer, "Soft Errors",
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].errors.soft">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    put(<<"cloud.host.disk.errors.soft">>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"disk">>, Instance}], State);
+    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"soft">>], V, SnapTime,
+         State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -144,11 +137,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           16:32/integer, "Transport Errors",
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].errors.transport">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    put(<<"cloud.host.disk.errors.transport">>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"disk">>, Instance}], State);
+    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"transport">>], V,
+         SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -159,11 +149,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           27:32/integer, "Predictive Failure Analysis",
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "predicted_failures">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    put(<<"cloud.host.disk.errors.predicted_failures">>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"disk">>, Instance}], State);
+    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"predicted_failures">>],
+         V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -174,11 +161,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           15:32/integer, "Illegal Request",
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    Metric = <<"sd[", ID/binary, "].", "illegal_requests">>,
-    tachyon_guard:put(Host, SnapTime, Metric, V, 1),
-    put(<<"cloud.host.disk.errors.illegal">>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"disk">>, Instance}], State);
+    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"illegal">>], V, SnapTime,
+         State);
 
 %%
 %% CPU Load
@@ -192,10 +176,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    ID = list_to_binary(integer_to_list(Instance)),
-    tachyon_guard:put(Host, SnapTime, <<"cpu[", ID/binary, "].", Key/binary>>, V, 4),
-    put(<<"cloud.host.cpu.", Key/binary>>, V, SnapTime,
-        [{<<"host">>, Host}, {<<"cpu">>, Instance}], State);
+    puts([Host, <<"cpu">>, Instance, Key], V, SnapTime, State);
 
 %%
 %% IP_NIC_EVENT_QUEUE
@@ -209,8 +190,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           _Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    put(<<"cloud.host.ip_nic_event_queue.", Key/binary>>, V, SnapTime,
-        [{<<"host">>, Host}], State);
+    puts([Host, <<"ip_nic_event_queue">>, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -221,8 +201,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           _Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    put(<<"cloud.host.cache.", Name/binary, $., Key/binary>>, V, SnapTime,
-        [{<<"host">>, Host}], State);
+    puts([Host, <<"cache">>, Name, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           6:32/integer, "global",
@@ -242,20 +221,17 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
     case Name of
         %% CPU
         <<"cpucaps_zone_", _/binary>> ->
-            put(<<"cloud.zones.cpu.", Key/binary>>, V, SnapTime,
-                [{<<"zone">>, Zone}], State);
+            putz([Zone, <<"cpu">>, Key], V, SnapTime,
+            State);
         %% Memory
         <<"physicalmem_zone_", _/binary>> ->
-            put(<<"cloud.zones.mem.", Key/binary>>, V, SnapTime,
-                [{<<"zone">>, Zone}], State);
+            putz([Zone, <<"mem">>, Key], V, SnapTime, State);
         %% Swap
         <<"swapresv_zone_", _/binary>> ->
-            put(<<"cloud.zones.swap.", Key/binary>>, V, SnapTime,
-                [{<<"zone">>, Zone}], State);
+            putz([Zone, <<"swap">>, Key], V, SnapTime, State);
         %% Procs
         <<"nprocs_zone_", _/binary>> ->
-            put(<<"cloud.zones.swap.", Key/binary>>, V, SnapTime,
-                [{<<"zone">>, Zone}], State);
+            putz([Zone, <<"swap">>, Key], V, SnapTime, State);
         _ ->
             {ok,State}
     end;
@@ -270,8 +246,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
     IFace = parse_iface(IFInstance),
-    put(<<"cloud.zones.net.", Key/binary>>, V, SnapTime,
-        [{<<"zone">>, Zone}, {<<"interface">>, IFace}], State);
+    putz([Zone, <<"net">>, IFace, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ZoneSize:32/integer, Zone:_ZoneSize/binary,
@@ -282,8 +257,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    put(<<"cloud.zones.vfs.", Key/binary>>, V, SnapTime,
-        [{<<"zone">>, Zone}], State);
+    putz([Zone, <<"vfs">>, Key], V, SnapTime, State);
 
 message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _ZoneSize:32/integer, Zone:_ZoneSize/binary,
@@ -294,8 +268,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
           _Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    put(<<"cloud.zones.zfs.", Key/binary>>, V, SnapTime,
-        [{<<"zone">>, Zone}], State);
+    putz([Zone, <<"zfs">>, Key], V, SnapTime, State);
 
 message(_Msg, _, State) ->
     tachyon_mps:provide(),
@@ -312,11 +285,23 @@ parse_iface1(<<$_, IFace/binary>>) ->
     IFace;
 parse_iface1(<<_, Rest/binary>>) ->
     parse_iface(Rest);
+
 parse_iface1(<<>>) ->
     <<"net">>.
 
-put(Metric, Value, Time, Args, State = #state{db = DB}) ->
+
+puts(Metric, Value, Time, State = #state{server = Con}) ->
+    tachyon_mps:send(),
     tachyon_mps:provide(),
     tachyon_mps:handle(),
-    DB1 = tachyon_backend:put(Metric, Value, Time, Args, DB),
-    {ok, State#state{db = DB1}}.
+    Metric2 = dproto:metric_from_list(Metric),
+    Con1 = ddb_tcp:send(Metric2, Time, Value, Con),
+    {ok, State#state{server = Con1}}.
+
+putz(Metric, Value, Time, State = #state{zone = Con}) ->
+    tachyon_mps:send(),
+    tachyon_mps:provide(),
+    tachyon_mps:handle(),
+    Metric2 = dproto:metric_from_list(Metric),
+    Con1 = ddb_tcp:send(Metric2, Time, Value, Con),
+    {ok, State#state{zone = Con1}}.

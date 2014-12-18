@@ -22,7 +22,7 @@
 -define(COUNTERS_PROV, tachyon_counters_provided).
 -define(COUNTERS_HAND, tachyon_counters_handled).
 -define(COUNTERS_SEND, tachyon_counters_send).
--record(state, {db}).
+-record(state, {connection, node}).
 
 %%%===================================================================
 %%% API
@@ -90,8 +90,10 @@ init([]) ->
     ets:new(?COUNTERS_PROV, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_HAND, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_SEND, [named_table, set, public, {write_concurrency, true}]),
-    {ok, DB} = tachyon_backend:init(),
-    {ok, #state{db=DB}}.
+    {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),
+    Con = ddb_tcp:stream_mode(<<"tachyon">>, 2, ddb_tcp:connect(Host, Port)),
+    Node = list_to_binary(atom_to_list(node())),
+    {ok, #state{connection = Con, node = Node}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -134,7 +136,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(tick, State = #state{}) ->
+handle_info(tick, State = #state{connection = Con, node = Node}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
 
@@ -150,12 +152,12 @@ handle_info(tick, State = #state{}) ->
     ets:delete_all_objects(?COUNTERS_HAND),
     H = lists:sum([N || {_, N} <- TblH]),
 
-    DB1 = tachyon_backend:put(<<"tachyon.messages.handled">>, H, T, [], State#state.db),
+    Con1 = ddb_tcp:send([Node, <<"messages">>, <<"handled">>], H, T, Con),
     %% We send 3 metrics here so provided is + 3
-    DB2 = tachyon_backend:put(<<"tachyon.messages.provided">>, P + 3, T, [], DB1),
-    DB3 = tachyon_backend:put(<<"tachyon.messages.send">>, S, T, [], DB2),
+    Con2 = ddb_tcp:send([Node, <<"messages">>, <<"provided">>], P + 3, T, Con1),
+    Con3 = ddb_tcp:send([Node, <<"messages">>, <<"send">>], S, T, Con2),
     erlang:send_after(1000, self(), tick),
-    {noreply, State#state{db = DB3}};
+    {noreply, State#state{connection = Con3}};
 
 handle_info(_Info, State) ->
     {noreply, State}.
