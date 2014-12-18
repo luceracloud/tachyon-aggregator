@@ -100,7 +100,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"disk">>, Instance, <<"metrics">>, Key], V, SnapTime, State);
+    puts([Host, <<"disk">>, integer_to_binary(Instance), <<"metrics">>, Key],
+         V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
           6:32/integer, "global",
@@ -111,7 +112,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           11:32/integer, "Hard Errors",
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"hard">>], V, SnapTime,
+    puts([Host, <<"disk">>, integer_to_binary(Instance), <<"errors">>,
+          <<"hard">>], V, SnapTime,
          State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
@@ -123,7 +125,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           11:32/integer, "Soft Errors",
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"soft">>], V, SnapTime,
+    puts([Host, <<"disk">>, integer_to_binary(Instance), <<"errors">>,
+          <<"soft">>], V, SnapTime,
          State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
@@ -147,7 +150,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           27:32/integer, "Predictive Failure Analysis",
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"predicted_failures">>],
+    puts([Host, <<"disk">>, integer_to_binary(Instance), <<"errors">>,
+          <<"predicted_failures">>],
          V, SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
@@ -159,7 +163,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           15:32/integer, "Illegal Request",
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"illegal">>], V, SnapTime,
+    puts([Host, <<"disk">>, integer_to_binary(Instance), <<"errors">>,
+          <<"illegal">>], V, SnapTime,
          State);
 
 %%
@@ -174,7 +179,8 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           _KeySize:32/integer, Key:_KeySize/binary,
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"cpu">>, Instance, Key], V, SnapTime, State);
+    puts([Host, <<"cpu">>, integer_to_binary(Instance), Key], V, SnapTime,
+         State);
 
 %%
 %% IP_NIC_EVENT_QUEUE
