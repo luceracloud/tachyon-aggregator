@@ -138,7 +138,7 @@ message(<<_HostSize:32/integer, Host:_HostSize/binary,
           Instance:64/integer,
           16:32/integer, "Transport Errors",
           $i, V:64/integer>>, _, State) ->
-    puts([Host, <<"disk">>, Instance, <<"errors">>, <<"transport">>], V,
+    puts([Host, <<"disk">>, integer_to_binary(Instance), <<"errors">>, <<"transport">>], V,
          SnapTime, State);
 
 message(<<_HostSize:32/integer, Host:_HostSize/binary,
