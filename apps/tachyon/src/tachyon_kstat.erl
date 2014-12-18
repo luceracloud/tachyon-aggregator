@@ -299,7 +299,7 @@ puts(Metric, Value, Time, State = #state{server = Con}) ->
     tachyon_mps:provide(),
     tachyon_mps:handle(),
     Metric2 = dproto:metric_from_list(Metric),
-    Con1 = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
+    {ok, Con1} = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
     {ok, State#state{server = Con1}}.
 
 putz(Metric, Value, Time, State = #state{zone = Con}) ->
@@ -307,5 +307,5 @@ putz(Metric, Value, Time, State = #state{zone = Con}) ->
     tachyon_mps:provide(),
     tachyon_mps:handle(),
     Metric2 = dproto:metric_from_list(Metric),
-    Con1 = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
+    {ok, Con1} = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
     {ok, State#state{zone = Con1}}.
