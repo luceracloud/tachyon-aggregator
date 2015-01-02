@@ -29,7 +29,7 @@ distclean: clean devclean relclean
 	$(REBAR) delete-deps
 
 long-test:
-	-rm -r apps/$(PROJECT)/.eunit
+	[ -d apps/$(PROJECT)/.eunit ] && rm -r apps/$(PROJECT)/.eunit || true
 	$(REBAR) skip_deps=true -DEQC_LONG_TESTS eunit -v -r
 
 qc:
@@ -40,7 +40,7 @@ eqc-ci: clean all
 
 eunit:
 	$(REBAR) compile
-	-rm -r apps/$(PROJECT)/.eunit
+	[ -d apps/$(PROJECT)/.eunit ] && rm -r apps/$(PROJECT)/.eunit || true
 	$(REBAR) eunit skip_deps=true -r -v
 
 test: eunit
@@ -50,15 +50,14 @@ quick-xref:
 	$(REBAR) xref skip_deps=true -r
 
 quick-test:
-	-rm -r apps/$(PROJECT)/.eunit
+	[ -d apps/$(PROJECT)/.eunit ] && rm -r apps/$(PROJECT)/.eunit || true
 	$(REBAR) -DEQC_SHORT_TEST skip_deps=true eunit -r -v
 
-rel: all
-	[ -d rel/$(PROJECT)/share ] && rm -r rel/$(PROJECT)/share || true
+rel: relclean all
 	$(REBAR) generate
 
 relclean:
-	rm -rf rel/$(PROJECT)
+	[ -d rel/$(PROJECT) ] && rm -rf rel/$(PROJECT) || true
 
 devrel: dev1 dev2 dev3 dev4
 
