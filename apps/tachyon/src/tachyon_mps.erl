@@ -22,7 +22,7 @@
 -define(COUNTERS_PROV, tachyon_counters_provided).
 -define(COUNTERS_HAND, tachyon_counters_handled).
 -define(COUNTERS_SEND, tachyon_counters_send).
--record(state, {db}).
+-record(state, {connection, node}).
 
 %%%===================================================================
 %%% API
@@ -90,8 +90,11 @@ init([]) ->
     ets:new(?COUNTERS_PROV, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_HAND, [named_table, set, public, {write_concurrency, true}]),
     ets:new(?COUNTERS_SEND, [named_table, set, public, {write_concurrency, true}]),
-    {ok, DB} = tachyon_backend:init(),
-    {ok, #state{db=DB}}.
+    {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),
+    {ok, Con} = ddb_tcp:connect(Host, Port),
+    {ok, Con1} = ddb_tcp:stream_mode(<<"tachyon">>, 2, Con),
+    Node = list_to_binary(atom_to_list(node())),
+    {ok, #state{connection = Con1, node = Node}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -134,7 +137,7 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(tick, State = #state{}) ->
+handle_info(tick, State = #state{connection = Con, node = Node}) ->
     {MegaSecs, Secs, _} = now(),
     T = (MegaSecs*1000000 + Secs),
 
@@ -149,13 +152,18 @@ handle_info(tick, State = #state{}) ->
     TblH = ets:tab2list(?COUNTERS_HAND),
     ets:delete_all_objects(?COUNTERS_HAND),
     H = lists:sum([N || {_, N} <- TblH]),
-
-    DB1 = tachyon_backend:put(<<"tachyon.messages.handled">>, H, T, [], State#state.db),
+    {ok, Con1} = ddb_tcp:send(
+                   dproto:metric_from_list([Node, <<"messages">>, <<"handled">>]),
+                   T, mmath_bin:from_list([H]), Con),
     %% We send 3 metrics here so provided is + 3
-    DB2 = tachyon_backend:put(<<"tachyon.messages.provided">>, P + 3, T, [], DB1),
-    DB3 = tachyon_backend:put(<<"tachyon.messages.send">>, S, T, [], DB2),
+    {ok, Con2} = ddb_tcp:send(
+                   dproto:metric_from_list([Node, <<"messages">>, <<"provided">>]),
+                   T, mmath_bin:from_list([P + 3]), Con1),
+    {ok, Con3} = ddb_tcp:send(
+                   dproto:metric_from_list([Node, <<"messages">>, <<"send">>]),
+                   T, mmath_bin:from_list([S]), Con2),
     erlang:send_after(1000, self(), tick),
-    {noreply, State#state{db = DB3}};
+    {noreply, State#state{connection = Con3}};
 
 handle_info(_Info, State) ->
     {noreply, State}.

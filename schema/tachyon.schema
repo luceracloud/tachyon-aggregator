@@ -6,82 +6,15 @@
  [{default, "aggregator"},
   {datatype, string}]}.
 
-%% @doc the NSQ topic on which JSON metrics are received
-{mapping, "metric.json_topic", "tachyon.metric_json_topic",
- [{default, "tachyon-metrics-json"},
-  {datatype, string}]}.
-
-%% @doc the NSQ topic on which binary metrics are received
-{mapping, "metric.bin_topic", "tachyon.metric_bin_topic",
- [{default, "tachyon-metrics-bin"},
-  {datatype, string}]}.
-
-%% @doc The number of connections used to receive general metrics
-{mapping, "metric.connections", "tachyon.metric_connections",
- [{default, 5},
-  {datatype, integer}]}.
-
 %% @doc the NSQ topic on which kstat binary metrics are received
-{mapping, "kstat.topic", "tachyon.kstat_topic",
+{mapping, "topic", "tachyon.kstat_topic",
  [{default, "tachyon-metrics-bin"},
   {datatype, string}]}.
 
 %% @doc The number of connections used to receive kstat metrics
-{mapping, "kstat.connections", "tachyon.kstat_connections",
+{mapping, "connections", "tachyon.kstat_connections",
  [{default, 10},
   {datatype, integer}]}.
-
-%% @doc The kairosdb endpoint to use, if not set no data will be written
-%% to kairosdb.
-{mapping, "kairosdb", "tachyon.kairosdb",
- [{commented, {"127.0.0.1", 4242}},
-  {datatype, ip}]}.
-
-%% @doc The kairosdb endpoint to use, if not set no data will be written
-%% to kairosdb.
-{mapping, "kairosdb.buffer_size", "tachyon.kairosdb_buffer_size",
- [{default, 100},
-  {datatype, integer}]}.
-
-%% @doc The kairosdb endpoint to use, if not set no data will be written
-%% to kairosdb.
-{mapping, "statsd.buffer_size", "tachyon.statsd_buffer_size",
- [{default, 100},
-  {datatype, integer}]}.
-
-%% @doc Enable or disable writing to statsd.
-{mapping, "statsd", "tachyon.statsd",
- [{commented, {"127.0.0.1", 4242}},
-  {datatype, ip}]}.
-
-%% @doc The DalmatinerDB backend (if used).
-{mapping, "dalmatinerdb.ip.$name", "tachyon.ddb_ips",
- [{commented, {"127.0.0.1", 4444}},
-  {datatype, ip}]}.
-
-{translation,
- "tachyon.ddb_ips",
- fun(Conf) ->
-         HTTP = cuttlefish_variable:filter_by_prefix("dalmatinerdb.ip", Conf),
-         [ IP || {_, IP} <- HTTP]
- end
-}.
-
-%% @doc The DalmatinerDB backend (if used).
-{mapping, "dalmatinerdb.buffer_size", "tachyon.ddb_buffer_size",
- [{default, 4096},
-  {datatype, bytesize}]}.
-
-%% @doc The number of ports for DalmatinerDB provides, writes will
-%% round robin through them.
-{mapping, "dalmatinerdb.num_ports", "tachyon.ddb_num_ports",
- [{default, 30},
-  {datatype, integer}]}.
-
-%% @doc The bucket to write to when sending data to DalmatinerDB
-{mapping, "dalmatinerdb.bucket", "tachyon.ddb_bucket",
- [{default, "tachyon"},
-  {datatype, string}]}.
 
 %% @doc One more more nsqlookupd http interfaces for tachyon to discover
 %% the channels.
@@ -97,3 +30,9 @@
          [ IP || {_, IP} <- HTTP]
  end
 }.
+
+%% @doc The DalmatinerDB backend (if used).
+{mapping, "ddb", "tachyon.ddb_ip",
+ [{commented, {"127.0.0.1", 4444}},
+  {datatype, ip}]}.
+
