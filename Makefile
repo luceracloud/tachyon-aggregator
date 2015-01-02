@@ -54,7 +54,7 @@ quick-test:
 	$(REBAR) -DEQC_SHORT_TEST skip_deps=true eunit -r -v
 
 rel: all
-	-rm -r rel/$(PROJECT)/share
+	[ -d rel/$(PROJECT)/share] && rm -r rel/$(PROJECT)/share || true
 	$(REBAR) generate
 
 relclean:
