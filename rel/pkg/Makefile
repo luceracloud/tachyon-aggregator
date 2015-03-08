@@ -1,22 +1,17 @@
 VERSION=0.1.0
 COMPONENT_INTERNAL=tachyon
 COMPONENT=tachyon
+DEPS="erlang>=16.1.2"
 
-.PHONY: build_info package package_list
+include ../../deps/fifo_utils/priv/pkg.mk
 
-package: package_list build_info
-	pkg_create -i install.sh -k deinstall.sh -D displayfile -B build-info -c comment -d description -f packlist -I /opt/local -p deploy -U $(COMPONENT)-$(VERSION)$(SUFFIX).tgz
+.PHONY: package prepare clean
 
-package_list:
-	echo "@pkgdep erlang>=15.1.1" > packlist
-	[ -d deploy/$(COMPONENT) ] && rm -r deploy/$(COMPONENT) || true
-	cp -r ../$(COMPONENT_INTERNAL) deploy/$(COMPONENT)
-	(cd deploy; find * -type f | sort) >> packlist
+prepare:
+	-rm -r $(STAGE_DIR)/$(COMPONENT)
+	cp -r ../$(COMPONENT_INTERNAL) $(STAGE_DIR)/$(COMPONENT)
 
-build_info:
-	pkg_info -X pkg_install | egrep '^(MACHINE_ARCH|OPSYS|OS_VERSION|PKGTOOLS_VERSION)' >build-info
-	echo "CATEGORIES=fifo" >>build-info
-	echo "HOMEPAGE=https://lucerahq.com/" >>build-info
+package: prepare $(FILE).tgz
 
-clean:
-	-rm *.tgz build-info packlist
+clean: clean-pkg
+	-rm *.tgz
