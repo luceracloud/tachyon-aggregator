@@ -152,18 +152,10 @@ handle_info(tick, State = #state{connection = Con, node = Node}) ->
     TblH = ets:tab2list(?COUNTERS_HAND),
     ets:delete_all_objects(?COUNTERS_HAND),
     H = lists:sum([N || {_, N} <- TblH]),
-    {ok, Con1} = ddb_tcp:send(
-                   dproto:metric_from_list([Node, <<"messages">>, <<"handled">>]),
-                   T, mmath_bin:from_list([H]), Con),
-    %% We send 3 metrics here so provided is + 3
-    {ok, Con2} = ddb_tcp:send(
-                   dproto:metric_from_list([Node, <<"messages">>, <<"provided">>]),
-                   T, mmath_bin:from_list([P + 3]), Con1),
-    {ok, Con3} = ddb_tcp:send(
-                   dproto:metric_from_list([Node, <<"messages">>, <<"send">>]),
-                   T, mmath_bin:from_list([S]), Con2),
+    %% We send 3 metrics here so provided and send are + 3
+    Con1 = send_handled(Con, T, Node, H, P + 3, S + 3),
     erlang:send_after(1000, self(), tick),
-    {noreply, State#state{connection = Con3}};
+    {noreply, State#state{connection = Con1}};
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -196,3 +188,35 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+send_handled(Con, T, Node, H, P, S) ->
+    case ddb_tcp:send(
+           dproto:metric_from_list([Node, <<"messages">>, <<"handled">>]),
+           T, mmath_bin:from_list([H]), Con) of
+        {ok, Con1} ->
+            send_provided(Con1, T, Node, P, S);
+        {error, _, Con1} ->
+            Con1
+    end.
+
+
+send_provided(Con, T, Node, P, S) ->
+    case ddb_tcp:send(
+           dproto:metric_from_list([Node, <<"messages">>, <<"provided">>]),
+           T, mmath_bin:from_list([P]), Con) of
+        {ok, Con1} ->
+            send_send(Con1, T, Node, S);
+        {error, _, Con1} ->
+            Con1
+    end.
+
+send_send(Con, T, Node, S) ->
+    case ddb_tcp:send(
+           dproto:metric_from_list([Node, <<"messages">>, <<"send">>]),
+           T, mmath_bin:from_list([S]), Con) of
+        {ok, Con1} ->
+            Con1;
+        {error, _, Con1} ->
+            Con1
+    end.
+

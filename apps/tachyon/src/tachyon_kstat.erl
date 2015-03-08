@@ -1,3 +1,4 @@
+
 %%%-------------------------------------------------------------------
 %%% @author Heinz Nikolaus Gies <heinz@licenser.net>
 %%% @copyright (C) 2014, Lucera Financial Infrastructures
@@ -299,13 +300,21 @@ puts(Metric, Value, Time, State = #state{server = Con}) ->
     tachyon_mps:provide(),
     tachyon_mps:handle(),
     Metric2 = dproto:metric_from_list(Metric),
-    {ok, Con1} = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
-    {ok, State#state{server = Con1}}.
+    case ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con) of
+        {ok, Con1}  ->
+            {ok, State#state{server = Con1}};
+        {error, _, Con1} ->
+            {requeue, State#state{server = Con1}, 5}
+    end.
 
 putz(Metric, Value, Time, State = #state{zone = Con}) ->
     tachyon_mps:send(),
     tachyon_mps:provide(),
     tachyon_mps:handle(),
     Metric2 = dproto:metric_from_list(Metric),
-    {ok, Con1} = ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con),
-    {ok, State#state{zone = Con1}}.
+    case ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), Con) of
+        {ok, Con1} ->
+            {ok, State#state{zone = Con1}};
+        {error, _, Con1} ->
+            {requeue, State#state{server = Con1}, 5}
+    end.
