@@ -1,5 +1,8 @@
 #!/usr/bin/bash
 
+AWK=/usr/bin/awk
+SED=/usr/bin/sed
+
 USER=tachyon
 GROUP=$USER
 
