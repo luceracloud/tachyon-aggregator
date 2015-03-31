@@ -33,6 +33,5 @@
 
 %% @doc The DalmatinerDB backend (if used).
 {mapping, "ddb", "tachyon.ddb_ip",
- [{commented, {"127.0.0.1", 4444}},
+ [{default, {"127.0.0.1", 4444}},
   {datatype, ip}]}.
-
