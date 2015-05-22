@@ -1,4 +1,3 @@
-
 %%%-------------------------------------------------------------------
 %%% @author Heinz Nikolaus Gies <heinz@licenser.net>
 %%% @copyright (C) 2014, Lucera Financial Infrastructures
@@ -236,7 +235,7 @@ message(<<_HostSize:32/integer, _Host:_HostSize/binary,
             putz([Zone, <<"swap">>, Key], V, SnapTime, State);
         %% Procs
         <<"nprocs_zone_", _/binary>> ->
-            putz([Zone, <<"swap">>, Key], V, SnapTime, State);
+            putz([Zone, <<"nprocs">>, Key], V, SnapTime, State);
         _ ->
             {ok,State}
     end;

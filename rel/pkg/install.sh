@@ -24,6 +24,7 @@ case $2 in
         fi
         echo Creating directories ...
         mkdir -p /var/db/tachyon
+        mkdir -p /var/log/tachyon
         chown -R $USER:$GROUP /var/db/tachyon
         chown -R $USER:$GROUP /var/log/tachyon
         if [ -d /tmp/tachyon ]
@@ -35,6 +36,11 @@ case $2 in
         echo Importing service ...
         svccfg import /opt/local/tachyon/share/tachyon.xml
         CONFFILE=/opt/local/tachyon/etc/tachyon.conf
+	RULES=/opt/local/tachyon/etc/tachyon.rules
+	if [ ! -f "${RULES}" ]
+	then
+		cp ${RULES}.exmaple ${RULES}
+	fi
         if [ ! -f "${CONFFILE}" ]
         then
             echo "Creating new configuration from example file."

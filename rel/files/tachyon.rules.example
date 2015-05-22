@@ -1,0 +1,81 @@
+%%-*- mode: erlang -*-
+
+{ignore, [{key, "crtime"}]}.
+{ignore, [{key, "snaptime"}]}.
+{ignore, [{key, "zonename"}]}.
+{ignore, [{key, "class"}]}.
+
+{{server, [host, "ip", key]},
+ [gz, {module, "ip"}]}.
+
+{{server, [host, "arc", key]},
+ [gz, {name, "arcstats"}, {module, "zfs"}]}.
+
+
+{{server, [host, "disk", instance, "metrics", key]},
+ [{module, "sd"}]}.
+
+{{server, [host, "disk", instance, "errors", "hard"]},
+ [{module, "sderr"}, {key, "Hard Errors"}]}.
+
+{{server, [host, "disk", instance, "errors", "soft"]},
+ [{module, "sderr"}, {key, "Soft Errors"}]}.
+
+{{server, [host, "disk", instance, "errors", "transport"]},
+ [{module, "sderr"}, {key, "Transport Errors"}]}.
+
+{{server, [host, "disk", instance, "errors", "predicted_failures"]},
+ [{module, "sderr"}, {key, "Predictive Failure Analysis"}]}.
+
+{{server, [host, "disk", instance, "errors", "illegal"]},
+ [{module, "sderr"}, {key, "Illegal Request"}]}.
+
+%%
+%% CPU Load
+%%
+
+{{server, [host, "cpu", instance, key]},
+ [{module, "cpu_stat"}]}.
+
+%%
+%% IP_NIC_EVENT_QUEUE
+%%
+
+{{server, [host, "ip_nic_event_queue", key]},
+ [gz, {name, "IP_NIC_EVENT_QUEUE"}, {module, "unix"}]}.
+
+{{server, [host, "cache", name, key]},
+ [gz, {module, "unix"}]}.
+
+%%
+%% End of GZ section, we don't want any other of those messages.
+%%
+
+{ignore, [gz]}.
+
+{{zone, [zone, {zone_stat, name}, key]}, [{module, "caps"}]}.
+
+{fn,
+ "zone_stat(<<\"cpucaps_zone_\", _/binary>>) -> <<\"cpu\">>;\n"
+ "zone_stat(<<\"physicalmem_mem_\", _/binary>>) -> <<\"mem\">>;\n"
+ "zone_stat(<<\"swapresv_mem_\", _/binary>>) -> <<\"swap\">>;\n"
+ "zone_stat(<<\"nprocs_mem_\", _/binary>>) -> <<\"cpu\">>;\n"
+ "zone_stat(_) -> ignore.\n"}.
+
+
+{{zone, [zone, "net", {parse_iface, name}, key]}, [{module, "link"}]}.
+
+
+{fn,
+ "parse_iface(<<$z, _, $_, IFace/binary>>) -> IFace;\n"
+ "parse_iface(<<$z, _, _, $_, IFace/binary>>) -> IFace;\n"
+ "parse_iface(O) -> parse_iface1(O).\n"}.
+
+{fn,
+ "parse_iface1(<<$_, IFace/binary>>) -> IFace;\n"
+ "parse_iface1(<<_, Rest/binary>>) -> parse_iface(Rest);\n"
+ "parse_iface1(<<>>) -> <<\"net\">>.\n"}.
+
+
+{{zone, [zone, "vfs", key]}, [{module, "zone_vfs"}]}.
+{{zone, [zone, "zfs", key]}, [{module, "zone_zfs"}]}.
