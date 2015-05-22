@@ -20,10 +20,14 @@
 %% ===================================================================
 
 make_rules(File) ->
+    lager:info("[rules] Reading rule file: ~s", [File]),
     {ok, Rules} = file:consult(File),
+    lager:info("[rules] Compiling code to Erlang."),
     ErlCode = tachyon_c:c(Rules),
     ErlFile = filename:join(code:priv_dir(tachyon), "tachyon_kstat.erl"),
+    lager:info("[rules] Writing resulting erlang code to: ~s.", [ErlFile]),
     file:write_file(ErlFile, ErlCode),
+    lager:info("[rules] Compiling Erlang code."),
     compile:file(ErlFile).
 
 start(_StartType, _StartArgs) ->
