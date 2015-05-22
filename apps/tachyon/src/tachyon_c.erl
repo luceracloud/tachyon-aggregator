@@ -4,7 +4,7 @@
 -export([c/1]).
 
 %% <<_HostSize:32/integer,   _Host:_HostSize/binary,
-%%   _ZoneSize:32/integer,   _Zone:_ZoneSize/binary,
+%%   _UuidSize:32/integer,   _Uuid:_UuidSize/binary,
 %%   _SnapTime:64/integer,
 %%   _NameSize:32/integer,   _Name:_NameSize/binary,
 %%   _ModuleSize:32/integer, _Module:_ModuleSize/binary,
@@ -13,16 +13,31 @@
 %%   _KeySize:32/integer, Key:_KeySize/binary
 %%   _Type, V:64/intege>>
 
+c(File)  ->
+    case file:read_file(File) of
+        {ok, Content}  ->
+            case tl_lexer:string(binary_to_list(Content)) of
+                {ok, L, _} ->
+                    case tl_parser:parse(L) of
+                        {ok, Matches} ->
+                            M1 = [c(Target, lists:map(fun expand/1, Data)) ||
+                                     {Target, Data} <- Matches, Target /= fn],
+                            [header(), $\n,
+                             M1,
+                             "match(_, State) ->\n",
+                             mk_target(ignore), ".\n"] ++
+                                [[Data, $\n] ||
+                                    {fn, Data} <- Matches];
+                        E1 ->
+                            {L, E1}
+                    end;
+                E2 ->
+                    E2
+            end;
+        E3 ->
+            E3
+    end.
 
-c(Matches)  ->
-    M1 = [c(Target, lists:map(fun expand/1, Data)) ||
-             {Target, Data} <- Matches, Target /= fn],
-    [header(), $\n,
-     M1,
-     "match(_, State) ->\n",
-     mk_target(ignore), ".\n"] ++
-        [Data ||
-            {fn, Data} <- Matches].
 
 c(raw, Data) ->
     Data;
@@ -40,7 +55,7 @@ c(Target, Data) ->
     I = "        ",
     R = [
          "<<", mk_bin(Data1, host,   Ignore), ",\n",
-         I,    mk_bin(Data1, zone,   Ignore), ",\n",
+         I,    mk_bin(Data1, uuid,   Ignore), ",\n",
          I,    ignore(Ignore), "SnapTime:64/integer,\n",
          I,    mk_bin(Data1, name,   Ignore), ",\n",
          I,    mk_bin(Data1, module, Ignore), ",\n",
@@ -58,7 +73,7 @@ c(Target, Data) ->
     R2.
 
 expand(gz) ->
-    {zone, "global"};
+    {uuid, "global"};
 expand(Other) ->
     Other.
 
