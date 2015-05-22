@@ -26,10 +26,12 @@ make_rules(File) ->
     lager:info("[rules] Writing resulting erlang code to: ~s.", [ErlFile]),
     file:write_file(ErlFile, ErlCode),
     lager:info("[rules] Compiling Erlang code."),
-    compile:file(ErlFile).
+    Opts = [verbose,report_errors,report_warnings, binary],
+    {ok, tachyon_kstat, Bin} = compile:file(ErlFile, Opts),
+    code:load_binary(tachyon_kstat, "tachyon_kstat.beam", Bin).
 
 start(_StartType, _StartArgs) ->
-    {ok,tachyon_kstat} = make_rules("etc/tachyon.rules"),
+    {module, tachyon_kstat} = make_rules("etc/tachyon.rules"),
     tachyon_sup:start_link().
 
 stop(_State) ->

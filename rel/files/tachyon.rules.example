@@ -76,7 +76,7 @@ zone(module = "link") ->
 
 -erl parse_iface1(<<$_, IFace/binary>>) -> IFace;
 -erl parse_iface1(<<_, Rest/binary>>) -> parse_iface(Rest);
--erl parse_iface1(<<>>) -> <<\"net\">>.
+-erl parse_iface1(<<>>) -> <<"net">>.
 
 zone(module = "zone_vfs") ->
     [uuid, "vfs", key].
