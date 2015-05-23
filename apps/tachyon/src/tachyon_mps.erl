@@ -92,7 +92,10 @@ init([]) ->
     ets:new(?COUNTERS_SEND, [named_table, set, public, {write_concurrency, true}]),
     {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),
     {ok, Con} = ddb_tcp:connect(Host, Port),
-    {ok, Con1} = ddb_tcp:stream_mode(<<"tachyon">>, 2, Con),
+    Con1 = case ddb_tcp:stream_mode(<<"tachyon">>, 2, Con) of
+               {ok, ConX} -> ConX;
+               {error, _, ConX} -> ConX
+           end,
     Node = list_to_binary(atom_to_list(node())),
     {ok, #state{connection = Con1, node = Node}}.
 

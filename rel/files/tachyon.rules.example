@@ -1,0 +1,85 @@
+%%-*- mode: erlang -*-
+
+ignore(key = "crtime").
+ignore(key = "snaptime").
+ignore(key = "zonename").
+ignore(key = "class").
+
+server(gz, module = "ip") ->
+    [host, "ip", key].
+
+server(gz, module = "zfs", name = "arcstats") ->
+    [host, "arc", key].
+
+%%
+%% Disks
+%%
+server(gz, module = "sd") ->
+    [host, "disk", instance, "metrics", key].
+
+server(gz, module = "sderr", key = "Hard Errors") ->
+    [host, "disk", instance, "errors", "hard"].
+
+server(gz, module = "sderr", key = "Soft Errors") ->
+    [host, "disk", instance, "errors", "soft"].
+
+server(gz, module = "sderr", key = "Transport Errors") ->
+    [host, "disk", instance, "errors", "transport"].
+
+server(gz, module = "sderr", key = "Predictive Failure Analysis") ->
+    [host, "disk", instance, "errors", "predicted_failures"].
+
+server(gz, module = "sderr", key = "Illegal Request") ->
+    [host, "disk", instance, "errors", "illegal"].
+
+%%
+%% CPU Load
+%%
+
+server(gz, module = "cpu_stat") ->
+    [host, "cpu", instance, key].
+
+%%===erlang-code===
+
+%% %%
+%% %% IP_NIC_EVENT_QUEUE
+%% %%
+
+server(gz, name = "IP_NIC_EVENT_QUEUE", module = "unix") ->
+    [host, "ip_nic_event_queue", key].
+
+server(gz, module = "unix") ->
+    [host, "cache", name, key].
+
+%%
+%% End of GZ section, we don't want any other of those messages.
+%%
+
+ignore(gz).
+
+zone(module = "caps") ->
+    [uuid, zone_stat(name), key].
+
+-erl zone_stat(<<"cpucaps_zone_", _/binary>>) -> <<"cpu">>;
+-erl zone_stat(<<"physicalmem_mem_", _/binary>>) -> <<"mem">>;
+-erl zone_stat(<<"swapresv_mem_", _/binary>>) -> <<"swap">>;
+-erl zone_stat(<<"nprocs_mem_", _/binary>>) -> <<"cpu">>;
+-erl zone_stat(_) -> ignore.
+
+zone(module = "link") ->
+    [uuid, "net", parse_iface(name), key].
+
+
+-erl parse_iface(<<$z, _, $_, IFace/binary>>) -> IFace;
+-erl parse_iface(<<$z, _, _, $_, IFace/binary>>) -> IFace;
+-erl parse_iface(O) -> parse_iface1(O).
+
+-erl parse_iface1(<<$_, IFace/binary>>) -> IFace;
+-erl parse_iface1(<<_, Rest/binary>>) -> parse_iface(Rest);
+-erl parse_iface1(<<>>) -> <<"net">>.
+
+zone(module = "zone_vfs") ->
+    [uuid, "vfs", key].
+
+zone(module = "zone_zfs") ->
+    [uuid, "zfs", key].
