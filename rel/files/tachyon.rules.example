@@ -63,7 +63,7 @@ zone(module = "caps") ->
 -erl zone_stat(<<"cpucaps_zone_", _/binary>>) -> <<"cpu">>;
 -erl zone_stat(<<"physicalmem_zone_", _/binary>>) -> <<"mem">>;
 -erl zone_stat(<<"swapresv_zone_", _/binary>>) -> <<"swap">>;
--erl zone_stat(<<"nprocs_zone_", _/binary>>) -> <<"cpu">>;
+-erl zone_stat(<<"nprocs_zone_", _/binary>>) -> <<"nprocs">>;
 -erl zone_stat(_) -> ignore.
 
 zone(module = "link") ->
