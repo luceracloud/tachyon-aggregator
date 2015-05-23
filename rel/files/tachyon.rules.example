@@ -61,9 +61,9 @@ zone(module = "caps") ->
     [uuid, zone_stat(name), key].
 
 -erl zone_stat(<<"cpucaps_zone_", _/binary>>) -> <<"cpu">>;
--erl zone_stat(<<"physicalmem_mem_", _/binary>>) -> <<"mem">>;
--erl zone_stat(<<"swapresv_mem_", _/binary>>) -> <<"swap">>;
--erl zone_stat(<<"nprocs_mem_", _/binary>>) -> <<"cpu">>;
+-erl zone_stat(<<"physicalmem_zone_", _/binary>>) -> <<"mem">>;
+-erl zone_stat(<<"swapresv_zone_", _/binary>>) -> <<"swap">>;
+-erl zone_stat(<<"nprocs_zone_", _/binary>>) -> <<"cpu">>;
 -erl zone_stat(_) -> ignore.
 
 zone(module = "link") ->
