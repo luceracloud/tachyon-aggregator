@@ -26,13 +26,13 @@ Rules.
               {token, {str,           TokenLine, S}}.
 {Str2}      : S = strip(TokenChars,   TokenLen),
               {token, {str,           TokenLine, S}}.
-[(),.[\]=]  :   {token, {a(TokenChars), TokenLine}}.
-{WS}+       :   skip_token.
+[(),.[\]=]  : {token, {a(TokenChars), TokenLine}}.
+{WS}+       : skip_token.
 
 Erlang code.
 -ignore_xref([format_error/1, string/2, token/2, token/3, tokens/2, tokens/3]).
 
-strip(TokenChars,TokenLen) -> lists:sublist(TokenChars, 2, TokenLen - 2).
-unerl(TokenChars,TokenLen) -> lists:sublist(TokenChars, 6, TokenLen).
+strip(TokenChars, TokenLen) -> lists:sublist(TokenChars, 2, TokenLen - 2).
+unerl(TokenChars, TokenLen) -> lists:sublist(TokenChars, 6, TokenLen).
 
 a(L) -> list_to_atom(L).
