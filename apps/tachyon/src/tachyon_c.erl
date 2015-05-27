@@ -136,7 +136,7 @@ ignore(_) ->
     "".
 
 header(Module) ->
-    ["-module(", Module ,").\n"
+    ["-module(", atom_to_list(Module) ,").\n"
      "-behaviour(ensq_channel_behaviour).\n"
      "-record(state, {host, port, connections = #{}}).\n"
      "-export([init/0, response/2, message/3, error/2]).\n"
