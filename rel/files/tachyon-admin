@@ -97,11 +97,11 @@ run()
 case "$1" in
     load)
         shift
-        run tachyon_app load_rules $@
+        run tachyon_console load_rules $@
         ;;
     test)
         shift
-        run tachyon_app test_rules $@
+        run tachyon_console test_rules $@
         ;;
     *)
         echo "Usage: $SCRIPT { load | test }"
