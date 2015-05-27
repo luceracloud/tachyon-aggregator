@@ -95,14 +95,19 @@ run()
 
 # Check the first argument for instructions
 case "$1" in
-    reload)
+    load)
         shift
-        run tachyon_app make_rules $@
+        run tachyon_app load_rules $@
+        ;;
+    test)
+        shift
+        run tachyon_app test_rules $@
         ;;
     *)
-        echo "Usage: $SCRIPT { join | leave | reip | ringready | remove |"
-        echo "                 services | wait-for-service | member-status |"
-        echo "                 ring-status }"
+        echo "Usage: $SCRIPT { load | test }"
+        echo ""
+        echo "  load <rules file>" - 
+        echo "  test <rules file>"
         exit 1
         ;;
 esac
