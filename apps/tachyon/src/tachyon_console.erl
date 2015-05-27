@@ -19,8 +19,9 @@ load_rules(Module, File) ->
     p("Rule File:           ~s", [File]),
     p("Output File:         ~s", [ErlFile]),
     p("Target Module:       ~s", [Module]),
-    p("BEAM Filename:       ~s", [ErlFile]),
+    p("BEAM Filename:       ~s", [BeamFile]),
     p("Compilation Options: ~p", [Opts]),
+    p(""),
     case tachyon_c:c(Module, File) of
         {ok, ErlCode} ->
             p("Compilation succesful."),
@@ -32,6 +33,7 @@ load_rules(Module, File) ->
                             p("Compiled to BEAM."),
                             case code:load_binary(Module, BeamFile, Bin) of
                                 {module, Module} ->
+                                    p("Rule loading successfull!"),
                                     ok;
                                 E ->
                                     e("Filed to load beam file", E)
