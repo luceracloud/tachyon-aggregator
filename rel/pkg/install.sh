@@ -39,7 +39,7 @@ case $2 in
 	RULES=/opt/local/tachyon/etc/tachyon.rules
 	if [ ! -f "${RULES}" ]
 	then
-		cp ${RULES}.exmaple ${RULES}
+		cp ${RULES}.example ${RULES}
 	fi
         if [ ! -f "${CONFFILE}" ]
         then
