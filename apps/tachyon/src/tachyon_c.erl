@@ -1,7 +1,7 @@
 -module(tachyon_c).
 
 
--export([c/1]).
+-export([c/2]).
 
 %% <<_HostSize:32/integer,   _Host:_HostSize/binary,
 %%   _UuidSize:32/integer,   _Uuid:_UuidSize/binary,
@@ -13,21 +13,21 @@
 %%   _KeySize:32/integer, Key:_KeySize/binary
 %%   _Type, V:64/intege>>
 
-c(File)  ->
+c(Module, File)  ->
     case file:read_file(File) of
         {ok, Content}  ->
             case tl_lexer:string(binary_to_list(Content)) of
                 {ok, L, _} ->
                     case tl_parser:parse(L) of
                         {ok, Matches} ->
-                            M1 = [c(Target, lists:map(fun expand/1, Data)) ||
+                            M1 = [c1(Target, lists:map(fun expand/1, Data)) ||
                                      {Target, Data} <- Matches, Target /= fn],
-                            [header(), $\n,
-                             M1,
-                             "match(_, State) ->\n",
-                             mk_target(ignore), ".\n"] ++
-                                [[Data, $\n] ||
-                                    {fn, Data} <- Matches];
+                            {ok, [header(Module), $\n,
+                                  M1,
+                                  "match(_, State) ->\n",
+                                  mk_target(ignore), ".\n"] ++
+                                 [[Data, $\n] ||
+                                     {fn, Data} <- Matches]};
                         E1 ->
                             {L, E1}
                     end;
@@ -39,10 +39,10 @@ c(File)  ->
     end.
 
 
-c(raw, Data) ->
+c1(raw, Data) ->
     Data;
 
-c(Target, Data) ->
+c1(Target, Data) ->
     Data1 = case Target of
                 {_, Ts} ->
                     Data ++ [T || T <- Ts, is_atom(T)] ++
@@ -135,45 +135,45 @@ ignore(true) ->
 ignore(_) ->
     "".
 
-header() ->
-    "-module(tachyon_kstat).\n"
-        "-behaviour(ensq_channel_behaviour).\n"
-        "-record(state, {host, port, connections = #{}}).\n"
-        "-export([init/0, response/2, message/3, error/2]).\n"
-        "init() ->\n"
-        "    {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),\n"
-        "    {ok, #state{host = Host, port = Port}}.\n"
-        "response(_Msg, State) ->\n"
-        "    {ok, State}.\n"
-        "error(_Msg, State) ->\n"
-        "    {ok, State}.\n"
-        "message(M, _, State) ->\n"
-        "    match(M, State).\n"
-        "putb(Bucket, Metric, Time, Value,\n"
-        "     State = #state{host = H, port = P, connections = Cs}) ->\n"
-        "    C1 = case maps:find(Bucket, Cs) of\n"
-        "             {ok, C} ->\n"
-        "                 C;\n"
-        "             error ->\n"
-        "                 {ok, CN0} = ddb_tcp:connect(H, P),\n"
-        "                 {ok, CN1} = ddb_tcp:stream_mode(Bucket, 2, CN0),\n"
-        "                 CN1\n"
-        "         end,\n"
-        "    tachyon_mps:send(),\n"
-        "    tachyon_mps:provide(),\n"
-        "    tachyon_mps:handle(),\n"
-        "    Metric2 = dproto:metric_from_list(Metric),\n"
-        "    case ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), C1) of\n"
-        "        {ok, C2} ->\n"
-        "            Cs1 = maps:put(Bucket, C2, Cs),\n"
-        "            {ok, State#state{connections = Cs1}};\n"
-        "        {error, _, C2} ->\n"
-        "            Cs1 = maps:put(Bucket, C2, Cs),\n"
-        "            {ok, State#state{connections = Cs1}}\n"
-        "    end.\n"
-        "do_ignore(ignore) -> true;\n"
-        "do_ignore(_) -> false.\n"
-        "".
+header(Module) ->
+    ["-module(", Module ,").\n"
+     "-behaviour(ensq_channel_behaviour).\n"
+     "-record(state, {host, port, connections = #{}}).\n"
+     "-export([init/0, response/2, message/3, error/2]).\n"
+     "init() ->\n"
+     "    {ok, {Host, Port}} = application:get_env(tachyon, ddb_ip),\n"
+     "    {ok, #state{host = Host, port = Port}}.\n"
+     "response(_Msg, State) ->\n"
+     "    {ok, State}.\n"
+     "error(_Msg, State) ->\n"
+     "    {ok, State}.\n"
+     "message(M, _, State) ->\n"
+     "    match(M, State).\n"
+     "putb(Bucket, Metric, Time, Value,\n"
+     "     State = #state{host = H, port = P, connections = Cs}) ->\n"
+     "    C1 = case maps:find(Bucket, Cs) of\n"
+     "             {ok, C} ->\n"
+     "                 C;\n"
+     "             error ->\n"
+     "                 {ok, CN0} = ddb_tcp:connect(H, P),\n"
+     "                 {ok, CN1} = ddb_tcp:stream_mode(Bucket, 2, CN0),\n"
+     "                 CN1\n"
+     "         end,\n"
+     "    tachyon_mps:send(),\n"
+     "    tachyon_mps:provide(),\n"
+     "    tachyon_mps:handle(),\n"
+     "    Metric2 = dproto:metric_from_list(Metric),\n"
+     "    case ddb_tcp:send(Metric2, Time, mmath_bin:from_list([Value]), C1) of\n"
+     "        {ok, C2} ->\n"
+     "            Cs1 = maps:put(Bucket, C2, Cs),\n"
+     "            {ok, State#state{connections = Cs1}};\n"
+     "        {error, _, C2} ->\n"
+     "            Cs1 = maps:put(Bucket, C2, Cs),\n"
+     "            {ok, State#state{connections = Cs1}}\n"
+     "    end.\n"
+     "do_ignore(ignore) -> true;\n"
+     "do_ignore(_) -> false.\n"
+    ].
 
 to_cap([C | R]) ->
     [C1] = string:to_upper([C]),

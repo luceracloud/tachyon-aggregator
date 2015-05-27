@@ -9,3 +9,5 @@ tachyon.version
 sniffle.version
 .rebar
 tachyon_version.hrl
+\#*
+.#*
