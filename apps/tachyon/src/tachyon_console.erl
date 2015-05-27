@@ -20,7 +20,7 @@ load_rules(Module, File) ->
     p("Output File:         ~s", [ErlFile]),
     p("Target Module:       ~s", [Module]),
     p("BEAM Filename:       ~s", [ErlFile]),
-    p("Compilation Options: ~s", [Opts]),
+    p("Compilation Options: ~p", [Opts]),
     case tachyon_c:c(Module, File) of
         {ok, ErlCode} ->
             p("Compilation succesful."),
