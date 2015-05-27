@@ -33,7 +33,7 @@ load_rules(Module, File) ->
                             p("Compiled to BEAM."),
                             case code:load_binary(Module, BeamFile, Bin) of
                                 {module, Module} ->
-                                    p("Rule loading successfull!"),
+                                    p("Rule loading successfully completed!"),
                                     ok;
                                 E ->
                                     e("Filed to load beam file", E)
