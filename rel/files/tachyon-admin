@@ -106,7 +106,7 @@ case "$1" in
     *)
         echo "Usage: $SCRIPT { load | test }"
         echo ""
-        echo "  load <rules file>" - 
+        echo "  load <rules file>"
         echo "  test <rules file>"
         exit 1
         ;;
