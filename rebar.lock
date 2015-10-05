@@ -5,6 +5,7 @@
  {<<"ddb_client">>,{pkg,<<"ddb_client">>,<<"0.1.16">>},0},
  {<<"dproto">>,{pkg,<<"dproto">>,<<"0.1.12">>},1},
  {<<"ensq">>,{pkg,<<"ensq">>,<<"0.1.5">>},0},
+ {<<"eper">>,{pkg,<<"eper">>,<<"0.94.0">>},0},
  {<<"fifo_utils">>,{pkg,<<"fifo_utils">>,<<"0.1.16">>},0},
  {<<"getopt">>,
   {git,"git://github.com/jcomellas/getopt.git",
@@ -18,4 +19,5 @@
  {<<"neotoma">>,
   {git,"git://github.com/seancribbs/neotoma.git",
        {ref,"760928ec8870da02eb11bccb501e2700925d06c6"}},
-  1}].
+  1},
+ {<<"recon">>,{pkg,<<"recon">>,<<"2.2.1">>},0}].
