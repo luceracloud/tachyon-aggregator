@@ -36,8 +36,20 @@ server(gz, module = "sderr", key = "Illegal Request") ->
 %% CPU Load
 %%
 
-server(gz, module = "cpu_stat") ->
-    [host, "cpu", instance, key].
+server(gz, module = "cpu", key="cpu_nsec_dtrace") ->
+    [host, "cpu", instance, "dtrace"].
+
+server(gz, module = "cpu", key="cpu_nsec_idle") ->
+    [host, "cpu", instance, "idle"].
+
+server(gz, module = "cpu", key="cpu_nsec_intr") ->
+    [host, "cpu", instance, "intr"].
+
+server(gz, module = "cpu", key="cpu_nsec_kernel") ->
+    [host, "cpu", instance, "kernel"].
+
+server(gz, module = "cpu", key="cpu_nsec_user") ->
+    [host, "cpu", instance, "user"].
 
 %%===erlang-code===
 
