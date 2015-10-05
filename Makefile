@@ -1,9 +1,9 @@
-REBAR = $(shell pwd)/rebar
+REBAR = $(shell pwd)/rebar3
 PROJECT=tachyon
 
-.PHONY: deps rel stagedevrel package version all
+.PHONY: rel package version all
 
-all: cp-hooks deps compile
+all: cp-hooks compile
 
 cp-hooks:
 	cp hooks/* .git/hooks
@@ -17,16 +17,9 @@ version_header: version
 compile: version_header
 	$(REBAR) compile
 
-deps:
-	$(REBAR) get-deps
-
 clean:
 	$(REBAR) clean
 	make -C rel/pkg clean
-	-rm -r apps/*/ebin
-
-distclean: clean devclean relclean
-	$(REBAR) delete-deps
 
 long-test:
 	[ -d apps/$(PROJECT)/.eunit ] && rm -r apps/$(PROJECT)/.eunit || true
@@ -39,29 +32,21 @@ eqc-ci: clean all
 	$(REBAR) -D EQC_CI -C rebar_eqc_ci.config compile eunit skip_deps=true --verbose
 
 eunit:
-	$(REBAR) compile
-	[ -d apps/$(PROJECT)/.eunit ] && rm -r apps/$(PROJECT)/.eunit || true
-	$(REBAR) eunit skip_deps=true -r -v
+	$(REBAR) eunit
 
 test: eunit
-	$(REBAR) xref skip_deps=true -r
-
-quick-xref:
-	$(REBAR) xref skip_deps=true -r
+	$(REBAR) xref
 
 quick-test:
-	[ -d apps/$(PROJECT)/.eunit ] && rm -r apps/$(PROJECT)/.eunit || true
-	$(REBAR) -DEQC_SHORT_TEST skip_deps=true eunit -r -v
+	$(REBAR) eunit
 
-rel: relclean all
-	$(REBAR) generate
+rel:
+	$(REBAR) as prod release
 
-relclean:
-	[ -d rel/$(PROJECT) ] && rm -rf rel/$(PROJECT) || true
+update:
+	$(REBAR) update
 
-devrel: dev1 dev2 dev3 dev4
-
-package: rel
+package: update rel
 	make -C rel/pkg package
 
 ###
@@ -75,7 +60,7 @@ docs:
 ##
 
 xref: all
-	$(REBAR) xref skip_deps=true -r
+	$(REBAR) xref
 
 stage : rel
 	$(foreach dep,$(wildcard deps/* wildcard apps/*), rm -rf rel/$(PROJECT)/lib/$(shell basename $(dep))-* && ln -sf $(abspath $(dep)) rel/$(PROJECT)/lib;)

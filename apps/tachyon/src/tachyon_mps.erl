@@ -141,8 +141,7 @@ handle_cast(_Msg, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_info(tick, State = #state{connection = Con, node = Node}) ->
-    {MegaSecs, Secs, _} = now(),
-    T = (MegaSecs*1000000 + Secs),
+    T = erlang:system_time(seconds),
 
     TblP = ets:tab2list(?COUNTERS_PROV),
     ets:delete_all_objects(?COUNTERS_PROV),
