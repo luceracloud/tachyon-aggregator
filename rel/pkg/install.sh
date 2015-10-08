@@ -46,10 +46,10 @@ case $2 in
             echo "Creating new configuration from example file."
             cp ${CONFFILE}.example ${CONFFILE}
         else
-            echo "Merging old file with new template, the original can be found in ${CONFFILE}.old."
-            /opt/local/tachyon/share/update_config.sh ${CONFFILE}.example ${CONFFILE} > ${CONFFILE}.new &&
-                mv ${CONFFILE} ${CONFFILE}.old &&
-                mv ${CONFFILE}.new ${CONFFILE}
+            echo "Please make sure you update your config according to the update manual!"
+            #/opt/local/fifo-sniffle/share/update_config.sh ${CONFFILE}.example ${CONFFILE} > ${CONFFILE}.new &&
+            #    mv ${CONFFILE} ${CONFFILE}.old &&
+            #    mv ${CONFFILE}.new ${CONFFILE}
         fi
         ;;
 esac
