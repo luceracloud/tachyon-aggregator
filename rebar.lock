@@ -2,7 +2,7 @@
   {git,"https://github.com/tsloughter/cuttlefish.git",
        {ref,"f5f6fdc1b0dd8ebe909b81f0b38f5715d4e869e6"}},
   0},
- {<<"ddb_client">>,{pkg,<<"ddb_client">>,<<"0.1.16">>},0},
+ {<<"ddb_client">>,{pkg,<<"ddb_client">>,<<"0.1.17">>},0},
  {<<"dproto">>,{pkg,<<"dproto">>,<<"0.1.12">>},1},
  {<<"ensq">>,{pkg,<<"ensq">>,<<"0.1.6">>},0},
  {<<"eper">>,{pkg,<<"eper">>,<<"0.94.0">>},0},
