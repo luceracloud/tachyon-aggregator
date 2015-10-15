@@ -8,7 +8,7 @@
 
 %% @doc the NSQ topic on which kstat binary metrics are received
 {mapping, "topic", "tachyon.kstat_topic",
- [{default, "tachyon-metrics-bin"},
+ [{default, "tachyon"},
   {datatype, string}]}.
 
 %% @doc The number of connections used to receive kstat metrics
